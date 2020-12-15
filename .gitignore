@@ -1,0 +1,16 @@
+# editor cruft
+**/.vscode/
+
+# build cruft
+_build
+**/.build/
+**/build*/
+**/bin/
+lib_dispatch/lib/
+
+# macOS cruft
+.DS_Store
+
+# misc cruft
+**/*.local.*
+**/*.local/
