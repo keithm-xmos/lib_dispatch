@@ -45,7 +45,7 @@ void dispatch_thread_handler(void *param) {
   }
 }
 
-dispatch_handle_t dispatch_queue_create(size_t length, size_t thread_count,
+dispatch_queue_t *dispatch_queue_create(size_t length, size_t thread_count,
                                         size_t stack_size, char *name) {
   assert(length <= (thread_count + 1));  // NOTE: this is true for now
   dispatch_xcore_t *queue;
@@ -75,14 +75,14 @@ dispatch_handle_t dispatch_queue_create(size_t length, size_t thread_count,
   queue->stack = malloc(queue->stack_size * thread_count);
 
   // initialize the queue
-  dispatch_queue_init((dispatch_handle_t *)queue);
+  dispatch_queue_init(queue);
 
   debug_printf("dispatch_queue_create: name=%s\n", queue->name);
 
-  return (dispatch_handle_t)queue;
+  return queue;
 }
 
-void dispatch_queue_init(dispatch_handle_t ctx) {
+void dispatch_queue_init(dispatch_queue_t *ctx) {
   assert(ctx);
   dispatch_xcore_t *queue = (dispatch_xcore_t *)ctx;
 
@@ -107,7 +107,7 @@ void dispatch_queue_init(dispatch_handle_t ctx) {
   }
 }
 
-void dispatch_queue_async(dispatch_handle_t ctx, dispatch_task_t *task) {
+void dispatch_queue_async(dispatch_queue_t *ctx, dispatch_task_t *task) {
   assert(ctx);
   assert(task);
   dispatch_xcore_t *queue = (dispatch_xcore_t *)ctx;
@@ -137,7 +137,7 @@ void dispatch_queue_async(dispatch_handle_t ctx, dispatch_task_t *task) {
   }
 }
 
-void dispatch_queue_for(dispatch_handle_t ctx, int N, dispatch_task_t *task) {
+void dispatch_queue_for(dispatch_queue_t *ctx, int N, dispatch_task_t *task) {
   assert(ctx);
   assert(task);
   dispatch_xcore_t *queue = (dispatch_xcore_t *)ctx;
@@ -149,7 +149,7 @@ void dispatch_queue_for(dispatch_handle_t ctx, int N, dispatch_task_t *task) {
   }
 }
 
-void dispatch_queue_sync(dispatch_handle_t ctx, dispatch_task_t *task) {
+void dispatch_queue_sync(dispatch_queue_t *ctx, dispatch_task_t *task) {
   assert(ctx);
   assert(task);
   dispatch_xcore_t *queue = (dispatch_xcore_t *)ctx;
@@ -160,7 +160,7 @@ void dispatch_queue_sync(dispatch_handle_t ctx, dispatch_task_t *task) {
   dispatch_task_wait(task);
 }
 
-void dispatch_queue_wait(dispatch_handle_t ctx) {
+void dispatch_queue_wait(dispatch_queue_t *ctx) {
   assert(ctx);
   dispatch_xcore_t *queue = (dispatch_xcore_t *)ctx;
 
@@ -177,7 +177,7 @@ void dispatch_queue_wait(dispatch_handle_t ctx) {
   }
 }
 
-void dispatch_queue_destroy(dispatch_handle_t ctx) {
+void dispatch_queue_destroy(dispatch_queue_t *ctx) {
   assert(ctx);
   dispatch_xcore_t *queue = (dispatch_xcore_t *)ctx;
 

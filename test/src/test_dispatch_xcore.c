@@ -35,7 +35,7 @@ TEST_SETUP(dispatch_xcore) {}
 TEST_TEAR_DOWN(dispatch_xcore) {}
 
 TEST(dispatch_xcore, test_async) {
-  dispatch_handle_t *queue;
+  dispatch_queue_t *queue;
   dispatch_task_t task;
   test_work_params_t params;
   int length = 3;
@@ -58,7 +58,7 @@ TEST(dispatch_xcore, test_async) {
 }
 
 TEST(dispatch_xcore, test_for) {
-  dispatch_handle_t *queue;
+  dispatch_queue_t *queue;
   dispatch_task_t task;
   test_work_params_t params;
   int length = 3;
@@ -79,7 +79,7 @@ TEST(dispatch_xcore, test_for) {
 }
 
 TEST(dispatch_xcore, test_sync) {
-  dispatch_handle_t *queue;
+  dispatch_queue_t *queue;
   dispatch_task_t task;
   test_work_params_t params;
 
@@ -102,24 +102,24 @@ TEST(dispatch_xcore, test_sync) {
 
 TEST(dispatch_xcore, test_static) {
   // create queue with data on the stack
-  dispatch_xcore_t queue;
+  dispatch_xcore_t queue_s;
   volatile dispatch_worker_flag_t flags[TEST_STATIC_THREAD_COUNT];
   channel_t channels[TEST_STATIC_THREAD_COUNT];
   __attribute__((aligned(8))) static char
       static_stack[DISPATCHER_STACK_SIZE * TEST_STATIC_THREAD_COUNT];
 
-  queue.length = TEST_STATIC_LENGTH;
-  queue.thread_count = TEST_STATIC_THREAD_COUNT;
-  queue.flags = &flags[0];
-  queue.channels = &channels[0];
-  queue.stack_size = DISPATCHER_STACK_SIZE;
-  queue.stack = static_stack;
+  queue_s.length = TEST_STATIC_LENGTH;
+  queue_s.thread_count = TEST_STATIC_THREAD_COUNT;
+  queue_s.flags = &flags[0];
+  queue_s.channels = &channels[0];
+  queue_s.stack_size = DISPATCHER_STACK_SIZE;
+  queue_s.stack = static_stack;
 #if DEBUG_PRINT_ENABLE
-  queue.name = "test_static";
+  queue_s.name = "test_static";
 #endif
 
-  dispatch_handle_t handle = (dispatch_handle_t)&queue;
-  dispatch_queue_init(handle);
+  dispatch_queue_t *queue = &queue_s;
+  dispatch_queue_init(queue);
 
   // now use the static queue
   dispatch_task_t task;
@@ -129,9 +129,9 @@ TEST(dispatch_xcore, test_static) {
   params.count = 0;
   dispatch_task_create(&task, do_dispatch_xcore_work, &params, "test_static");
   for (int i = 0; i < task_count; i++) {
-    dispatch_queue_async(handle, &task);
+    dispatch_queue_async(queue, &task);
   }
-  dispatch_queue_wait(handle);
+  dispatch_queue_wait(queue);
 
   TEST_ASSERT_EQUAL_INT(task_count, params.count);
 }

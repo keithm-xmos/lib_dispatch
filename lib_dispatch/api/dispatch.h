@@ -8,7 +8,7 @@
 
 #include "dispatch_task.h"
 
-typedef void* dispatch_handle_t;
+typedef void dispatch_queue_t;
 
 // **********
 // group API
@@ -30,23 +30,23 @@ typedef void* dispatch_handle_t;
 
 // void dispatch_group_wait(dispatch_group_t *group);
 
-dispatch_handle_t dispatch_queue_create(size_t length, size_t thread_count,
+dispatch_queue_t* dispatch_queue_create(size_t length, size_t thread_count,
                                         size_t stack_size, char* name);
 
-void dispatch_queue_init(dispatch_handle_t ctx);
+void dispatch_queue_init(dispatch_queue_t* ctx);
 
-void dispatch_queue_destroy(dispatch_handle_t ctx);
+void dispatch_queue_destroy(dispatch_queue_t* ctx);
 
 // Run task asyncronously
-void dispatch_queue_async(dispatch_handle_t ctx, dispatch_task_t* task);
+void dispatch_queue_async(dispatch_queue_t* ctx, dispatch_task_t* task);
 
 // Run task syncronously
-void dispatch_queue_sync(dispatch_handle_t ctx, dispatch_task_t* task);
+void dispatch_queue_sync(dispatch_queue_t* ctx, dispatch_task_t* task);
 
 // Run task N times
-void dispatch_queue_for(dispatch_handle_t ctx, int N, dispatch_task_t* task);
+void dispatch_queue_for(dispatch_queue_t* ctx, int N, dispatch_task_t* task);
 
 // Wait for all tasks to be finish
-void dispatch_queue_wait(dispatch_handle_t ctx);
+void dispatch_queue_wait(dispatch_queue_t* ctx);
 
 #endif  // LIB_DISPATCH_H_
