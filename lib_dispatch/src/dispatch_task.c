@@ -2,12 +2,18 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#include "debug_print.h"
 #include "lib_dispatch/api/dispatch.h"
 
 void dispatch_task_create(dispatch_task_t *task, void (*work)(void *),
                           void *params, char *name) {
   assert(task);
-  task->name = name;
+#if DEBUG_PRINT_ENABLE
+  if (name)
+    task->name = name;
+  else
+    task->name = "null";
+#endif
   task->work = work;
   task->params = params;
   task->notify = NULL;
@@ -24,6 +30,7 @@ void dispatch_task_wait(dispatch_task_t *task) {
   assert(task);
 
   // call work function in current thread
+  debug_printf("dispatch_task_wait:  name=%s\n", task->name);
   task->work(task->params);
 
   if (task->notify) {
