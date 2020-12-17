@@ -8,7 +8,7 @@
 
 #define TEST_STATIC_LENGTH (3)
 #define TEST_STATIC_THREAD_COUNT (3)
-#define STATIC_STACK_WORDS (1024)  // more than enough
+#define DISPATCHER_STACK_SIZE (1024)  // more than enough
 
 typedef struct test_work_params {
   int count;
@@ -42,7 +42,8 @@ TEST(dispatch_xcore, test_async) {
   int thread_count = 3;
   int task_count = 8;
 
-  queue = dispatch_queue_create(length, thread_count, "test_async");
+  queue = dispatch_queue_create(length, thread_count, DISPATCHER_STACK_SIZE,
+                                "test_async");
   dispatch_task_create(&task, do_dispatch_xcore_work, &params, "test_async");
 
   params.count = 0;
@@ -64,7 +65,8 @@ TEST(dispatch_xcore, test_for) {
   int thread_count = 3;
   int for_count = 5;
 
-  queue = dispatch_queue_create(length, thread_count, "test_for");
+  queue = dispatch_queue_create(length, thread_count, DISPATCHER_STACK_SIZE,
+                                "test_for");
   dispatch_task_create(&task, do_dispatch_xcore_work, &params, "test_for");
 
   params.count = 0;
@@ -85,7 +87,8 @@ TEST(dispatch_xcore, test_sync) {
   int thread_count = 3;
   int task_count = 4;
 
-  queue = dispatch_queue_create(length, thread_count, "test_sync");
+  queue = dispatch_queue_create(length, thread_count, DISPATCHER_STACK_SIZE,
+                                "test_sync");
   dispatch_task_create(&task, do_dispatch_xcore_work, &params, "test_sync");
 
   params.count = 0;
@@ -102,14 +105,14 @@ TEST(dispatch_xcore, test_static) {
   dispatch_xcore_t queue;
   volatile dispatch_worker_flag_t flags[TEST_STATIC_THREAD_COUNT];
   channel_t channels[TEST_STATIC_THREAD_COUNT];
-  static char
-      static_stack[STATIC_STACK_WORDS * sizeof(int) * TEST_STATIC_THREAD_COUNT];
+  __attribute__((aligned(8))) static char
+      static_stack[DISPATCHER_STACK_SIZE * TEST_STATIC_THREAD_COUNT];
 
   queue.length = TEST_STATIC_LENGTH;
   queue.thread_count = TEST_STATIC_THREAD_COUNT;
   queue.flags = &flags[0];
   queue.channels = &channels[0];
-  queue.stack_words = STATIC_STACK_WORDS;
+  queue.stack_size = DISPATCHER_STACK_SIZE;
   queue.stack = static_stack;
 #if DEBUG_PRINT_ENABLE
   queue.name = "test_static";

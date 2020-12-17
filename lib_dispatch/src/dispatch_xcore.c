@@ -14,22 +14,12 @@
 #define DISPATCH_WAKE_EVT (0x2)
 #define DISPATCH_EXIT_EVT (0x3)
 
-#define STRINGIFY_THREAD_FUNCTION(NAME) #NAME
-#define GET_THREAD_FUNCTION_STACKWORDS(DEST, NAME)                     \
-  asm("ldc %[__dest], " STRINGIFY_THREAD_FUNCTION(NAME) ".nstackwords" \
-      : [ __dest ] "=r"(DEST))
-
 struct dispatch_thread_handler_data {
   volatile dispatch_worker_flag_t flag;
   chanend_t cend;
 };
 
-// TODO: are both the stackfuntion pragma and the fptrgroup needed?
-//       can I just specify some memory from a stack somewhere that the user
-//       specifies?
-#pragma stackfunction 300
-__attribute__((fptrgroup("dispatch_thread_handler"))) void
-dispatch_thread_handler(void *param) {
+void dispatch_thread_handler(void *param) {
   uint8_t evt;
   dispatch_task_t task;
   chanend_t cend = *((chanend_t *)(param));
@@ -56,7 +46,7 @@ dispatch_thread_handler(void *param) {
 }
 
 dispatch_handle_t dispatch_queue_create(size_t length, size_t thread_count,
-                                        char *name) {
+                                        size_t stack_size, char *name) {
   assert(length <= (thread_count + 1));  // NOTE: this is true for now
   dispatch_xcore_t *queue;
 
@@ -80,9 +70,9 @@ dispatch_handle_t dispatch_queue_create(size_t length, size_t thread_count,
   // allocate channels
   queue->channels = malloc(sizeof(channel_t) * thread_count);
 
-  // allocate stacks
-  GET_THREAD_FUNCTION_STACKWORDS(queue->stack_words, dispatch_thread_handler);
-  queue->stack = malloc(queue->stack_words * sizeof(int) * thread_count);
+  // allocate stack
+  queue->stack_size = stack_size;
+  queue->stack = malloc(queue->stack_size * thread_count);
 
   // initialize the queue
   dispatch_queue_init((dispatch_handle_t *)queue);
@@ -104,10 +94,10 @@ void dispatch_queue_init(dispatch_handle_t ctx) {
   for (int i = 0; i < queue->thread_count; i++) {
     queue->channels[i] = chan_alloc();
     queue->flags[i] = DISPATCH_WORKER_READY;
-    run_async(
-        dispatch_thread_handler, (void *)&queue->channels[i].end_b,
-        stack_base((void *)&queue->stack[stack_offset], queue->stack_words));
-    stack_offset += queue->stack_words * sizeof(int);
+    run_async(dispatch_thread_handler, (void *)&queue->channels[i].end_b,
+              stack_base((void *)&queue->stack[stack_offset],
+                         (queue->stack_size / sizeof(int))));
+    stack_offset += queue->stack_size;
   }
   // tell workers where their status flag is
   for (int i = 0; i < queue->thread_count; i++) {

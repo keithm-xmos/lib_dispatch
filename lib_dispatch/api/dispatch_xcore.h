@@ -13,7 +13,7 @@ typedef enum {
 typedef struct dispatch_xcore {
   int length;
   int thread_count;
-  int stack_words;
+  int stack_size;
   char *stack;
   volatile dispatch_worker_flag_t
       *flags;  // must be volatile as it is shared by >1 threads

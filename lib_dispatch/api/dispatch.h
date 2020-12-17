@@ -31,7 +31,7 @@ typedef void* dispatch_handle_t;
 // void dispatch_group_wait(dispatch_group_t *group);
 
 dispatch_handle_t dispatch_queue_create(size_t length, size_t thread_count,
-                                        char* name);
+                                        size_t stack_size, char* name);
 
 void dispatch_queue_init(dispatch_handle_t ctx);
 
