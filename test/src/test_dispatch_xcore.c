@@ -103,17 +103,19 @@ TEST(dispatch_xcore, test_sync) {
 TEST(dispatch_xcore, test_static) {
   // create queue with data on the stack
   dispatch_xcore_t queue_s;
-  volatile dispatch_worker_flag_t flags[TEST_STATIC_THREAD_COUNT];
+  dispatch_thread_status_t thread_status[TEST_STATIC_THREAD_COUNT];
+  dispatch_thread_data_t thread_data[TEST_STATIC_THREAD_COUNT];
   channel_t channels[TEST_STATIC_THREAD_COUNT];
   __attribute__((aligned(8))) static char
       static_stack[DISPATCHER_STACK_SIZE * TEST_STATIC_THREAD_COUNT];
 
   queue_s.length = TEST_STATIC_LENGTH;
   queue_s.thread_count = TEST_STATIC_THREAD_COUNT;
-  queue_s.flags = &flags[0];
   queue_s.channels = &channels[0];
-  queue_s.stack_size = DISPATCHER_STACK_SIZE;
-  queue_s.stack = static_stack;
+  queue_s.thread_stack_size = DISPATCHER_STACK_SIZE;
+  queue_s.thread_stack = static_stack;
+  queue_s.thread_status = &thread_status[0];
+  queue_s.thread_data = &thread_data[0];
 #if DEBUG_PRINT_ENABLE
   queue_s.name = "test_static";
 #endif

@@ -2,8 +2,10 @@
 #ifndef LIB_DISPATCH_TASK_H_
 #define LIB_DISPATCH_TASK_H_
 
+#include <xcore/thread.h>
+
 typedef struct dispatch_task {
-  void (*work)(void *);          // the function to perform
+  thread_function_t work;        // the function to perform
   void *params;                  // parameters to pass to the function
   struct dispatch_task *notify;  // the task to notify
   char *name;                    // to identify it when debugging

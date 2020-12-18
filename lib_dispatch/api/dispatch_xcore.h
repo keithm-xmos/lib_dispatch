@@ -6,17 +6,22 @@
 #include "xcore/channel.h"
 
 typedef enum {
-  DISPATCH_WORKER_READY,
-  DISPATCH_WORKER_BUSY
-} dispatch_worker_flag_t;
+  DISPATCH_THREAD_READY,
+  DISPATCH_THREAD_BUSY
+} dispatch_thread_status_t;
+
+typedef struct dispatch_thread_data {
+  volatile dispatch_thread_status_t *status;
+  chanend_t cend;
+} dispatch_thread_data_t;
 
 typedef struct dispatch_xcore {
   int length;
   int thread_count;
-  int stack_size;
-  char *stack;
-  volatile dispatch_worker_flag_t
-      *flags;  // must be volatile as it is shared by >1 threads
+  int thread_stack_size;
+  char *thread_stack;
+  dispatch_thread_status_t *thread_status;
+  dispatch_thread_data_t *thread_data;
   channel_t *channels;
   char *name;  // to identify it when debugging
 } dispatch_xcore_t;
