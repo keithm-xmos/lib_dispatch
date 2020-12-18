@@ -105,13 +105,13 @@ TEST(dispatch_xcore, test_static) {
   dispatch_xcore_t queue_s;
   dispatch_thread_status_t thread_status[TEST_STATIC_THREAD_COUNT];
   dispatch_thread_data_t thread_data[TEST_STATIC_THREAD_COUNT];
-  channel_t channels[TEST_STATIC_THREAD_COUNT];
+  chanend_t chanends[TEST_STATIC_THREAD_COUNT];
   __attribute__((aligned(8))) static char
       static_stack[DISPATCHER_STACK_SIZE * TEST_STATIC_THREAD_COUNT];
 
   queue_s.length = TEST_STATIC_LENGTH;
   queue_s.thread_count = TEST_STATIC_THREAD_COUNT;
-  queue_s.channels = &channels[0];
+  queue_s.chanends = &chanends[0];
   queue_s.thread_stack_size = DISPATCHER_STACK_SIZE;
   queue_s.thread_stack = static_stack;
   queue_s.thread_status = &thread_status[0];

@@ -22,7 +22,7 @@ typedef struct dispatch_xcore {
   char *thread_stack;
   dispatch_thread_status_t *thread_status;
   dispatch_thread_data_t *thread_data;
-  channel_t *channels;
+  chanend_t *chanends;
   char *name;  // to identify it when debugging
 } dispatch_xcore_t;
 
