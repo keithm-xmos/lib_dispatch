@@ -47,10 +47,8 @@ void dispatch_task_wait(dispatch_task_t *ctx) {
 
   if (ctx->queue) {
     for (;;) {
-      // if (ctx->status == DISPATCH_TASK_DONE) break;
-      // TODO:
-      dispatch_task_perform(ctx);
-      break;
+      if (dispatch_queue_task_status(ctx->queue, ctx) == DISPATCH_TASK_DONE)
+        break;
     }
   } else {
     dispatch_task_perform(ctx);

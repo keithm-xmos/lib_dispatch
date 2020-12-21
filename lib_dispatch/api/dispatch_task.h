@@ -3,9 +3,9 @@
 #define LIB_DISPATCH_TASK_H_
 
 typedef enum {
-  DISPATCH_TASK_WAITING = 0,
-  DISPATCH_TASK_EXECUTING = 1,
-  DISPATCH_TASK_DONE = 2
+  DISPATCH_TASK_WAITING,
+  DISPATCH_TASK_EXECUTING,
+  DISPATCH_TASK_DONE,
 } dispatch_task_status_t;
 
 typedef void (*dispatch_function_t)(void *);

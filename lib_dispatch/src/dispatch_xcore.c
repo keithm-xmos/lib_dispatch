@@ -14,13 +14,15 @@
 #define DISPATCH_WAKE_EVT (0x1)
 #define DISPATCH_EXIT_EVT (0x2)
 
+#define DISPATCH_TASK_NONE (0x0)
+
 void dispatch_thread_handler(void *param) {
   dispatch_thread_data_t *thread_data = (dispatch_thread_data_t *)param;
   uint8_t evt;
   dispatch_task_t task;
 
   chanend_t cend = thread_data->cend;
-  volatile dispatch_thread_status_t *status = thread_data->status;
+  volatile dispatch_thread_task_t *task_id = thread_data->task;
 
   debug_printf("dispatch_thread_handler started: cend=%u\n", (int)cend);
 
@@ -32,8 +34,8 @@ void dispatch_thread_handler(void *param) {
       chan_in_buf_byte(cend, (void *)&task, sizeof(dispatch_task_t));
       // run the task
       dispatch_task_perform(&task);
-      // clear status
-      *status = DISPATCH_THREAD_READY;
+      // clear task id
+      *task_id = DISPATCH_TASK_NONE;
     } else if (evt == DISPATCH_EXIT_EVT) {
       debug_printf("dispatch_thread_handler exit event: cend=%u\n", (int)cend);
       // exit forever loop
@@ -64,9 +66,8 @@ dispatch_queue_t *dispatch_queue_create(size_t length, size_t thread_count,
   // allocate channels
   queue->thread_chanends = malloc(sizeof(channel_t) * thread_count);
 
-  // allocate thread status
-  queue->thread_status =
-      malloc(sizeof(dispatch_thread_status_t) * thread_count);
+  // allocate thread tasks
+  queue->thread_tasks = malloc(sizeof(dispatch_thread_task_t) * thread_count);
 
   // allocate thread data
   queue->thread_data = malloc(sizeof(dispatch_thread_data_t) * thread_count);
@@ -94,8 +95,8 @@ void dispatch_queue_init(dispatch_queue_t *ctx) {
 
   // create workers
   for (int i = 0; i < queue->thread_count; i++) {
-    queue->thread_status[i] = DISPATCH_THREAD_READY;
-    queue->thread_data[i].status = &queue->thread_status[i];
+    queue->thread_tasks[i] = DISPATCH_TASK_NONE;
+    queue->thread_data[i].task = &queue->thread_tasks[i];
     // create and setup chanends
     queue->thread_chanends[i] = chanend_alloc();   // queue's chanend
     queue->thread_data[i].cend = chanend_alloc();  // worker's chanend
@@ -119,7 +120,7 @@ void dispatch_queue_async(dispatch_queue_t *ctx, dispatch_task_t *task) {
   // lookup READY task
   int worker_index = -1;
   for (int i = 0; i < queue->thread_count; i++) {
-    if (queue->thread_status[i] == DISPATCH_THREAD_READY) {
+    if (queue->thread_tasks[i] == DISPATCH_TASK_NONE) {
       worker_index = i;
       break;
     }
@@ -130,8 +131,8 @@ void dispatch_queue_async(dispatch_queue_t *ctx, dispatch_task_t *task) {
     task->queue = ctx;
     // signal worker to wake up (blocks waiting for worker)
     chan_out_byte(queue->thread_chanends[worker_index], DISPATCH_WAKE_EVT);
-    // set thread status and task status to executing
-    queue->thread_status[worker_index] = DISPATCH_THREAD_BUSY;
+    // set thread task to the task ID it is about to execute
+    queue->thread_tasks[worker_index] = (dispatch_thread_task_t)task;
     // send task to worker
     chan_out_buf_byte(queue->thread_chanends[worker_index], (void *)&task[0],
                       sizeof(dispatch_task_t));
@@ -160,7 +161,7 @@ void dispatch_queue_sync(dispatch_queue_t *ctx, dispatch_task_t *task) {
 
   debug_printf("dispatch_queue_sync: name=%s\n", queue->name);
 
-  // run in callers thread
+  dispatch_queue_async(ctx, task);
   dispatch_task_wait(task);
 }
 
@@ -175,10 +176,23 @@ void dispatch_queue_wait(dispatch_queue_t *ctx) {
   for (;;) {
     busy_count = 0;
     for (int i = 0; i < queue->thread_count; i++) {
-      if (queue->thread_status[i] == DISPATCH_THREAD_BUSY) busy_count++;
+      if (queue->thread_tasks[i] != DISPATCH_TASK_NONE) busy_count++;
     }
     if (busy_count == 0) return;
   }
+}
+
+dispatch_task_status_t dispatch_queue_task_status(dispatch_queue_t *ctx,
+                                                  dispatch_task_t *task) {
+  assert(ctx);
+  dispatch_xcore_t *queue = (dispatch_xcore_t *)ctx;
+
+  for (int i = 0; i < queue->thread_count; i++) {
+    if (queue->thread_tasks[i] == (dispatch_thread_task_t)task) {
+      return DISPATCH_TASK_EXECUTING;
+    }
+  }
+  return DISPATCH_TASK_DONE;
 }
 
 void dispatch_queue_destroy(dispatch_queue_t *ctx) {
@@ -187,7 +201,7 @@ void dispatch_queue_destroy(dispatch_queue_t *ctx) {
 
   assert(queue);
   assert(queue->thread_chanends);
-  // assert(queue->thread_status);
+  assert(queue->thread_tasks);
   assert(queue->thread_data);
   assert(queue->thread_stack);
 
@@ -214,7 +228,7 @@ void dispatch_queue_destroy(dispatch_queue_t *ctx) {
   // free memory
   free((void *)queue->thread_stack);
   free((void *)queue->thread_data);
-  // free((void *)queue->thread_status);
+  free((void *)queue->thread_tasks);
   free((void *)queue->thread_chanends);
   free((void *)queue);
 }

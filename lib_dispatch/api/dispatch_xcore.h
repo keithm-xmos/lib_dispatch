@@ -5,13 +5,10 @@
 #include "lib_dispatch/api/dispatch.h"
 #include "xcore/channel.h"
 
-typedef enum {
-  DISPATCH_THREAD_READY,
-  DISPATCH_THREAD_BUSY
-} dispatch_thread_status_t;
+typedef int dispatch_thread_task_t;
 
 typedef struct dispatch_thread_data {
-  volatile dispatch_thread_status_t *status;
+  volatile dispatch_thread_task_t *task;
   chanend_t cend;
 } dispatch_thread_data_t;
 
@@ -21,7 +18,7 @@ typedef struct dispatch_xcore {
   int thread_count;
   int thread_stack_size;
   char *thread_stack;
-  dispatch_thread_status_t *thread_status;
+  dispatch_thread_task_t *thread_tasks;
   dispatch_thread_data_t *thread_data;
   chanend_t *thread_chanends;
 } dispatch_xcore_t;

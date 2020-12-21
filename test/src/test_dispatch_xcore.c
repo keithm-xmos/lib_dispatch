@@ -104,7 +104,7 @@ TEST(dispatch_xcore, test_sync) {
 TEST(dispatch_xcore, test_static) {
   // create queue with data on the stack
   dispatch_xcore_t queue_s;
-  dispatch_thread_status_t thread_status[TEST_STATIC_THREAD_COUNT];
+  dispatch_thread_task_t thread_tasks[TEST_STATIC_THREAD_COUNT];
   dispatch_thread_data_t thread_data[TEST_STATIC_THREAD_COUNT];
   chanend_t chanends[TEST_STATIC_THREAD_COUNT];
   __attribute__((aligned(8))) static char
@@ -115,7 +115,7 @@ TEST(dispatch_xcore, test_static) {
   queue_s.thread_chanends = &chanends[0];
   queue_s.thread_stack_size = DISPATCHER_STACK_SIZE;
   queue_s.thread_stack = static_stack;
-  queue_s.thread_status = &thread_status[0];
+  queue_s.thread_tasks = &thread_tasks[0];
   queue_s.thread_data = &thread_data[0];
 #if DEBUG_PRINT_ENABLE
   strncpy(queue_s.name, "test_static", 32);

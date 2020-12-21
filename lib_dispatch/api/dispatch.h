@@ -47,6 +47,10 @@ void dispatch_queue_sync(dispatch_queue_t* ctx, dispatch_task_t* task);
 void dispatch_queue_for(dispatch_queue_t* ctx, int N, dispatch_task_t* task);
 
 // Wait for all tasks to be finish
+dispatch_task_status_t dispatch_queue_task_status(dispatch_queue_t* ctx,
+                                                  dispatch_task_t* task);
+
+// Wait for all tasks to be finish
 void dispatch_queue_wait(dispatch_queue_t* ctx);
 
 #endif  // LIB_DISPATCH_H_
