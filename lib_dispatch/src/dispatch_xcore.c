@@ -3,6 +3,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 #include <xcore/chanend.h>
 #include <xcore/channel.h>
 #include <xcore/hwtimer.h>
@@ -30,7 +31,7 @@ void dispatch_thread_handler(void *param) {
       // read the task
       chan_in_buf_byte(cend, (void *)&task, sizeof(dispatch_task_t));
       // run the task
-      dispatch_task_wait(&task);
+      dispatch_task_perform(&task);
       // clear status
       *status = DISPATCH_THREAD_READY;
     } else if (evt == DISPATCH_EXIT_EVT) {
@@ -55,13 +56,13 @@ dispatch_queue_t *dispatch_queue_create(size_t length, size_t thread_count,
   queue->thread_count = thread_count;
 #if DEBUG_PRINT_ENABLE
   if (name)
-    queue->name = name;
+    strncpy(queue->name, name, 32);
   else
-    queue->name = "null";
+    strncpy(queue->name, "null", 32);
 #endif
 
   // allocate channels
-  queue->chanends = malloc(sizeof(channel_t) * thread_count);
+  queue->thread_chanends = malloc(sizeof(channel_t) * thread_count);
 
   // allocate thread status
   queue->thread_status =
@@ -93,12 +94,14 @@ void dispatch_queue_init(dispatch_queue_t *ctx) {
 
   // create workers
   for (int i = 0; i < queue->thread_count; i++) {
-    queue->chanends[i] = chanend_alloc();
     queue->thread_status[i] = DISPATCH_THREAD_READY;
     queue->thread_data[i].status = &queue->thread_status[i];
-    queue->thread_data[i].cend = chanend_alloc();
-    chanend_set_dest(queue->chanends[i], queue->thread_data[i].cend);
-    chanend_set_dest(queue->thread_data[i].cend, queue->chanends[i]);
+    // create and setup chanends
+    queue->thread_chanends[i] = chanend_alloc();   // queue's chanend
+    queue->thread_data[i].cend = chanend_alloc();  // worker's chanend
+    chanend_set_dest(queue->thread_chanends[i], queue->thread_data[i].cend);
+    chanend_set_dest(queue->thread_data[i].cend, queue->thread_chanends[i]);
+    // launch the thread worker
     run_async(
         dispatch_thread_handler, (void *)&queue->thread_data[i],
         stack_base((void *)&queue->thread_stack[stack_offset], stack_words));
@@ -123,15 +126,18 @@ void dispatch_queue_async(dispatch_queue_t *ctx, dispatch_task_t *task) {
   }
 
   if (worker_index >= 0) {
-    // signal worker to wake up
+    // assign to this queue
+    task->queue = ctx;
+    // signal worker to wake up (blocks waiting for worker)
+    chan_out_byte(queue->thread_chanends[worker_index], DISPATCH_WAKE_EVT);
+    // set thread status and task status to executing
     queue->thread_status[worker_index] = DISPATCH_THREAD_BUSY;
-    chan_out_byte(queue->chanends[worker_index], DISPATCH_WAKE_EVT);
     // send task to worker
-    chan_out_buf_byte(queue->chanends[worker_index], (void *)&task[0],
+    chan_out_buf_byte(queue->thread_chanends[worker_index], (void *)&task[0],
                       sizeof(dispatch_task_t));
   } else {
     // run in callers thread
-    dispatch_task_wait(task);
+    dispatch_task_perform(task);
   }
 }
 
@@ -180,8 +186,8 @@ void dispatch_queue_destroy(dispatch_queue_t *ctx) {
   dispatch_xcore_t *queue = (dispatch_xcore_t *)ctx;
 
   assert(queue);
-  assert(queue->chanends);
-  assert(queue->thread_status);
+  assert(queue->thread_chanends);
+  // assert(queue->thread_status);
   assert(queue->thread_data);
   assert(queue->thread_stack);
 
@@ -189,7 +195,7 @@ void dispatch_queue_destroy(dispatch_queue_t *ctx) {
 
   // send all thread workers the EXIT event
   for (int i = 0; i < queue->thread_count; i++) {
-    chan_out_byte(queue->chanends[i], DISPATCH_EXIT_EVT);
+    chan_out_byte(queue->thread_chanends[i], DISPATCH_EXIT_EVT);
   }
 
   // need to give task handlers time to exit
@@ -202,13 +208,13 @@ void dispatch_queue_destroy(dispatch_queue_t *ctx) {
   // now safe to free the chanends
   for (int i = 0; i < queue->thread_count; i++) {
     chanend_free(queue->thread_data[i].cend);
-    chanend_free(queue->chanends[i]);
+    chanend_free(queue->thread_chanends[i]);
   }
 
   // free memory
   free((void *)queue->thread_stack);
   free((void *)queue->thread_data);
-  free((void *)queue->thread_status);
-  free((void *)queue->chanends);
+  // free((void *)queue->thread_status);
+  free((void *)queue->thread_chanends);
   free((void *)queue);
 }

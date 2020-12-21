@@ -3,23 +3,23 @@
 #include "unity.h"
 #include "unity_fixture.h"
 
-typedef struct test_work_params {
+typedef struct test_work_arg {
   int zero;
   int one;
-} test_work_params_t;
+} test_work_arg_t;
 
 DISPATCH_TASK_FUNCTION
 void do_dispatch_task_work(void *p) {
-  test_work_params_t *params = (test_work_params_t *)p;
-  params->zero = 0;
-  params->one = 1;
+  test_work_arg_t *arg = (test_work_arg_t *)p;
+  arg->zero = 0;
+  arg->one = 1;
 }
 
 DISPATCH_TASK_FUNCTION
 void undo_dispatch_task_work(void *p) {
-  test_work_params_t *params = (test_work_params_t *)p;
-  params->zero = 1;
-  params->one = 0;
+  test_work_arg_t *arg = (test_work_arg_t *)p;
+  arg->zero = 1;
+  arg->one = 0;
 }
 
 TEST_GROUP(dispatch_task);
@@ -30,36 +30,36 @@ TEST_TEAR_DOWN(dispatch_task) {}
 
 TEST(dispatch_task, test_create) {
   dispatch_task_t task;
-  void *params = NULL;
+  void *arg = NULL;
   char *name = "test_create_task";
 
-  dispatch_task_create(&task, do_dispatch_task_work, params, name);
+  dispatch_task_init(&task, do_dispatch_task_work, arg, name);
 
   TEST_ASSERT_NULL(task.notify);
-  TEST_ASSERT_EQUAL(do_dispatch_task_work, task.work);
-  TEST_ASSERT_EQUAL(params, task.params);
+  TEST_ASSERT_EQUAL(do_dispatch_task_work, task.fn);
+  TEST_ASSERT_EQUAL(arg, task.arg);
   // TEST_ASSERT_EQUAL_STRING(name, task.name);
 }
 
 TEST(dispatch_task, test_wait) {
   dispatch_task_t task;
-  test_work_params_t params;
+  test_work_arg_t arg;
 
-  dispatch_task_create(&task, do_dispatch_task_work, &params, "test_wait_task");
+  dispatch_task_init(&task, do_dispatch_task_work, &arg, "test_wait_task");
   dispatch_task_wait(&task);
 
-  TEST_ASSERT_EQUAL_INT(0, params.zero);
-  TEST_ASSERT_EQUAL_INT(1, params.one);
+  TEST_ASSERT_EQUAL_INT(0, arg.zero);
+  TEST_ASSERT_EQUAL_INT(1, arg.one);
 }
 
 TEST(dispatch_task, test_notify) {
   dispatch_task_t do_task;
   dispatch_task_t undo_task;
-  test_work_params_t params;
+  test_work_arg_t arg;
 
   // create two tasks
-  dispatch_task_create(&do_task, do_dispatch_task_work, &params, NULL);
-  dispatch_task_create(&undo_task, undo_dispatch_task_work, &params, NULL);
+  dispatch_task_init(&do_task, do_dispatch_task_work, &arg, NULL);
+  dispatch_task_init(&undo_task, undo_dispatch_task_work, &arg, NULL);
 
   // setup task to notify when first task is complete
   dispatch_task_notify(&do_task, &undo_task);
@@ -68,8 +68,8 @@ TEST(dispatch_task, test_notify) {
   dispatch_task_wait(&do_task);
 
   // assert the notified task ran
-  TEST_ASSERT_EQUAL_INT(1, params.zero);
-  TEST_ASSERT_EQUAL_INT(0, params.one);
+  TEST_ASSERT_EQUAL_INT(1, arg.zero);
+  TEST_ASSERT_EQUAL_INT(0, arg.one);
 }
 
 TEST_GROUP_RUNNER(dispatch_task) {

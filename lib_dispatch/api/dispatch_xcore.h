@@ -16,14 +16,14 @@ typedef struct dispatch_thread_data {
 } dispatch_thread_data_t;
 
 typedef struct dispatch_xcore {
+  char name[32];  // to identify it when debugging
   int length;
   int thread_count;
   int thread_stack_size;
   char *thread_stack;
   dispatch_thread_status_t *thread_status;
   dispatch_thread_data_t *thread_data;
-  chanend_t *chanends;
-  char *name;  // to identify it when debugging
+  chanend_t *thread_chanends;
 } dispatch_xcore_t;
 
 #endif  // LIB_DISPATCH_XCORE_H_

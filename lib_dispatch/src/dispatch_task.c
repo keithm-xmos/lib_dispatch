@@ -1,40 +1,58 @@
 // Copyright (c) 2020, XMOS Ltd, All rights reserved
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "debug_print.h"
 #include "lib_dispatch/api/dispatch.h"
 
-void dispatch_task_create(dispatch_task_t *task, void (*work)(void *),
-                          void *params, char *name) {
-  assert(task);
+void dispatch_task_init(dispatch_task_t *ctx, dispatch_function_t fn, void *arg,
+                        char *name) {
+  assert(ctx);
+  assert(fn);
 #if DEBUG_PRINT_ENABLE
   if (name)
-    task->name = name;
+    strncpy(ctx->name, name, 32);
   else
-    task->name = "null";
+    strncpy(ctx->name, "null", 32);
 #endif
-  task->work = work;
-  task->params = params;
-  task->notify = NULL;
+  ctx->fn = fn;
+  ctx->arg = arg;
+  ctx->notify = NULL;
+  ctx->queue = NULL;
 }
 
-void dispatch_task_notify(dispatch_task_t *current_task,
-                          dispatch_task_t *notify_task) {
-  assert(current_task);
+void dispatch_task_notify(dispatch_task_t *ctx, dispatch_task_t *notify_task) {
+  assert(ctx);
   assert(notify_task);
-  current_task->notify = notify_task;
+  ctx->notify = notify_task;
 }
 
-void dispatch_task_wait(dispatch_task_t *task) {
-  assert(task);
+void dispatch_task_perform(dispatch_task_t *ctx) {
+  assert(ctx);
+  // call function in current thread
+  ctx->fn(ctx->arg);
 
-  // call work function in current thread
-  debug_printf("dispatch_task_wait:  name=%s\n", task->name);
-  task->work(task->params);
-
-  if (task->notify) {
+  if (ctx->notify) {
     // call notify function in current thread
-    task->notify->work(task->notify->params);
+    ctx->notify->fn(ctx->notify->arg);
+  }
+}
+
+void dispatch_task_wait(dispatch_task_t *ctx) {
+  assert(ctx);
+
+  // call fn function in current thread
+  debug_printf("dispatch_task_wait:  name=%s\n", ctx->name);
+
+  if (ctx->queue) {
+    for (;;) {
+      // if (ctx->status == DISPATCH_TASK_DONE) break;
+      // TODO:
+      dispatch_task_perform(ctx);
+      break;
+    }
+  } else {
+    dispatch_task_perform(ctx);
   }
 }
