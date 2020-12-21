@@ -8,15 +8,16 @@
 
 struct dispatch_queue_t;
 
-typedef struct dispatch_group {
+typedef struct dispatch_group_struct dispatch_group_t;
+struct dispatch_group_struct {
   char name[32];  // to identify it when debugging
   size_t max_length;
   size_t length;
   dispatch_task_t *tasks;
-  dispatch_task_t *notify_task;         // the task to notify
-  struct dispatch_group *notify_group;  // the group to notify
-  struct dispatch_queue_t *queue;       // parent queue
-} dispatch_group_t;
+  dispatch_task_t *notify_task;                // the task to notify
+  struct dispatch_group_struct *notify_group;  // the group to notify
+  struct dispatch_queue_t *queue;              // parent queue
+};
 
 // TODO: document me!
 dispatch_group_t *dispatch_group_create(size_t length, char *name);

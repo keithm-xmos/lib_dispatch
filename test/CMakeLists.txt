@@ -96,10 +96,13 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/../lib_dispatch.cmake")
 
 if(HOST)
   set(LIB_DISPATCH_SOURCES ${LIB_DISPATCH_HOST_SOURCES})
+  set(TEST_DISPATCH_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/test_dispatch_host.c")
 elseif(FREERTOS)
   set(LIB_DISPATCH_SOURCES ${LIB_DISPATCH_FREERTOS_SOURCES})
+  set(TEST_DISPATCH_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/test_dispatch_freertos.c")
 else()
   set(LIB_DISPATCH_SOURCES ${LIB_DISPATCH_XCORE_SOURCES})
+  set(TEST_DISPATCH_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/test_dispatch_xcore.c")
 endif()
 
 target_sources(lib_dispatch_tests
@@ -108,7 +111,7 @@ target_sources(lib_dispatch_tests
   PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/main.c"
   PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/test_dispatch_task.c"
   PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/test_dispatch_group.c"
-  PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/test_dispatch_xcore.c"
+  PRIVATE ${TEST_DISPATCH_SOURCES}
 )
 
 target_include_directories(lib_dispatch_tests

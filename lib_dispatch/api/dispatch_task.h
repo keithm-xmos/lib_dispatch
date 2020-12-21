@@ -2,19 +2,24 @@
 #ifndef LIB_DISPATCH_TASK_H_
 #define LIB_DISPATCH_TASK_H_
 
+#ifdef XCORE
 #define DISPATCH_TASK_FUNCTION __attribute__((fptrgroup("dispatch_function")))
+#else
+#define DISPATCH_TASK_FUNCTION
+#endif
 
 typedef void (*dispatch_function_t)(void *);
 
 struct dispatch_queue_t;
 
-typedef struct dispatch_task {
-  char name[32];                   // to identify it when debugging
-  dispatch_function_t fn;          // the function to perform
-  void *arg;                       // argument to pass to the function
-  struct dispatch_task *notify;    // the task to notify
-  struct dispatch_queue_t *queue;  // parent queue
-} dispatch_task_t;
+typedef struct dispatch_task_struct dispatch_task_t;
+struct dispatch_task_struct {
+  char name[32];                        // to identify it when debugging
+  dispatch_function_t fn;               // the function to perform
+  void *arg;                            // argument to pass to the function
+  struct dispatch_task_struct *notify;  // the task to notify
+  struct dispatch_queue_t *queue;       // parent queue
+};
 
 // TODO: document me!
 // Create a new task with function pointer, void pointer arument, and name (for

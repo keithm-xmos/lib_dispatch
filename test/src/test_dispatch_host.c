@@ -1,5 +1,6 @@
 // Copyright (c) 2020, XMOS Ltd, All rights reserved
 #include "lib_dispatch/api/dispatch.h"
+#include "lib_dispatch/api/dispatch_host.h"
 #include "unity.h"
 #include "unity_fixture.h"
 

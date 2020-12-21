@@ -6,12 +6,14 @@
 
 typedef int dispatch_thread_task_t;
 
-typedef struct dispatch_thread_data {
+typedef struct dispatch_thread_data_struct dispatch_thread_data_t;
+struct dispatch_thread_data_struct {
   volatile dispatch_thread_task_t *task;
   chanend_t cend;
-} dispatch_thread_data_t;
+};
 
-typedef struct dispatch_xcore {
+typedef struct dispatch_xcore_struct dispatch_xcore_t;
+struct dispatch_xcore_struct {
   char name[32];  // to identify it when debugging
   int length;
   int thread_count;
@@ -20,6 +22,6 @@ typedef struct dispatch_xcore {
   dispatch_thread_task_t *thread_tasks;
   dispatch_thread_data_t *thread_data;
   chanend_t *thread_chanends;
-} dispatch_xcore_t;
+};
 
 #endif  // LIB_DISPATCH_XCORE_H_
