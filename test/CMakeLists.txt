@@ -107,6 +107,7 @@ target_sources(lib_dispatch_tests
   PRIVATE ${LIB_DISPATCH_SOURCES}
   PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/main.c"
   PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/test_dispatch_task.c"
+  PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/test_dispatch_group.c"
   PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/test_dispatch_xcore.c"
 )
 

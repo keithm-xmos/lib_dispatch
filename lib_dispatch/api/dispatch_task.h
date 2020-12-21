@@ -2,11 +2,7 @@
 #ifndef LIB_DISPATCH_TASK_H_
 #define LIB_DISPATCH_TASK_H_
 
-typedef enum {
-  DISPATCH_TASK_WAITING,
-  DISPATCH_TASK_EXECUTING,
-  DISPATCH_TASK_DONE,
-} dispatch_task_status_t;
+#define DISPATCH_TASK_FUNCTION __attribute__((fptrgroup("dispatch_function")))
 
 typedef void (*dispatch_function_t)(void *);
 
@@ -20,18 +16,22 @@ typedef struct dispatch_task {
   struct dispatch_queue_t *queue;  // parent queue
 } dispatch_task_t;
 
+// TODO: document me!
 // Create a new task with function pointer, void pointer arument, and name (for
 // debugging)
 void dispatch_task_init(dispatch_task_t *ctx, dispatch_function_t fn, void *arg,
                         char *name);
 
+// TODO: document me!
 // Schedules the execution of the notify task after the completion of the
 // current task
-void dispatch_task_notify(dispatch_task_t *ctx, dispatch_task_t *notify_task);
+void dispatch_task_notify(dispatch_task_t *ctx, dispatch_task_t *task);
 
+// TODO: document me!
 // Run the task in the caller's thread
 void dispatch_task_perform(dispatch_task_t *ctx);
 
+// TODO: document me!
 // Causes the caller to wait synchronously until the task finishes executing
 void dispatch_task_wait(dispatch_task_t *ctx);
 

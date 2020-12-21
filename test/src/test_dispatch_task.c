@@ -38,7 +38,6 @@ TEST(dispatch_task, test_create) {
   TEST_ASSERT_NULL(task.notify);
   TEST_ASSERT_EQUAL(do_dispatch_task_work, task.fn);
   TEST_ASSERT_EQUAL(arg, task.arg);
-  // TEST_ASSERT_EQUAL_STRING(name, task.name);
 }
 
 TEST(dispatch_task, test_wait) {
@@ -47,6 +46,17 @@ TEST(dispatch_task, test_wait) {
 
   dispatch_task_init(&task, do_dispatch_task_work, &arg, "test_wait_task");
   dispatch_task_wait(&task);
+
+  TEST_ASSERT_EQUAL_INT(0, arg.zero);
+  TEST_ASSERT_EQUAL_INT(1, arg.one);
+}
+
+TEST(dispatch_task, test_perform) {
+  dispatch_task_t task;
+  test_work_arg_t arg;
+
+  dispatch_task_init(&task, do_dispatch_task_work, &arg, "test_perform_task");
+  dispatch_task_perform(&task);
 
   TEST_ASSERT_EQUAL_INT(0, arg.zero);
   TEST_ASSERT_EQUAL_INT(1, arg.one);
@@ -74,6 +84,7 @@ TEST(dispatch_task, test_notify) {
 
 TEST_GROUP_RUNNER(dispatch_task) {
   RUN_TEST_CASE(dispatch_task, test_create);
+  RUN_TEST_CASE(dispatch_task, test_perform);
   RUN_TEST_CASE(dispatch_task, test_wait);
   RUN_TEST_CASE(dispatch_task, test_notify);
 }

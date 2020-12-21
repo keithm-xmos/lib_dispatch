@@ -2,7 +2,6 @@
 #ifndef LIB_DISPATCH_XCORE_H_
 #define LIB_DISPATCH_XCORE_H_
 
-#include "lib_dispatch/api/dispatch.h"
 #include "xcore/channel.h"
 
 typedef int dispatch_thread_task_t;

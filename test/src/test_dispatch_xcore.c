@@ -35,7 +35,7 @@ TEST_SETUP(dispatch_xcore) {}
 
 TEST_TEAR_DOWN(dispatch_xcore) {}
 
-TEST(dispatch_xcore, test_async) {
+TEST(dispatch_xcore, test_async_task) {
   dispatch_queue_t *queue;
   dispatch_task_t task;
   test_work_arg_t arg;
@@ -44,12 +44,12 @@ TEST(dispatch_xcore, test_async) {
   int task_count = 8;
 
   queue = dispatch_queue_create(length, thread_count, DISPATCHER_STACK_SIZE,
-                                "test_async");
-  dispatch_task_init(&task, do_dispatch_xcore_work, &arg, "test_async");
+                                "test_async_task");
+  dispatch_task_init(&task, do_dispatch_xcore_work, &arg, "test_async_task");
 
   arg.count = 0;
   for (int i = 0; i < task_count; i++) {
-    dispatch_queue_async(queue, &task);
+    dispatch_queue_async_task(queue, &task);
   }
   dispatch_queue_wait(queue);
 
@@ -79,25 +79,35 @@ TEST(dispatch_xcore, test_for) {
   dispatch_queue_destroy(queue);
 }
 
-TEST(dispatch_xcore, test_sync) {
+TEST(dispatch_xcore, test_async_group) {
   dispatch_queue_t *queue;
+  dispatch_group_t *group;
   dispatch_task_t task;
   test_work_arg_t arg;
+  int group_length = 3;
+  int thread_count = 4;
+  int group_count = 2;
 
-  int length = 3;
-  int thread_count = 3;
-  int task_count = 4;
-
-  queue = dispatch_queue_create(length, thread_count, DISPATCHER_STACK_SIZE,
-                                "test_sync");
-  dispatch_task_init(&task, do_dispatch_xcore_work, &arg, "test_sync");
+  queue = dispatch_queue_create(thread_count, thread_count,
+                                DISPATCHER_STACK_SIZE, "test_async_group");
+  group = dispatch_group_create(group_length, "test_async_group");
+  dispatch_task_init(&task, do_dispatch_xcore_work, &arg, "test_async_group");
 
   arg.count = 0;
-  for (int i = 0; i < task_count; i++) {
-    dispatch_queue_sync(queue, &task);
-    TEST_ASSERT_EQUAL_INT(i + 1, arg.count);
+
+  // add tasks to group
+  for (int i = 0; i < group_length; i++) {
+    dispatch_group_add(group, &task);
   }
 
+  for (int i = 0; i < group_count; i++) {
+    dispatch_queue_async_group(queue, group);
+    dispatch_group_wait(group);
+  }
+
+  TEST_ASSERT_EQUAL_INT((group_length * group_count), arg.count);
+
+  dispatch_group_destroy(group);
   dispatch_queue_destroy(queue);
 }
 
@@ -132,7 +142,7 @@ TEST(dispatch_xcore, test_static) {
   arg.count = 0;
   dispatch_task_init(&task, do_dispatch_xcore_work, &arg, "test_static");
   for (int i = 0; i < task_count; i++) {
-    dispatch_queue_async(queue, &task);
+    dispatch_queue_async_task(queue, &task);
   }
   dispatch_queue_wait(queue);
 
@@ -141,7 +151,7 @@ TEST(dispatch_xcore, test_static) {
 
 TEST_GROUP_RUNNER(dispatch_xcore) {
   RUN_TEST_CASE(dispatch_xcore, test_static);
-  RUN_TEST_CASE(dispatch_xcore, test_sync);
-  RUN_TEST_CASE(dispatch_xcore, test_async);
+  RUN_TEST_CASE(dispatch_xcore, test_async_task);
+  RUN_TEST_CASE(dispatch_xcore, test_async_group);
   RUN_TEST_CASE(dispatch_xcore, test_for);
 }

@@ -4,6 +4,7 @@
 
 static void RunTests(void) {
   RUN_TEST_GROUP(dispatch_task);
+  RUN_TEST_GROUP(dispatch_group);
 #if defined(XCORE)
   RUN_TEST_GROUP(dispatch_xcore);
 #elif defined(HOST)
