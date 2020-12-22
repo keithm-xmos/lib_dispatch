@@ -12,7 +12,7 @@ static void RunTests(void) {
   RUN_TEST_GROUP(dispatch_queue_host);
 #endif
 #if defined(FREERTOS)
-  RUN_TEST_GROUP(dispatch_freertos);
+  RUN_TEST_GROUP(dispatch_queue_freertos);
 #endif
 }
 

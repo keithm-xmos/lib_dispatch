@@ -4,3 +4,6 @@
 [submodule "test/Unity"]
 	path = test/Unity
 	url = git@github.com:ThrowTheSwitch/Unity.git
+[submodule "FreeRTOS"]
+	path = test/FreeRTOS
+	url = git@github.com:xmos/FreeRTOS.git

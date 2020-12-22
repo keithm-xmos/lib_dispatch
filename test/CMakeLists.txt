@@ -56,11 +56,22 @@ if(XCORE OR FREERTOS)
     "-Wno-xcore-fptrgroup"
     "-Wno-unknown-pragmas"
     "-report"
-    "-DXCORE"
     "-DDEBUG_PRINT_ENABLE=1"
     "-Os"
   )
-else()
+endif()
+
+if(XCORE)
+  set(BUILD_FLAGS
+    ${BUILD_FLAGS} 
+    "-DXCORE"
+  )
+elseif(FREERTOS)
+  set(BUILD_FLAGS
+    ${BUILD_FLAGS} 
+    "-DFREERTOS"
+  )
+elseif(HOST)
   set(BUILD_FLAGS
     "-DHOST"
   )
