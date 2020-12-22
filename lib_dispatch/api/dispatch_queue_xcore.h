@@ -12,7 +12,7 @@ struct dispatch_thread_data_struct {
   chanend_t cend;
 };
 
-typedef struct dispatch_xcore_struct dispatch_xcore_t;
+typedef struct dispatch_xcore_struct dispatch_xcore_queue_t;
 struct dispatch_xcore_struct {
   char name[32];  // to identify it when debugging
   int length;

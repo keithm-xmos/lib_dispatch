@@ -8,7 +8,7 @@
 #include "debug_print.h"
 #include "lib_dispatch/api/dispatch_queue.h"
 
-dispatch_group_t *dispatch_group_create(size_t length, char *name) {
+dispatch_group_t *dispatch_group_create(size_t length, const char *name) {
   dispatch_group_t *group;
 
   debug_printf("dispatch_group_create: length=%d\n", length);
@@ -18,7 +18,7 @@ dispatch_group_t *dispatch_group_create(size_t length, char *name) {
   group->max_length = length;
   group->tasks = (dispatch_task_t *)malloc(sizeof(dispatch_task_t) * length);
 
-#if DEBUG_PRINT_ENABLE
+#ifndef NDEBUG
   if (name)
     strncpy(group->name, name, 32);
   else

@@ -3,7 +3,7 @@
 #include <xcore/hwtimer.h>
 
 #include "lib_dispatch/api/dispatch.h"
-#include "lib_dispatch/api/dispatch_xcore.h"
+#include "lib_dispatch/api/dispatch_queue_xcore.h"
 #include "unity.h"
 #include "unity_fixture.h"
 
@@ -16,7 +16,7 @@ typedef struct test_work_arg {
 } test_work_arg_t;
 
 DISPATCH_TASK_FUNCTION
-void do_dispatch_xcore_work(void *p) {
+void do_dispatch_queue_xcore_work(void *p) {
   test_work_arg_t *arg = (test_work_arg_t *)p;
 
   // keep busy doing stuff
@@ -29,13 +29,13 @@ void do_dispatch_xcore_work(void *p) {
   arg->count++;
 }
 
-TEST_GROUP(dispatch_xcore);
+TEST_GROUP(dispatch_queue_xcore);
 
-TEST_SETUP(dispatch_xcore) {}
+TEST_SETUP(dispatch_queue_xcore) {}
 
-TEST_TEAR_DOWN(dispatch_xcore) {}
+TEST_TEAR_DOWN(dispatch_queue_xcore) {}
 
-TEST(dispatch_xcore, test_async_task) {
+TEST(dispatch_queue_xcore, test_async_task) {
   dispatch_queue_t *queue;
   dispatch_task_t task;
   test_work_arg_t arg;
@@ -45,7 +45,8 @@ TEST(dispatch_xcore, test_async_task) {
 
   queue = dispatch_queue_create(length, thread_count, DISPATCHER_STACK_SIZE,
                                 "test_async_task");
-  dispatch_task_init(&task, do_dispatch_xcore_work, &arg, "test_async_task");
+  dispatch_task_init(&task, do_dispatch_queue_xcore_work, &arg,
+                     "test_async_task");
 
   arg.count = 0;
   for (int i = 0; i < task_count; i++) {
@@ -58,7 +59,7 @@ TEST(dispatch_xcore, test_async_task) {
   dispatch_queue_destroy(queue);
 }
 
-TEST(dispatch_xcore, test_for) {
+TEST(dispatch_queue_xcore, test_for) {
   dispatch_queue_t *queue;
   dispatch_task_t task;
   test_work_arg_t arg;
@@ -68,7 +69,7 @@ TEST(dispatch_xcore, test_for) {
 
   queue = dispatch_queue_create(length, thread_count, DISPATCHER_STACK_SIZE,
                                 "test_for");
-  dispatch_task_init(&task, do_dispatch_xcore_work, &arg, "test_for");
+  dispatch_task_init(&task, do_dispatch_queue_xcore_work, &arg, "test_for");
 
   arg.count = 0;
   dispatch_queue_for(queue, for_count, &task);
@@ -79,7 +80,7 @@ TEST(dispatch_xcore, test_for) {
   dispatch_queue_destroy(queue);
 }
 
-TEST(dispatch_xcore, test_async_group) {
+TEST(dispatch_queue_xcore, test_async_group) {
   dispatch_queue_t *queue;
   dispatch_group_t *group;
   dispatch_task_t task;
@@ -91,7 +92,8 @@ TEST(dispatch_xcore, test_async_group) {
   queue = dispatch_queue_create(thread_count, thread_count,
                                 DISPATCHER_STACK_SIZE, "test_async_group");
   group = dispatch_group_create(group_length, "test_async_group");
-  dispatch_task_init(&task, do_dispatch_xcore_work, &arg, "test_async_group");
+  dispatch_task_init(&task, do_dispatch_queue_xcore_work, &arg,
+                     "test_async_group");
 
   arg.count = 0;
 
@@ -111,9 +113,9 @@ TEST(dispatch_xcore, test_async_group) {
   dispatch_queue_destroy(queue);
 }
 
-TEST(dispatch_xcore, test_static) {
+TEST(dispatch_queue_xcore, test_static) {
   // create queue with data on the stack
-  dispatch_xcore_t queue_s;
+  dispatch_xcore_queue_t queue_s;
   dispatch_thread_task_t thread_tasks[TEST_STATIC_THREAD_COUNT];
   dispatch_thread_data_t thread_data[TEST_STATIC_THREAD_COUNT];
   chanend_t chanends[TEST_STATIC_THREAD_COUNT];
@@ -140,7 +142,7 @@ TEST(dispatch_xcore, test_static) {
   int task_count = 4;
 
   arg.count = 0;
-  dispatch_task_init(&task, do_dispatch_xcore_work, &arg, "test_static");
+  dispatch_task_init(&task, do_dispatch_queue_xcore_work, &arg, "test_static");
   for (int i = 0; i < task_count; i++) {
     dispatch_queue_async_task(queue, &task);
   }
@@ -149,9 +151,9 @@ TEST(dispatch_xcore, test_static) {
   TEST_ASSERT_EQUAL_INT(task_count, arg.count);
 }
 
-TEST_GROUP_RUNNER(dispatch_xcore) {
-  RUN_TEST_CASE(dispatch_xcore, test_static);
-  RUN_TEST_CASE(dispatch_xcore, test_async_task);
-  RUN_TEST_CASE(dispatch_xcore, test_async_group);
-  RUN_TEST_CASE(dispatch_xcore, test_for);
+TEST_GROUP_RUNNER(dispatch_queue_xcore) {
+  RUN_TEST_CASE(dispatch_queue_xcore, test_static);
+  RUN_TEST_CASE(dispatch_queue_xcore, test_async_task);
+  RUN_TEST_CASE(dispatch_queue_xcore, test_async_group);
+  RUN_TEST_CASE(dispatch_queue_xcore, test_for);
 }

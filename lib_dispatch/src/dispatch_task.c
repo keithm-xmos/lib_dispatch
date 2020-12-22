@@ -7,10 +7,10 @@
 #include "lib_dispatch/api/dispatch.h"
 
 void dispatch_task_init(dispatch_task_t *ctx, dispatch_function_t fn, void *arg,
-                        char *name) {
+                        const char *name) {
   assert(ctx);
   assert(fn);
-#if DEBUG_PRINT_ENABLE
+#ifndef NDEBUG
   if (name)
     strncpy(ctx->name, name, 32);
   else
@@ -53,4 +53,13 @@ void dispatch_task_wait(dispatch_task_t *ctx) {
   } else {
     dispatch_task_perform(ctx);
   }
+}
+
+bool dispatch_task_equal(dispatch_task_t *lhs, dispatch_task_t *rhs) {
+  assert(lhs);
+  assert(rhs);
+
+  return ((lhs->fn == rhs->fn) && (lhs->arg == rhs->arg) &&
+          (lhs->notify == rhs->notify) && (lhs->queue == rhs->queue) &&
+          (strncmp(lhs->name, rhs->name, 32) == 0));
 }

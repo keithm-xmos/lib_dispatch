@@ -11,18 +11,18 @@ set(LIB_DISPATCH_SOURCES
 
 set(LIB_DISPATCH_HOST_SOURCES
   ${LIB_DISPATCH_SOURCES}
-  "${LIB_DISPATCH_DIR}/lib_dispatch/src/dispatch_host.cc"
+  "${LIB_DISPATCH_DIR}/lib_dispatch/src/dispatch_queue_host.cc"
 )
 
 set(LIB_DISPATCH_XCORE_SOURCES
   ${LIB_DISPATCH_SOURCES}
-  "${LIB_DISPATCH_DIR}/lib_dispatch/src/dispatch_xcore.c"
+  "${LIB_DISPATCH_DIR}/lib_dispatch/src/dispatch_queue_xcore.c"
   "${LIB_DISPATCH_DIR}/lib_logging/lib_logging/src/debug_printf.c"
 )
 
 set(LIB_DISPATCH_FREERTOS_SOURCES
   ${LIB_DISPATCH_SOURCES}
-  "${LIB_DISPATCH_DIR}/lib_dispatch/src/dispatch_freertos.c"
+  "${LIB_DISPATCH_DIR}/lib_dispatch/src/dispatch_queue_freertos.c"
   "${LIB_DISPATCH_DIR}/lib_logging/lib_logging/src/debug_printf.c"
 )
 

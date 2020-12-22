@@ -24,7 +24,7 @@ extern "C" {
 #endif  // __cplusplus
 
 // TODO: document me!
-dispatch_group_t *dispatch_group_create(size_t length, char *name);
+dispatch_group_t *dispatch_group_create(size_t length, const char *name);
 
 // TODO: document me!
 void dispatch_group_init(dispatch_group_t *ctx);

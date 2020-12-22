@@ -21,7 +21,7 @@ extern "C" {
 
 // TODO: document me!
 dispatch_queue_t* dispatch_queue_create(size_t length, size_t thread_count,
-                                        size_t stack_size, char* name);
+                                        size_t stack_size, const char* name);
 // TODO: document me!
 void dispatch_queue_init(dispatch_queue_t* ctx);
 

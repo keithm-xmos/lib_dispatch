@@ -2,6 +2,8 @@
 #ifndef LIB_DISPATCH_TASK_H_
 #define LIB_DISPATCH_TASK_H_
 
+#include <stdbool.h>
+
 #ifdef XCORE
 #define DISPATCH_TASK_FUNCTION __attribute__((fptrgroup("dispatch_function")))
 #else
@@ -29,7 +31,7 @@ extern "C" {
 // Create a new task with function pointer, void pointer arument, and name (for
 // debugging)
 void dispatch_task_init(dispatch_task_t *ctx, dispatch_function_t fn, void *arg,
-                        char *name);
+                        const char *name);
 
 // TODO: document me!
 // Schedules the execution of the notify task after the completion of the
@@ -43,6 +45,9 @@ void dispatch_task_perform(dispatch_task_t *ctx);
 // TODO: document me!
 // Causes the caller to wait synchronously until the task finishes executing
 void dispatch_task_wait(dispatch_task_t *ctx);
+
+// TODO: document me!
+bool dispatch_task_equal(dispatch_task_t *lhs, dispatch_task_t *rhs);
 
 #ifdef __cplusplus
 }  // extern "C"

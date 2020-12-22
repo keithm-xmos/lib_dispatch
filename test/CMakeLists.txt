@@ -60,6 +60,10 @@ if(XCORE OR FREERTOS)
     "-DDEBUG_PRINT_ENABLE=1"
     "-Os"
   )
+else()
+  set(BUILD_FLAGS
+    "-DHOST"
+  )
 endif()
 
 add_executable(lib_dispatch_tests)
@@ -69,6 +73,8 @@ target_link_options(lib_dispatch_tests PRIVATE ${BUILD_FLAGS})
 
 if(XCORE OR FREERTOS)
   set_target_properties(lib_dispatch_tests PROPERTIES OUTPUT_NAME lib_dispatch_tests.xe)
+else()
+  target_link_libraries(lib_dispatch_tests stdc++ m pthread)
 endif()
 
 #**********************

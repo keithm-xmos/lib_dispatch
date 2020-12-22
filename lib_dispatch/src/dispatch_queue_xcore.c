@@ -1,5 +1,5 @@
 // Copyright (c) 2020, XMOS Ltd, All rights reserved
-#include "lib_dispatch/api/dispatch_xcore.h"
+#include "lib_dispatch/api/dispatch_queue_xcore.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -48,18 +48,18 @@ void dispatch_thread_handler(void *param) {
 }
 
 dispatch_queue_t *dispatch_queue_create(size_t length, size_t thread_count,
-                                        size_t stack_size, char *name) {
+                                        size_t stack_size, const char *name) {
   assert(length <= (thread_count + 1));  // NOTE: this is true for now
-  dispatch_xcore_t *queue;
+  dispatch_xcore_queue_t *queue;
 
   debug_printf("dispatch_queue_create: length=%d, thread_count=%d\n", length,
                thread_count);
 
-  queue = (dispatch_xcore_t *)malloc(sizeof(dispatch_xcore_t));
+  queue = (dispatch_xcore_queue_t *)malloc(sizeof(dispatch_xcore_queue_t));
 
   queue->length = length;
   queue->thread_count = thread_count;
-#if DEBUG_PRINT_ENABLE
+#if !NDEBUG
   if (name)
     strncpy(queue->name, name, 32);
   else
@@ -89,7 +89,7 @@ dispatch_queue_t *dispatch_queue_create(size_t length, size_t thread_count,
 
 void dispatch_queue_init(dispatch_queue_t *ctx) {
   assert(ctx);
-  dispatch_xcore_t *queue = (dispatch_xcore_t *)ctx;
+  dispatch_xcore_queue_t *queue = (dispatch_xcore_queue_t *)ctx;
 
   debug_printf("dispatch_queue_init: name=%s\n", queue->name);
 
@@ -116,7 +116,7 @@ void dispatch_queue_init(dispatch_queue_t *ctx) {
 void dispatch_queue_async_task(dispatch_queue_t *ctx, dispatch_task_t *task) {
   assert(ctx);
   assert(task);
-  dispatch_xcore_t *queue = (dispatch_xcore_t *)ctx;
+  dispatch_xcore_queue_t *queue = (dispatch_xcore_queue_t *)ctx;
 
   debug_printf("dispatch_queue_async_task: name=%s\n", queue->name);
 
@@ -147,7 +147,7 @@ void dispatch_queue_async_task(dispatch_queue_t *ctx, dispatch_task_t *task) {
 
 void dispatch_queue_wait(dispatch_queue_t *ctx) {
   assert(ctx);
-  dispatch_xcore_t *queue = (dispatch_xcore_t *)ctx;
+  dispatch_xcore_queue_t *queue = (dispatch_xcore_queue_t *)ctx;
 
   debug_printf("dispatch_queue_wait: name=%s\n", queue->name);
 
@@ -165,7 +165,7 @@ void dispatch_queue_wait(dispatch_queue_t *ctx) {
 dispatch_queue_status_t dispatch_queue_task_status(dispatch_queue_t *ctx,
                                                    dispatch_task_t *task) {
   assert(ctx);
-  dispatch_xcore_t *queue = (dispatch_xcore_t *)ctx;
+  dispatch_xcore_queue_t *queue = (dispatch_xcore_queue_t *)ctx;
 
   for (int i = 0; i < queue->thread_count; i++) {
     if (queue->thread_tasks[i] == (dispatch_thread_task_t)task) {
@@ -178,7 +178,7 @@ dispatch_queue_status_t dispatch_queue_task_status(dispatch_queue_t *ctx,
 dispatch_queue_status_t dispatch_queue_group_status(dispatch_queue_t *ctx,
                                                     dispatch_group_t *group) {
   assert(ctx);
-  dispatch_xcore_t *queue = (dispatch_xcore_t *)ctx;
+  dispatch_xcore_queue_t *queue = (dispatch_xcore_queue_t *)ctx;
 
   for (int i = 0; i < group->length; i++) {
     dispatch_task_t *task = &group->tasks[i];
@@ -193,7 +193,7 @@ dispatch_queue_status_t dispatch_queue_group_status(dispatch_queue_t *ctx,
 
 void dispatch_queue_destroy(dispatch_queue_t *ctx) {
   assert(ctx);
-  dispatch_xcore_t *queue = (dispatch_xcore_t *)ctx;
+  dispatch_xcore_queue_t *queue = (dispatch_xcore_queue_t *)ctx;
 
   assert(queue);
   assert(queue->thread_chanends);
@@ -201,7 +201,7 @@ void dispatch_queue_destroy(dispatch_queue_t *ctx) {
   assert(queue->thread_data);
   assert(queue->thread_stack);
 
-  debug_printf("dispatch_queue_async: name=%s\n", queue->name);
+  debug_printf("dispatch_queue_destroy: name=%s\n", queue->name);
 
   // send all thread workers the EXIT event
   for (int i = 0; i < queue->thread_count; i++) {
