@@ -7,3 +7,10 @@
 [submodule "FreeRTOS"]
 	path = test/FreeRTOS
 	url = git@github.com:xmos/FreeRTOS.git
+	branch = release/xcore-smp
+[submodule "test/aiot_sdk"]
+	path = test/aiot_sdk
+	url = git@github.com:xmos/aiot_sdk.git
+[submodule "test/lib_xassert"]
+	path = lib_xassert
+	url = git@github.com:xmos/lib_xassert.git

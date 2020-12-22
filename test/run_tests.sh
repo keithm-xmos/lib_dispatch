@@ -3,6 +3,7 @@
 set -e
 
 mkdir -p build
+cd build
 
 # run freertos build and tests
 rm -rf *
@@ -17,8 +18,9 @@ make
 xrun --io --args lib_dispatch_tests.xe -v
 
 # run host build and tests
-cd build
 rm -rf *
 cmake ../ -DHOST=ON
 make
 ./lib_dispatch_tests -v
+
+cd ..

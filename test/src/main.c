@@ -2,6 +2,10 @@
 #include "unity.h"
 #include "unity_fixture.h"
 
+#if FREERTOS
+#include "FreeRTOS.h"
+#endif
+
 static void RunTests(void) {
   RUN_TEST_GROUP(dispatch_task);
   RUN_TEST_GROUP(dispatch_group);
@@ -17,6 +21,10 @@ static void RunTests(void) {
 }
 
 int main(int argc, const char* argv[]) {
+#if FREERTOS
+  vTaskStartScheduler();
+#endif
+
   UnityGetCommandLineOptions(argc, argv);
   UnityBegin(argv[0]);
   RunTests();

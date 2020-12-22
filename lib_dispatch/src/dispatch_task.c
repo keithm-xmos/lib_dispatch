@@ -1,7 +1,7 @@
 // Copyright (c) 2020, XMOS Ltd, All rights reserved
-#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <xassert.h>
 
 #include "debug_print.h"
 #include "lib_dispatch/api/dispatch.h"

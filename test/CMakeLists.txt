@@ -93,6 +93,8 @@ endif()
 #**********************
 
 set(UNITY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Unity")
+set(FREERTOS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/FreeRTOS")
+set(AIOTSDK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/aiot_sdk")
 
 set(UNITY_SOURCES
   PRIVATE "${UNITY_DIR}/src/unity.c"
@@ -117,6 +119,12 @@ if(HOST)
 elseif(FREERTOS)
   set(LIB_DISPATCH_SOURCES ${LIB_DISPATCH_FREERTOS_SOURCES})
   set(TEST_DISPATCH_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/test_dispatch_freertos.c")
+  set(TEST_DISPATCH_INCLUDES 
+    "${FREERTOS_DIR}/FreeRTOS/Source/include"
+    "${FREERTOS_DIR}/FreeRTOS/Source/portable/XCC/XCOREAI"
+    "${AIOTSDK_DIR}/modules/lib_rtos_support/api"
+    "${AIOTSDK_DIR}/modules/lib_rtos_support/src"
+  )
 else()
   set(LIB_DISPATCH_SOURCES ${LIB_DISPATCH_XCORE_SOURCES})
   set(TEST_DISPATCH_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/test_dispatch_xcore.c")
@@ -134,6 +142,7 @@ target_sources(lib_dispatch_tests
 target_include_directories(lib_dispatch_tests
   PRIVATE ${UNITY_INCLUDES}
   PRIVATE ${LIB_DISPATCH_INCLUDES}
+  PRIVATE ${TEST_DISPATCH_INCLUDES}
   PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src"
 )
 

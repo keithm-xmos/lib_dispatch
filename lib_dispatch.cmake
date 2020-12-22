@@ -28,5 +28,6 @@ set(LIB_DISPATCH_FREERTOS_SOURCES
 
 set(LIB_DISPATCH_INCLUDES
   "${LIB_DISPATCH_DIR}"
+  "${LIB_DISPATCH_DIR}/lib_xassert/lib_xassert/api"
   "${LIB_DISPATCH_DIR}/lib_logging/lib_logging/api"
 )
