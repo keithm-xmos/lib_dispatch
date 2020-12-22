@@ -6,7 +6,7 @@
 
 #include "lib_dispatch/api/dispatch_task.h"
 
-struct dispatch_queue_t;
+struct dispatch_queue_struct;
 
 typedef struct dispatch_group_struct dispatch_group_t;
 struct dispatch_group_struct {
@@ -16,8 +16,12 @@ struct dispatch_group_struct {
   dispatch_task_t *tasks;
   dispatch_task_t *notify_task;                // the task to notify
   struct dispatch_group_struct *notify_group;  // the group to notify
-  struct dispatch_queue_t *queue;              // parent queue
+  struct dispatch_queue_struct *queue;         // parent queue
 };
+
+#ifdef __cplusplus
+extern "C" {
+#endif  // __cplusplus
 
 // TODO: document me!
 dispatch_group_t *dispatch_group_create(size_t length, char *name);
@@ -43,5 +47,9 @@ void dispatch_group_wait(dispatch_group_t *ctx);
 
 // TODO: document me!
 void dispatch_group_destroy(dispatch_group_t *ctx);
+
+#ifdef __cplusplus
+}  // extern "C"
+#endif  // __cplusplus
 
 #endif  // LIB_DISPATCH_GROUP_H_

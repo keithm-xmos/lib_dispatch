@@ -10,7 +10,7 @@
 
 typedef void (*dispatch_function_t)(void *);
 
-struct dispatch_queue_t;
+struct dispatch_queue_struct;
 
 typedef struct dispatch_task_struct dispatch_task_t;
 struct dispatch_task_struct {
@@ -18,8 +18,12 @@ struct dispatch_task_struct {
   dispatch_function_t fn;               // the function to perform
   void *arg;                            // argument to pass to the function
   struct dispatch_task_struct *notify;  // the task to notify
-  struct dispatch_queue_t *queue;       // parent queue
+  struct dispatch_queue_struct *queue;  // parent queue
 };
+
+#ifdef __cplusplus
+extern "C" {
+#endif  // __cplusplus
 
 // TODO: document me!
 // Create a new task with function pointer, void pointer arument, and name (for
@@ -39,5 +43,9 @@ void dispatch_task_perform(dispatch_task_t *ctx);
 // TODO: document me!
 // Causes the caller to wait synchronously until the task finishes executing
 void dispatch_task_wait(dispatch_task_t *ctx);
+
+#ifdef __cplusplus
+}  // extern "C"
+#endif  // __cplusplus
 
 #endif  // LIB_DISPATCH_TASK_H_

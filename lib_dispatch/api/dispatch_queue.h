@@ -15,6 +15,10 @@ typedef enum {
 
 typedef void dispatch_queue_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif  // __cplusplus
+
 // TODO: document me!
 dispatch_queue_t* dispatch_queue_create(size_t length, size_t thread_count,
                                         size_t stack_size, char* name);
@@ -43,5 +47,9 @@ dispatch_queue_status_t dispatch_queue_group_status(dispatch_queue_t* ctx,
 
 // Wait for all tasks to be finish
 void dispatch_queue_wait(dispatch_queue_t* ctx);
+
+#ifdef __cplusplus
+}  // extern "C"
+#endif  // __cplusplus
 
 #endif  // LIB_DISPATCH_QUEUE_H_
