@@ -9,10 +9,9 @@
 #include "lib_dispatch/api/dispatch_queue.h"
 #include "lib_dispatch/api/dispatch_task.h"
 
-#define DISPATCH_TASK_NONE (NULL)
+#define DISPATCH_TASK_NONE (0)
 
-void dispatch_thread_handler(dispatch_host_queue_t *q,
-                             dispatch_task_t **current_task) {
+void dispatch_thread_handler(dispatch_host_queue_t *q, int *task_id) {
   std::unique_lock<std::mutex> lock(q->lock);
 
   do {
@@ -21,20 +20,20 @@ void dispatch_thread_handler(dispatch_host_queue_t *q,
 
     // after wait, we own the lock
     if (!q->quit && q->queue.size()) {
-      dispatch_task_t *task = q->queue.front();
+      dispatch_task_t &task = q->queue.front();
 
       // set the current task
-      *current_task = task;
+      *task_id = task.id;
 
       q->queue.pop_front();
 
       // unlock now that we're done messing with the queue
       lock.unlock();
 
-      dispatch_task_perform(task);
+      dispatch_task_perform(&task);
 
       // reset current task
-      *current_task = DISPATCH_TASK_NONE;
+      *task_id = DISPATCH_TASK_NONE;
 
       lock.lock();
     }
@@ -50,7 +49,7 @@ dispatch_queue_t *dispatch_queue_create(size_t length, size_t thread_count,
 
   queue = new dispatch_host_queue_t;
   queue->threads.resize(thread_count);
-  queue->thread_tasks.resize(thread_count);
+  queue->thread_task_ids.resize(thread_count);
 
   if (name)
     queue->name.assign(name);
@@ -73,9 +72,9 @@ void dispatch_queue_init(dispatch_queue_t *ctx) {
 
   q->quit = false;
   for (size_t i = 0; i < q->threads.size(); i++) {
-    q->thread_tasks[i] = DISPATCH_TASK_NONE;
+    q->thread_task_ids[i] = DISPATCH_TASK_NONE;
     q->threads[i] =
-        std::thread(&dispatch_thread_handler, q, &q->thread_tasks[i]);
+        std::thread(&dispatch_thread_handler, q, &q->thread_task_ids[i]);
   }
 }
 
@@ -90,7 +89,7 @@ void dispatch_queue_async_task(dispatch_queue_t *ctx, dispatch_task_t *task) {
   task->queue = static_cast<dispatch_queue_struct *>(ctx);
 
   std::unique_lock<std::mutex> lock(q->lock);
-  q->queue.push_back(task);
+  q->queue.push_back(*task);
   // manual unlocking is done before notifying, to avoid waking up
   // the waiting thread only to block again (see notify_one for details)
   lock.unlock();
@@ -111,55 +110,40 @@ void dispatch_queue_wait(dispatch_queue_t *ctx) {
     busy_count = q->queue.size();  // tasks on the queue are considered busy
     lock.unlock();
     for (int i = 0; i < q->threads.size(); i++) {
-      if (q->thread_tasks[i] != DISPATCH_TASK_NONE) busy_count++;
+      if (q->thread_task_ids[i] != DISPATCH_TASK_NONE) busy_count++;
     }
     if (busy_count == 0) return;
   }
 }
 
-dispatch_queue_status_t dispatch_queue_task_status(dispatch_queue_t *ctx,
-                                                   dispatch_task_t *task) {
+void dispatch_queue_task_wait(dispatch_queue_t *ctx, int task_id) {
   assert(ctx);
-  dispatch_host_queue_t *q = static_cast<dispatch_host_queue_t *>(ctx);
+  assert(task_id > 0);
 
-  bool waiting = false;
-  std::unique_lock<std::mutex> lock(q->lock);
-  for (int i = 0; i < q->queue.size(); i++) {
-    dispatch_task_t *queued_task = q->queue.at(i);
+  dispatch_host_queue_t *q = (dispatch_host_queue_t *)ctx;
 
-    if (queued_task == task) {
-      waiting = true;
-      break;
+  bool done_waiting = true;
+
+  for (;;) {
+    done_waiting = true;
+    std::unique_lock<std::mutex> lock(q->lock);
+    for (int i = 0; i < q->queue.size(); i++) {
+      dispatch_task_t &queued_task = q->queue.at(i);
+
+      if (queued_task.id == task_id) {
+        done_waiting = false;
+        break;
+      }
     }
-  }
-  lock.unlock();
-
-  if (waiting) return DISPATCH_QUEUE_WAITING;
-
-  for (int i = 0; i < q->threads.size(); i++) {
-    if (q->thread_tasks[i] == task) {
-      return DISPATCH_QUEUE_EXECUTING;
+    lock.unlock();
+    for (int i = 0; i < q->threads.size(); i++) {
+      if (q->thread_task_ids[i] == task_id) {
+        done_waiting = false;
+        break;
+      }
     }
+    if (done_waiting) break;
   }
-  return DISPATCH_QUEUE_DONE;
-}
-
-dispatch_queue_status_t dispatch_queue_group_status(dispatch_queue_t *ctx,
-                                                    dispatch_group_t *group) {
-  assert(ctx);
-
-  int busy_count = 0;
-  dispatch_queue_status_t task_status;
-
-  for (int i = 0; i < group->length; i++) {
-    dispatch_task_t *task = &group->tasks[i];
-
-    task_status = dispatch_queue_task_status(ctx, task);
-    if (task_status != DISPATCH_QUEUE_DONE) busy_count++;
-  }
-  if (busy_count == 0) return DISPATCH_QUEUE_DONE;
-
-  return DISPATCH_QUEUE_WAITING;
 }
 
 void dispatch_queue_destroy(dispatch_queue_t *ctx) {

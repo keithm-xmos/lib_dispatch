@@ -70,7 +70,7 @@ TEST(dispatch_queue, test_async_task) {
 
   queue = dispatch_queue_create(queue_length, queue_thread_count,
                                 QUEUE_STACK_SIZE, "test_async_task");
-  dispatch_task_init(&task, do_dispatch_queue_work, &arg, "test_async_task");
+  dispatch_task_init(&task, do_dispatch_queue_work, &arg);
 
   arg.count = 0;
   for (int i = 0; i < task_count; i++) {
@@ -93,7 +93,7 @@ TEST(dispatch_queue, test_for) {
 
   queue = dispatch_queue_create(queue_length, queue_thread_count,
                                 QUEUE_STACK_SIZE, "test_for");
-  dispatch_task_init(&task, do_dispatch_queue_work, &arg, "test_for");
+  dispatch_task_init(&task, do_dispatch_queue_work, &arg);
 
   arg.count = 0;
   dispatch_queue_for(queue, for_count, &task);
@@ -116,8 +116,8 @@ TEST(dispatch_queue, test_async_group) {
 
   queue = dispatch_queue_create(queue_length, queue_thread_count,
                                 QUEUE_STACK_SIZE, "test_async_group");
-  group = dispatch_group_create(group_length, "test_async_group");
-  dispatch_task_init(&task, do_dispatch_queue_work, &arg, "test_async_group");
+  group = dispatch_group_create(group_length);
+  dispatch_task_init(&task, do_dispatch_queue_work, &arg);
 
   arg.count = 0;
 
@@ -146,7 +146,7 @@ TEST(dispatch_queue, test_wait_task) {
 
   queue = dispatch_queue_create(queue_length, queue_thread_count,
                                 QUEUE_STACK_SIZE, "test_wait_task");
-  dispatch_task_init(&task, do_dispatch_queue_work, &arg, "test_wait_task");
+  dispatch_task_init(&task, do_dispatch_queue_work, &arg);
 
   arg.count = 0;
 

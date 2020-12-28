@@ -38,12 +38,7 @@ void dispatch_queue_async_group(dispatch_queue_t* ctx, dispatch_group_t* group);
 void dispatch_queue_for(dispatch_queue_t* ctx, int N, dispatch_task_t* task);
 
 // Wait for tasks to be finish
-dispatch_queue_status_t dispatch_queue_task_status(dispatch_queue_t* ctx,
-                                                   dispatch_task_t* task);
-
-// Wait for group to be finish
-dispatch_queue_status_t dispatch_queue_group_status(dispatch_queue_t* ctx,
-                                                    dispatch_group_t* group);
+void dispatch_queue_task_wait(dispatch_queue_t* ctx, int task_id);
 
 // Wait for all tasks to be finish
 void dispatch_queue_wait(dispatch_queue_t* ctx);

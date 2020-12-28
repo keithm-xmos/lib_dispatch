@@ -18,8 +18,8 @@ struct dispatch_host_struct {
   std::string name;  // to identify it when debugging
   std::mutex lock;
   std::vector<std::thread> threads;
-  std::vector<dispatch_task_t *> thread_tasks;
-  std::deque<dispatch_task_t *> queue;
+  std::vector<int> thread_task_ids;
+  std::deque<dispatch_task_t> queue;
   std::condition_variable cv;
   bool quit;
 };

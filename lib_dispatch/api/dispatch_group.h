@@ -10,7 +10,7 @@ struct dispatch_queue_struct;
 
 typedef struct dispatch_group_struct dispatch_group_t;
 struct dispatch_group_struct {
-  char name[32];  // to identify it when debugging
+  size_t id;
   size_t max_length;
   size_t length;
   dispatch_task_t *tasks;
@@ -24,10 +24,10 @@ extern "C" {
 #endif  // __cplusplus
 
 // TODO: document me!
-dispatch_group_t *dispatch_group_create(size_t length, const char *name);
+dispatch_group_t *dispatch_group_create(size_t length);
 
 // TODO: document me!
-void dispatch_group_init(dispatch_group_t *ctx);
+size_t dispatch_group_init(dispatch_group_t *ctx);
 
 // TODO: document me!
 void dispatch_group_add(dispatch_group_t *ctx, dispatch_task_t *task);

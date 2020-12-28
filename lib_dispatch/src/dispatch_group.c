@@ -8,7 +8,7 @@
 #include "debug_print.h"
 #include "lib_dispatch/api/dispatch_queue.h"
 
-dispatch_group_t *dispatch_group_create(size_t length, const char *name) {
+dispatch_group_t *dispatch_group_create(size_t length) {
   dispatch_group_t *group;
 
   debug_printf("dispatch_group_create: length=%d\n", length);
@@ -18,27 +18,25 @@ dispatch_group_t *dispatch_group_create(size_t length, const char *name) {
   group->max_length = length;
   group->tasks = (dispatch_task_t *)malloc(sizeof(dispatch_task_t) * length);
 
-#ifndef NDEBUG
-  if (name)
-    strncpy(group->name, name, 32);
-  else
-    strncpy(group->name, "null", 32);
-#endif
-
   // initialize the queue
   dispatch_group_init(group);
 
-  debug_printf("dispatch_group_create: name=%s\n", group->name);
+  debug_printf("dispatch_group_create: id=%d\n", group->id);
 
   return group;
 }
 
-void dispatch_group_init(dispatch_group_t *ctx) {
+size_t dispatch_group_init(dispatch_group_t *ctx) {
   assert(ctx);
+  static int next_id = 1;
+
+  ctx->id = next_id++;
   ctx->length = 0;
   ctx->notify_task = NULL;
   ctx->notify_group = NULL;
   ctx->queue = NULL;
+
+  return ctx->id;
 }
 
 void dispatch_group_add(dispatch_group_t *ctx, dispatch_task_t *task) {
@@ -67,7 +65,7 @@ void dispatch_group_notify_group(dispatch_group_t *ctx,
 void dispatch_group_perform(dispatch_group_t *ctx) {
   assert(ctx);
 
-  debug_printf("dispatch_group_perform:  name=%s\n", ctx->name);
+  debug_printf("dispatch_group_perform:  id=%d\n", ctx->id);
 
   // call group in current thread
   for (int i = 0; i < ctx->length; i++) {
@@ -87,15 +85,12 @@ void dispatch_group_perform(dispatch_group_t *ctx) {
 void dispatch_group_wait(dispatch_group_t *ctx) {
   assert(ctx);
 
-  debug_printf("dispatch_group_wait:  name=%s\n", ctx->name);
-
+  debug_printf("dispatch_group_wait:  id=%d\n", ctx->id);
   if (ctx->queue) {
-    for (;;) {
-      if (dispatch_queue_group_status(ctx->queue, ctx) == DISPATCH_QUEUE_DONE)
-        break;
+    for (int i = 0; i < ctx->length; i++) {
+      dispatch_task_t *task = &ctx->tasks[i];
+      dispatch_queue_task_wait(ctx->queue, task->id);
     }
-  } else {
-    dispatch_group_perform(ctx);
   }
 }
 

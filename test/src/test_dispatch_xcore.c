@@ -20,7 +20,7 @@ TEST_TEAR_DOWN(dispatch_queue_xcore) {}
 TEST(dispatch_queue_xcore, test_static) {
   // create queue with data on the stack
   dispatch_xcore_queue_t queue_s;
-  dispatch_thread_task_t thread_tasks[TEST_STATIC_THREAD_COUNT];
+  int thread_task_ids[TEST_STATIC_THREAD_COUNT];
   dispatch_thread_data_t thread_data[TEST_STATIC_THREAD_COUNT];
   chanend_t chanends[TEST_STATIC_THREAD_COUNT];
   __attribute__((aligned(8))) static char
@@ -31,7 +31,7 @@ TEST(dispatch_queue_xcore, test_static) {
   queue_s.thread_chanends = &chanends[0];
   queue_s.thread_stack_size = TEST_STATIC_STACK_SIZE;
   queue_s.thread_stack = static_stack;
-  queue_s.thread_tasks = &thread_tasks[0];
+  queue_s.thread_task_ids = &thread_task_ids[0];
   queue_s.thread_data = &thread_data[0];
 #if DEBUG_PRINT_ENABLE
   strncpy(queue_s.name, "test_static", 32);
@@ -46,7 +46,7 @@ TEST(dispatch_queue_xcore, test_static) {
   int task_count = 4;
 
   arg.count = 0;
-  dispatch_task_init(&task, do_dispatch_queue_work, &arg, "test_static");
+  dispatch_task_init(&task, do_dispatch_queue_work, &arg);
   for (int i = 0; i < task_count; i++) {
     dispatch_queue_async_task(queue, &task);
   }

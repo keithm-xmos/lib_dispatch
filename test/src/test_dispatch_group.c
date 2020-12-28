@@ -37,13 +37,10 @@ TEST(dispatch_group, test_static) {
   test_work_arg_t arg;
 
   arg.count = 0;
-  dispatch_task_init(&task, do_dispatch_group_work, &arg, "test_static_task");
+  dispatch_task_init(&task, do_dispatch_group_work, &arg);
 
   group_s.max_length = TEST_STATIC_LENGTH;
   group_s.tasks = &tasks[0];
-#if DEBUG_PRINT_ENABLE
-  strncpy(group_s.name, "test_static", 32);
-#endif
 
   dispatch_group_t *group = &group_s;
   dispatch_group_init(group);
@@ -63,33 +60,13 @@ TEST(dispatch_group, test_perform) {
   int length = 3;
 
   arg.count = 0;
-  dispatch_task_init(&task, do_dispatch_group_work, &arg, "test_wait_task");
+  dispatch_task_init(&task, do_dispatch_group_work, &arg);
 
-  group = dispatch_group_create(length, "test_wait");
+  group = dispatch_group_create(length);
   for (int i = 0; i < length; i++) {
     dispatch_group_add(group, &task);
   }
   dispatch_group_perform(group);
-
-  TEST_ASSERT_EQUAL_INT(length, arg.count);
-
-  dispatch_group_destroy(group);
-}
-
-TEST(dispatch_group, test_wait) {
-  dispatch_group_t *group;
-  dispatch_task_t task;
-  test_work_arg_t arg;
-  int length = 3;
-
-  arg.count = 0;
-  dispatch_task_init(&task, do_dispatch_group_work, &arg, "test_wait_task");
-
-  group = dispatch_group_create(length, "test_wait");
-  for (int i = 0; i < length; i++) {
-    dispatch_group_add(group, &task);
-  }
-  dispatch_group_wait(group);
 
   TEST_ASSERT_EQUAL_INT(length, arg.count);
 
@@ -103,9 +80,9 @@ TEST(dispatch_group, test_notify_task) {
   int length = 3;
 
   arg.count = 0;
-  dispatch_task_init(&task, do_dispatch_group_work, &arg, "test_notify_task");
+  dispatch_task_init(&task, do_dispatch_group_work, &arg);
 
-  group = dispatch_group_create(length, "test_notify_task");
+  group = dispatch_group_create(length);
   for (int i = 0; i < length; i++) {
     dispatch_group_add(group, &task);
   }
@@ -127,17 +104,15 @@ TEST(dispatch_group, test_notify_group) {
   int length = 3;
 
   arg.count = 0;
-  dispatch_task_init(&do_task, do_dispatch_group_work, &arg,
-                     "test_wait_do_task");
-  dispatch_task_init(&undo_task, undo_dispatch_group_work, &arg,
-                     "test_wait_undo_task");
+  dispatch_task_init(&do_task, do_dispatch_group_work, &arg);
+  dispatch_task_init(&undo_task, undo_dispatch_group_work, &arg);
 
-  do_group = dispatch_group_create(length, "test_notify_group_do");
+  do_group = dispatch_group_create(length);
   for (int i = 0; i < length; i++) {
     dispatch_group_add(do_group, &do_task);
   }
 
-  undo_group = dispatch_group_create(length, "test_notify_group_undo");
+  undo_group = dispatch_group_create(length);
   for (int i = 0; i < length; i++) {
     dispatch_group_add(undo_group, &undo_task);
   }
@@ -155,7 +130,6 @@ TEST(dispatch_group, test_notify_group) {
 TEST_GROUP_RUNNER(dispatch_group) {
   RUN_TEST_CASE(dispatch_group, test_static);
   RUN_TEST_CASE(dispatch_group, test_perform);
-  RUN_TEST_CASE(dispatch_group, test_wait);
   RUN_TEST_CASE(dispatch_group, test_notify_task);
   RUN_TEST_CASE(dispatch_group, test_notify_group);
 }

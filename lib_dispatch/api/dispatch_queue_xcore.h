@@ -4,11 +4,9 @@
 
 #include "xcore/channel.h"
 
-typedef int dispatch_thread_task_t;
-
 typedef struct dispatch_thread_data_struct dispatch_thread_data_t;
 struct dispatch_thread_data_struct {
-  volatile dispatch_thread_task_t *task;
+  volatile int *task_id;
   chanend_t cend;
 };
 
@@ -19,7 +17,7 @@ struct dispatch_xcore_struct {
   int thread_count;
   int thread_stack_size;
   char *thread_stack;
-  dispatch_thread_task_t *thread_tasks;
+  int *thread_task_ids;
   dispatch_thread_data_t *thread_data;
   chanend_t *thread_chanends;
 };
