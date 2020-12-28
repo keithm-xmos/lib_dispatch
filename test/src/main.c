@@ -9,11 +9,9 @@
 static void RunTests(void) {
   RUN_TEST_GROUP(dispatch_task);
   RUN_TEST_GROUP(dispatch_group);
+  RUN_TEST_GROUP(dispatch_queue);
 #if defined(XCORE)
   RUN_TEST_GROUP(dispatch_queue_xcore);
-#endif
-#if defined(HOST)
-  RUN_TEST_GROUP(dispatch_queue_host);
 #endif
 #if defined(FREERTOS)
   RUN_TEST_GROUP(dispatch_queue_freertos);

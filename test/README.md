@@ -1,6 +1,8 @@
 # lib_dispatch Unit Tests
 
-## Building Tests for XCORE
+## XCORE
+
+### Building Tests
 
 Run the following commands to build the test firmware:
 
@@ -9,14 +11,7 @@ Run the following commands to build the test firmware:
     $ cmake ../ -DXCORE=ON
     $ make install
 
-## Building for FreeRTOS
-
-    $ mkdir build
-    $ cd build
-    $ cmake ../ -DFREERTOS=ON
-    $ make install
-
-### Running Tests on XCORE
+### Running Tests
 
 Run the following commands to run the test firmware:
 
@@ -26,10 +21,24 @@ For more options:
 
     $ xrun --io --args bin/lib_dispatch_tests.xe -h
 
-## Building for x86
+## x86
 
+### Building Tests
+
+    $ mkdir build
+    $ cd build
     $ cmake ../ -DHOST=ON
+    $ make install
 
-### Running Tests on x86
+### Running Tests
 
     S ./lib_dispatch_tests
+
+## FreeRTOS
+
+## Building Tests
+
+    $ mkdir build
+    $ cd build
+    $ cmake ../ -DFREERTOS=ON
+    $ make install
