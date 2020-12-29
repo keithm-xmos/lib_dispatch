@@ -1,6 +1,6 @@
 // Copyright (c) 2020, XMOS Ltd, All rights reserved
-#ifndef LIB_DISPATCH_GROUP_H_
-#define LIB_DISPATCH_GROUP_H_
+#ifndef DISPATCH_GROUP_H_
+#define DISPATCH_GROUP_H_
 
 #include <stddef.h>
 
@@ -54,4 +54,4 @@ void dispatch_group_destroy(dispatch_group_t *ctx);
 }  // extern "C"
 #endif  // __cplusplus
 
-#endif  // LIB_DISPATCH_GROUP_H_
+#endif  // DISPATCH_GROUP_H_

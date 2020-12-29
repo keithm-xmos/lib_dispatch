@@ -24,7 +24,7 @@ void dispatch_thread_handler(void *param) {
   dispatch_task_t task;
 
   chanend_t cend = thread_data->cend;
-  volatile int *task_id = thread_data->task_id;
+  volatile size_t *task_id = thread_data->task_id;
 
   debug_printf("dispatch_thread_handler started: cend=%u\n", (int)cend);
 
@@ -68,7 +68,7 @@ dispatch_queue_t *dispatch_queue_create(size_t length, size_t thread_count,
   // allocate channels
   queue->thread_chanends = malloc(sizeof(channel_t) * thread_count);
 
-  // allocate thread tasks
+  // allocate thread task ids
   queue->thread_task_ids = malloc(sizeof(size_t) * thread_count);
 
   // allocate thread data
@@ -93,7 +93,6 @@ void dispatch_queue_init(dispatch_queue_t *ctx) {
   debug_printf("dispatch_queue_init: name=%s\n", queue->name);
 
   int stack_offset = 0;
-  int stack_words = queue->thread_stack_size / sizeof(int);
 
   // create workers
   for (int i = 0; i < queue->thread_count; i++) {
@@ -105,10 +104,10 @@ void dispatch_queue_init(dispatch_queue_t *ctx) {
     chanend_set_dest(queue->thread_chanends[i], queue->thread_data[i].cend);
     chanend_set_dest(queue->thread_data[i].cend, queue->thread_chanends[i]);
     // launch the thread worker
-    run_async(
-        dispatch_thread_handler, (void *)&queue->thread_data[i],
-        stack_base((void *)&queue->thread_stack[stack_offset], stack_words));
-    stack_offset += queue->thread_stack_size;
+    run_async(dispatch_thread_handler, (void *)&queue->thread_data[i],
+              stack_base((void *)&queue->thread_stack[stack_offset],
+                         queue->thread_stack_size));
+    stack_offset += queue->thread_stack_size * sizeof(int);
   }
 }
 

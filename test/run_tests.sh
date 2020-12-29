@@ -6,16 +6,16 @@ mkdir -p build
 cd build
 
 # run freertos build and tests
-#rm -rf *
-#cmake ../ -DFREERTOS=ON
-#make
-#xrun --io --args lib_dispatch_tests.xe -v
+rm -rf *
+cmake ../ -DFREERTOS=ON
+make
+xrun --xscope --args lib_dispatch_tests.xe -v
 
 # run xcore build and tests
 rm -rf *
 cmake ../ -DXCORE=ON
 make
-xrun --io --args lib_dispatch_tests.xe -v
+xrun --xscope --args lib_dispatch_tests.xe -v
 
 # run host build and tests
 rm -rf *

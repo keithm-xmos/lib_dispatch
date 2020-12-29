@@ -1,6 +1,6 @@
 // Copyright (c) 2020, XMOS Ltd, All rights reserved
-#ifndef LIB_DISPATCH_QUEUE_H_
-#define LIB_DISPATCH_QUEUE_H_
+#ifndef DISPATCH_QUEUE_H_
+#define DISPATCH_QUEUE_H_
 
 #include <stddef.h>
 
@@ -41,4 +41,4 @@ void dispatch_queue_wait(dispatch_queue_t* ctx);
 }  // extern "C"
 #endif  // __cplusplus
 
-#endif  // LIB_DISPATCH_QUEUE_H_
+#endif  // DISPATCH_QUEUE_H_

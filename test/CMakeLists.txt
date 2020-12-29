@@ -22,7 +22,7 @@ if(XCORE OR FREERTOS)
   set(CMAKE_C_FLAGS "" CACHE STRING "C Compiler Base Flags" FORCE)
   set(CMAKE_EXE_LINKER_FLAGS "" CACHE INTERNAL "" FORCE)
 
-  enable_language(C)
+  enable_language(C ASM)
 else()
   enable_language(C CXX)
 endif()
@@ -53,10 +53,13 @@ if(XCORE OR FREERTOS)
     "-target=XCORE-AI-EXPLORER"
     "-fcmdline-buffer-bytes=1024"
     "-mcmodel=large"
+    "-fxscope"
+    "${CMAKE_CURRENT_SOURCE_DIR}/config.xscope"
     "-Wno-xcore-fptrgroup"
     "-Wno-unknown-pragmas"
     "-report"
     "-DDEBUG_PRINT_ENABLE=1"
+    "-march=xs3a"
     "-Os"
   )
 endif()
@@ -117,7 +120,28 @@ if(HOST)
   set(LIB_DISPATCH_SOURCES ${LIB_DISPATCH_HOST_SOURCES})
 elseif(FREERTOS)
   set(LIB_DISPATCH_SOURCES ${LIB_DISPATCH_FREERTOS_SOURCES})
-  set(TEST_DISPATCH_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/test_dispatch_freertos.c")
+  set(TEST_DISPATCH_SOURCES 
+    "${FREERTOS_DIR}/FreeRTOS/Source/croutine.c"
+    "${FREERTOS_DIR}/FreeRTOS/Source/event_groups.c"
+    "${FREERTOS_DIR}/FreeRTOS/Source/list.c"
+    "${FREERTOS_DIR}/FreeRTOS/Source/queue.c"
+    "${FREERTOS_DIR}/FreeRTOS/Source/stream_buffer.c"
+    "${FREERTOS_DIR}/FreeRTOS/Source/tasks.c"
+    "${FREERTOS_DIR}/FreeRTOS/Source/timers.c"
+    "${FREERTOS_DIR}/FreeRTOS/Source/portable/XCC/XCOREAI/port.c"
+    "${FREERTOS_DIR}/FreeRTOS/Source/portable/XCC/XCOREAI/port.xc"
+    "${FREERTOS_DIR}/FreeRTOS/Source/portable/MemMang/heap_4.c"
+    "${FREERTOS_DIR}/FreeRTOS/Source/portable/XCC/XCOREAI/portasm.S"
+    "${AIOTSDK_DIR}/modules/lib_rtos_support/src/rtos_cores.c"
+    "${AIOTSDK_DIR}/modules/lib_rtos_support/src/rtos_irq.c"
+    "${AIOTSDK_DIR}/modules/lib_rtos_support/src/rtos_locks.c"
+    "${AIOTSDK_DIR}/modules/lib_rtos_support/src/rtos_printf.c"
+    "${AIOTSDK_DIR}/modules/lib_rtos_support/src/rtos_time.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/test_dispatch_freertos.c"
+  )
+
+  set_source_files_properties("${FREERTOS_DIR}/FreeRTOS/Source/portable/XCC/XCOREAI/port.xc" PROPERTIES LANGUAGE C)
+
   set(TEST_DISPATCH_INCLUDES 
     "${FREERTOS_DIR}/FreeRTOS/Source/include"
     "${FREERTOS_DIR}/FreeRTOS/Source/portable/XCC/XCOREAI"

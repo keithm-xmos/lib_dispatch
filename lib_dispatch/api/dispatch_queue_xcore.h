@@ -1,12 +1,12 @@
 // Copyright (c) 2020, XMOS Ltd, All rights reserved
-#ifndef LIB_DISPATCH_XCORE_H_
-#define LIB_DISPATCH_XCORE_H_
+#ifndef DISPATCH_QUEUE_XCORE_H_
+#define DISPATCH_QUEUE_XCORE_H_
 
 #include "xcore/channel.h"
 
 typedef struct dispatch_thread_data_struct dispatch_thread_data_t;
 struct dispatch_thread_data_struct {
-  volatile int *task_id;
+  volatile size_t *task_id;
   chanend_t cend;
 };
 
@@ -17,9 +17,9 @@ struct dispatch_xcore_struct {
   int thread_count;
   int thread_stack_size;
   char *thread_stack;
-  int *thread_task_ids;
+  size_t *thread_task_ids;
   dispatch_thread_data_t *thread_data;
   chanend_t *thread_chanends;
 };
 
-#endif  // LIB_DISPATCH_XCORE_H_
+#endif  // DISPATCH_QUEUE_XCORE_H_

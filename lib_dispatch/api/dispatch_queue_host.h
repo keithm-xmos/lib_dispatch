@@ -1,6 +1,6 @@
 // Copyright (c) 2020, XMOS Ltd, All rights reserved
-#ifndef LIB_DISPATCH_HOST_H_
-#define LIB_DISPATCH_HOST_H_
+#ifndef DISPATCH_QUEUE_HOST_H_
+#define DISPATCH_QUEUE_HOST_H_
 
 #include <condition_variable>
 #include <cstdint>
@@ -19,9 +19,9 @@ struct dispatch_host_struct {
   std::mutex lock;
   std::vector<std::thread> threads;
   std::vector<int> thread_task_ids;
-  std::deque<dispatch_task_t> queue;
+  std::deque<dispatch_task_t> deque;
   std::condition_variable cv;
   bool quit;
 };
 
-#endif  // LIB_DISPATCH_HOST_H_
+#endif  // DISPATCH_QUEUE_HOST_H_

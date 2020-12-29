@@ -36,8 +36,6 @@ your application. */
 /* Memory allocation related definitions. */
 #define configSUPPORT_STATIC_ALLOCATION 0
 #define configSUPPORT_DYNAMIC_ALLOCATION 1
-//#define configTOTAL_HEAP_SIZE                   1024*1024
-//#define configAPPLICATION_ALLOCATED_HEAP        1
 #define configTOTAL_HEAP_SIZE 100 * 1024
 #define configAPPLICATION_ALLOCATED_HEAP 0
 
@@ -46,11 +44,11 @@ your application. */
 #define configUSE_TICK_HOOK 0
 #define configCHECK_FOR_STACK_OVERFLOW 0
 #define configUSE_MALLOC_FAILED_HOOK 1
-#define configUSE_DAEMON_TASK_STARTUP_HOOK 1
+#define configUSE_DAEMON_TASK_STARTUP_HOOK 0
 
 /* Run time and task stats gathering related definitions. */
-#define configGENERATE_RUN_TIME_STATS 1
-#define configUSE_TRACE_FACILITY 1
+#define configGENERATE_RUN_TIME_STATS 0
+#define configUSE_TRACE_FACILITY 0
 #define configUSE_STATS_FORMATTING_FUNCTIONS \
   2 /* Setting to 2 does not include <stdio.h> in tasks.c */
 
@@ -76,7 +74,7 @@ your application. */
 #define configUSE_DEBUG_SPRINTF 1
 
 /* Define to enable debug prints from tasks.c */
-#define configTASKS_DEBUG 0
+#define configTASKS_DEBUG 1
 
 /* FreeRTOS MPU specific definitions. */
 #define configINCLUDE_APPLICATION_DEFINED_PRIVILEGED_FUNCTIONS 0
@@ -89,6 +87,7 @@ your application. */
 #define INCLUDE_xResumeFromISR 1
 #define INCLUDE_vTaskDelayUntil 1
 #define INCLUDE_vTaskDelay 1
+//#define INCLUDE_vTaskEndScheduler 1
 #define INCLUDE_xTaskGetSchedulerState 1
 #define INCLUDE_xTaskGetCurrentTaskHandle 1
 #define INCLUDE_uxTaskGetStackHighWaterMark 1

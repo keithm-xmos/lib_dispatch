@@ -11,21 +11,22 @@
 
 #define DISPATCH_TASK_NONE (0)
 
-void dispatch_thread_handler(dispatch_host_queue_t *q, int *task_id) {
-  std::unique_lock<std::mutex> lock(q->lock);
+void dispatch_thread_handler(dispatch_host_queue_t *queue, int *task_id) {
+  std::unique_lock<std::mutex> lock(queue->lock);
 
   do {
     // Wait until we have data or a quit signal
-    q->cv.wait(lock, [q] { return (q->queue.size() || q->quit); });
+    queue->cv.wait(lock,
+                   [queue] { return (queue->deque.size() || queue->quit); });
 
     // after wait, we own the lock
-    if (!q->quit && q->queue.size()) {
-      dispatch_task_t &task = q->queue.front();
+    if (!queue->quit && queue->deque.size()) {
+      dispatch_task_t &task = queue->deque.front();
 
       // set the current task
       *task_id = task.id;
 
-      q->queue.pop_front();
+      queue->deque.pop_front();
 
       // unlock now that we're done messing with the queue
       lock.unlock();
@@ -37,7 +38,7 @@ void dispatch_thread_handler(dispatch_host_queue_t *q, int *task_id) {
 
       lock.lock();
     }
-  } while (!q->quit);
+  } while (!queue->quit);
 }
 
 dispatch_queue_t *dispatch_queue_create(size_t length, size_t thread_count,
@@ -66,51 +67,51 @@ dispatch_queue_t *dispatch_queue_create(size_t length, size_t thread_count,
 
 void dispatch_queue_init(dispatch_queue_t *ctx) {
   assert(ctx);
-  dispatch_host_queue_t *q = static_cast<dispatch_host_queue_t *>(ctx);
+  dispatch_host_queue_t *queue = static_cast<dispatch_host_queue_t *>(ctx);
 
-  std::printf("dispatch_queue_init: name=%s\n", q->name.c_str());
+  std::printf("dispatch_queue_init: name=%s\n", queue->name.c_str());
 
-  q->quit = false;
-  for (size_t i = 0; i < q->threads.size(); i++) {
-    q->thread_task_ids[i] = DISPATCH_TASK_NONE;
-    q->threads[i] =
-        std::thread(&dispatch_thread_handler, q, &q->thread_task_ids[i]);
+  queue->quit = false;
+  for (size_t i = 0; i < queue->threads.size(); i++) {
+    queue->thread_task_ids[i] = DISPATCH_TASK_NONE;
+    queue->threads[i] = std::thread(&dispatch_thread_handler, queue,
+                                    &queue->thread_task_ids[i]);
   }
 }
 
 void dispatch_queue_async_task(dispatch_queue_t *ctx, dispatch_task_t *task) {
   assert(ctx);
   assert(task);
-  dispatch_host_queue_t *q = static_cast<dispatch_host_queue_t *>(ctx);
+  dispatch_host_queue_t *queue = static_cast<dispatch_host_queue_t *>(ctx);
 
-  std::printf("dispatch_queue_async_task: name=%s\n", q->name.c_str());
+  std::printf("dispatch_queue_async_task: name=%s\n", queue->name.c_str());
 
   // assign to this queue
   task->queue = static_cast<dispatch_queue_struct *>(ctx);
 
-  std::unique_lock<std::mutex> lock(q->lock);
-  q->queue.push_back(*task);
+  std::unique_lock<std::mutex> lock(queue->lock);
+  queue->deque.push_back(*task);
   // manual unlocking is done before notifying, to avoid waking up
   // the waiting thread only to block again (see notify_one for details)
   lock.unlock();
 
-  q->cv.notify_one();
+  queue->cv.notify_one();
 }
 
 void dispatch_queue_wait(dispatch_queue_t *ctx) {
   assert(ctx);
-  dispatch_host_queue_t *q = static_cast<dispatch_host_queue_t *>(ctx);
+  dispatch_host_queue_t *queue = static_cast<dispatch_host_queue_t *>(ctx);
 
-  std::printf("dispatch_queue_wait: name=%s\n", q->name.c_str());
+  std::printf("dispatch_queue_wait: name=%s\n", queue->name.c_str());
 
   int busy_count = 0;
 
   for (;;) {
-    std::unique_lock<std::mutex> lock(q->lock);
-    busy_count = q->queue.size();  // tasks on the queue are considered busy
+    std::unique_lock<std::mutex> lock(queue->lock);
+    busy_count = queue->deque.size();  // tasks on the queue are considered busy
     lock.unlock();
-    for (int i = 0; i < q->threads.size(); i++) {
-      if (q->thread_task_ids[i] != DISPATCH_TASK_NONE) busy_count++;
+    for (int i = 0; i < queue->threads.size(); i++) {
+      if (queue->thread_task_ids[i] != DISPATCH_TASK_NONE) busy_count++;
     }
     if (busy_count == 0) return;
   }
@@ -120,15 +121,15 @@ void dispatch_queue_task_wait(dispatch_queue_t *ctx, int task_id) {
   assert(ctx);
   assert(task_id > DISPATCH_TASK_NONE);
 
-  dispatch_host_queue_t *q = (dispatch_host_queue_t *)ctx;
+  dispatch_host_queue_t *queue = (dispatch_host_queue_t *)ctx;
 
   bool done_waiting = true;
 
   for (;;) {
     done_waiting = true;
-    std::unique_lock<std::mutex> lock(q->lock);
-    for (int i = 0; i < q->queue.size(); i++) {
-      dispatch_task_t &queued_task = q->queue.at(i);
+    std::unique_lock<std::mutex> lock(queue->lock);
+    for (int i = 0; i < queue->deque.size(); i++) {
+      dispatch_task_t &queued_task = queue->deque.at(i);
 
       if (queued_task.id == task_id) {
         done_waiting = false;
@@ -136,8 +137,8 @@ void dispatch_queue_task_wait(dispatch_queue_t *ctx, int task_id) {
       }
     }
     lock.unlock();
-    for (int i = 0; i < q->threads.size(); i++) {
-      if (q->thread_task_ids[i] == task_id) {
+    for (int i = 0; i < queue->threads.size(); i++) {
+      if (queue->thread_task_ids[i] == task_id) {
         done_waiting = false;
         break;
       }
@@ -148,24 +149,24 @@ void dispatch_queue_task_wait(dispatch_queue_t *ctx, int task_id) {
 
 void dispatch_queue_destroy(dispatch_queue_t *ctx) {
   assert(ctx);
-  dispatch_host_queue_t *q = static_cast<dispatch_host_queue_t *>(ctx);
+  dispatch_host_queue_t *queue = static_cast<dispatch_host_queue_t *>(ctx);
 
-  std::printf("dispatch_queue_destroy: name=%s\n", q->name.c_str());
+  std::printf("dispatch_queue_destroy: name=%s\n", queue->name.c_str());
 
   // signal to all thread workers that it is time to quit
-  std::unique_lock<std::mutex> lock(q->lock);
-  q->quit = true;
+  std::unique_lock<std::mutex> lock(queue->lock);
+  queue->quit = true;
   lock.unlock();
-  q->cv.notify_all();
+  queue->cv.notify_all();
 
   // Wait for threads to finish before we exit
-  for (size_t i = 0; i < q->threads.size(); i++) {
-    if (q->threads[i].joinable()) {
+  for (size_t i = 0; i < queue->threads.size(); i++) {
+    if (queue->threads[i].joinable()) {
       // printf("Destructor: Joining thread %zu until completion\n", i);
-      q->threads[i].join();
+      queue->threads[i].join();
     }
   }
 
   // free memory
-  delete q;
+  delete queue;
 }

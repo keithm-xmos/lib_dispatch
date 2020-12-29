@@ -15,11 +15,11 @@ Run the following commands to build the test firmware:
 
 Run the following commands to run the test firmware:
 
-    $ xrun --io bin/lib_dispatch_tests.xe
+    $ xrun --xscope bin/lib_dispatch_tests.xe
 
 For more options:
 
-    $ xrun --io --args bin/lib_dispatch_tests.xe -h
+    $ xrun --xscope --args bin/lib_dispatch_tests.xe -h
 
 ## x86
 
@@ -36,9 +36,19 @@ For more options:
 
 ## FreeRTOS
 
-## Building Tests
+### Building Tests
 
     $ mkdir build
     $ cd build
     $ cmake ../ -DFREERTOS=ON
     $ make install
+
+### Running Tests
+
+Run the following commands to run the test firmware:
+
+    $ xrun --xscope bin/lib_dispatch_tests.xe
+
+For more options:
+
+    $ xrun --xscope --args bin/lib_dispatch_tests.xe -h

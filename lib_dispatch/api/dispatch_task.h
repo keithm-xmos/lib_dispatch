@@ -1,6 +1,6 @@
 // Copyright (c) 2020, XMOS Ltd, All rights reserved
-#ifndef LIB_DISPATCH_TASK_H_
-#define LIB_DISPATCH_TASK_H_
+#ifndef DISPATCH_TASK_H_
+#define DISPATCH_TASK_H_
 
 #include <stddef.h>
 
@@ -52,4 +52,4 @@ void dispatch_task_wait(dispatch_task_t *ctx);
 }  // extern "C"
 #endif  // __cplusplus
 
-#endif  // LIB_DISPATCH_TASK_H_
+#endif  // DISPATCH_TASK_H_

@@ -8,37 +8,27 @@
 
 #if XCORE
 #include <xcore/hwtimer.h>
-static int lock;
-#define mutex_init
-#define mutex_lock
-#define mutex_unlock
-#define mutex_destroy
+typedef int thread_mutex_t;
 #define QUEUE_LENGTH (3)
 #define QUEUE_THREAD_COUNT (3)
 #define QUEUE_STACK_SIZE (1024)  // more than enough
 #elif FREERTOS
-#include <pthread.h>
-#include <time.h>
-static pthread_mutex_t lock;
-#define mutex_init pthread_mutex_init
-#define mutex_lock pthread_mutex_lock
-#define mutex_unlock pthread_mutex_unlock
-#define mutex_destroy pthread_mutex_destroy
+#include "FreeRTOS.h"
+#include "task.h"
+typedef int thread_mutex_t;
 #define QUEUE_LENGTH (10)
 #define QUEUE_THREAD_COUNT (3)
 #define QUEUE_STACK_SIZE (1024)  // more than enough
 #elif HOST
 #include <pthread.h>
 #include <time.h>
-static pthread_mutex_t lock;
-#define mutex_init pthread_mutex_init
-#define mutex_lock pthread_mutex_lock
-#define mutex_unlock pthread_mutex_unlock
-#define mutex_destroy pthread_mutex_destroy
+typedef pthread_mutex_t thread_mutex_t;
 #define QUEUE_LENGTH (10)
 #define QUEUE_THREAD_COUNT (3)
 #define QUEUE_STACK_SIZE (0)  // not necessary
 #endif
+
+static thread_mutex_t lock;
 
 #if XCORE
 static void keep_busy() {
@@ -48,10 +38,27 @@ static void keep_busy() {
   hwtimer_wait_until(timer, time + magic_duration);
   hwtimer_free(timer);
 }
+static void mutex_init(thread_mutex_t *lock) {}
+static void mutex_lock(thread_mutex_t *lock) {}
+static void mutex_unlock(thread_mutex_t *lock) {}
+static void mutex_destroy(thread_mutex_t *lock) {}
+#elif FREERTOS
+static void keep_busy() {
+  unsigned magic_duration = 500;
+  vTaskDelay(magic_duration);
+}
+static void mutex_init(thread_mutex_t *lock) {}
+static void mutex_lock(thread_mutex_t *lock) {}
+static void mutex_unlock(thread_mutex_t *lock) {}
+static void mutex_destroy(thread_mutex_t *lock) {}
 #elif HOST
 static void keep_busy() {
   nanosleep((const struct timespec[]){{0, 1000 * 1000000000L}}, NULL);
 }
+static void mutex_init(thread_mutex_t *lock) { pthread_mutex_init(lock, NULL); }
+static void mutex_lock(thread_mutex_t *lock) { pthread_mutex_lock(lock); }
+static void mutex_unlock(thread_mutex_t *lock) { pthread_mutex_unlock(lock); }
+static void mutex_destroy(thread_mutex_t *lock) { pthread_mutex_destroy(lock); }
 #endif
 
 DISPATCH_TASK_FUNCTION
@@ -67,7 +74,7 @@ void do_dispatch_queue_work(void *p) {
 
 TEST_GROUP(dispatch_queue);
 
-TEST_SETUP(dispatch_queue) { mutex_init(&lock, NULL); }
+TEST_SETUP(dispatch_queue) { mutex_init(&lock); }
 
 TEST_TEAR_DOWN(dispatch_queue) { mutex_destroy(&lock); }
 

@@ -72,6 +72,6 @@ TEST(dispatch_task, test_notify) {
 
 TEST_GROUP_RUNNER(dispatch_task) {
   RUN_TEST_CASE(dispatch_task, test_create);
-  RUN_TEST_CASE(dispatch_task, test_perform);
-  RUN_TEST_CASE(dispatch_task, test_notify);
+  // RUN_TEST_CASE(dispatch_task, test_perform);
+  // RUN_TEST_CASE(dispatch_task, test_notify);
 }

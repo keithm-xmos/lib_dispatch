@@ -20,7 +20,7 @@ TEST_TEAR_DOWN(dispatch_queue_xcore) {}
 TEST(dispatch_queue_xcore, test_static) {
   // create queue with data on the stack
   dispatch_xcore_queue_t queue_s;
-  int thread_task_ids[TEST_STATIC_THREAD_COUNT];
+  size_t thread_task_ids[TEST_STATIC_THREAD_COUNT];
   dispatch_thread_data_t thread_data[TEST_STATIC_THREAD_COUNT];
   chanend_t chanends[TEST_STATIC_THREAD_COUNT];
   __attribute__((aligned(8))) static char
