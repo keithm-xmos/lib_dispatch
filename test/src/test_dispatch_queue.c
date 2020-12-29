@@ -44,7 +44,7 @@ static void mutex_unlock(thread_mutex_t *lock) {}
 static void mutex_destroy(thread_mutex_t *lock) {}
 #elif FREERTOS
 static void keep_busy() {
-  unsigned magic_duration = 500;
+  unsigned magic_duration = 1000;
   vTaskDelay(magic_duration);
 }
 static void mutex_init(thread_mutex_t *lock) {}
