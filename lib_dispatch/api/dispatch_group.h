@@ -6,6 +6,8 @@
 
 #include "lib_dispatch/api/dispatch_task.h"
 
+#define DISPATCH_GROUP_NONE (0)
+
 struct dispatch_queue_struct;
 
 typedef struct dispatch_group_struct dispatch_group_t;

@@ -7,12 +7,6 @@
 #include "dispatch_group.h"
 #include "dispatch_task.h"
 
-typedef enum {
-  DISPATCH_QUEUE_WAITING,
-  DISPATCH_QUEUE_EXECUTING,
-  DISPATCH_QUEUE_DONE,
-} dispatch_queue_status_t;
-
 typedef void dispatch_queue_t;
 
 #ifdef __cplusplus

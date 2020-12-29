@@ -11,7 +11,7 @@ size_t dispatch_task_init(dispatch_task_t *ctx, dispatch_function_t fn,
   assert(ctx);
   assert(fn);
 
-  static int next_id = 1;
+  static int next_id = DISPATCH_TASK_NONE + 1;
 
   ctx->id = next_id++;
   ctx->fn = fn;

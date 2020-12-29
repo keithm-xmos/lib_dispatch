@@ -28,10 +28,10 @@ dispatch_group_t *dispatch_group_create(size_t length) {
 
 size_t dispatch_group_init(dispatch_group_t *ctx) {
   assert(ctx);
-  static int next_id = 1;
+  static int next_id = DISPATCH_GROUP_NONE + 1;
 
   ctx->id = next_id++;
-  ctx->length = 0;
+  ctx->length = DISPATCH_GROUP_NONE;
   ctx->notify_task = NULL;
   ctx->notify_group = NULL;
   ctx->queue = NULL;

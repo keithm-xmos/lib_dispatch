@@ -118,7 +118,7 @@ void dispatch_queue_wait(dispatch_queue_t *ctx) {
 
 void dispatch_queue_task_wait(dispatch_queue_t *ctx, int task_id) {
   assert(ctx);
-  assert(task_id > 0);
+  assert(task_id > DISPATCH_TASK_NONE);
 
   dispatch_host_queue_t *q = (dispatch_host_queue_t *)ctx;
 

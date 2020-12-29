@@ -10,6 +10,8 @@
 #define DISPATCH_TASK_FUNCTION
 #endif
 
+#define DISPATCH_TASK_NONE (0)
+
 typedef void (*dispatch_function_t)(void *);
 
 struct dispatch_queue_struct;

@@ -18,8 +18,6 @@
 #define DISPATCH_WAKE_EVT (0x1)
 #define DISPATCH_EXIT_EVT (0x2)
 
-#define DISPATCH_TASK_NONE (0)
-
 void dispatch_thread_handler(void *param) {
   dispatch_thread_data_t *thread_data = (dispatch_thread_data_t *)param;
   uint8_t evt;
