@@ -13,8 +13,8 @@ struct dispatch_queue_struct;
 typedef struct dispatch_group_struct dispatch_group_t;
 struct dispatch_group_struct {
   size_t id;
-  size_t max_length;
   size_t length;
+  size_t count;
   dispatch_task_t *tasks;
   dispatch_task_t *notify_task;                // the task to notify
   struct dispatch_group_struct *notify_group;  // the group to notify

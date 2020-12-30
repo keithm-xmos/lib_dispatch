@@ -15,7 +15,7 @@ dispatch_group_t *dispatch_group_create(size_t length) {
 
   group = (dispatch_group_t *)malloc(sizeof(dispatch_group_t));
 
-  group->max_length = length;
+  group->length = length;
   group->tasks = (dispatch_task_t *)malloc(sizeof(dispatch_task_t) * length);
 
   // initialize the queue
@@ -31,7 +31,7 @@ size_t dispatch_group_init(dispatch_group_t *ctx) {
   static int next_id = DISPATCH_GROUP_NONE + 1;
 
   ctx->id = next_id++;
-  ctx->length = DISPATCH_GROUP_NONE;
+  ctx->count = 0;
   ctx->notify_task = NULL;
   ctx->notify_group = NULL;
   ctx->queue = NULL;
@@ -41,10 +41,10 @@ size_t dispatch_group_init(dispatch_group_t *ctx) {
 
 void dispatch_group_add(dispatch_group_t *ctx, dispatch_task_t *task) {
   assert(ctx);
-  assert(ctx->length < ctx->max_length);
+  assert(ctx->count < ctx->length);
 
-  memcpy(&ctx->tasks[ctx->length], task, sizeof(dispatch_task_t));
-  ctx->length++;
+  memcpy(&ctx->tasks[ctx->count], task, sizeof(dispatch_task_t));
+  ctx->count++;
 }
 
 void dispatch_group_notify_task(dispatch_group_t *ctx, dispatch_task_t *task) {
@@ -68,7 +68,7 @@ void dispatch_group_perform(dispatch_group_t *ctx) {
   debug_printf("dispatch_group_perform:  id=%d\n", ctx->id);
 
   // call group in current thread
-  for (int i = 0; i < ctx->length; i++) {
+  for (int i = 0; i < ctx->count; i++) {
     dispatch_task_t *task = &ctx->tasks[i];
     dispatch_task_perform(task);
   }
@@ -87,7 +87,7 @@ void dispatch_group_wait(dispatch_group_t *ctx) {
 
   debug_printf("dispatch_group_wait:  id=%d\n", ctx->id);
   if (ctx->queue) {
-    for (int i = 0; i < ctx->length; i++) {
+    for (int i = 0; i < ctx->count; i++) {
       dispatch_task_t *task = &ctx->tasks[i];
       dispatch_queue_task_wait(ctx->queue, task->id);
     }

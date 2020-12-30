@@ -22,19 +22,26 @@ void dispatch_queue_init(dispatch_queue_t* ctx);
 // TODO: document me!
 void dispatch_queue_destroy(dispatch_queue_t* ctx);
 
+// TODO: document me!
 // Run task asyncronously
+// NOTE: XCORE version runs the N+1th task in the callers thread if all N
+// workers are busy.
 void dispatch_queue_async_task(dispatch_queue_t* ctx, dispatch_task_t* task);
 
 // Run task asyncronously
+// TODO: document me!
 void dispatch_queue_async_group(dispatch_queue_t* ctx, dispatch_group_t* group);
 
 // Run task N times
+// TODO: document me!
 void dispatch_queue_for(dispatch_queue_t* ctx, int N, dispatch_task_t* task);
 
 // Wait for tasks to be finish
+// TODO: document me!
 void dispatch_queue_task_wait(dispatch_queue_t* ctx, int task_id);
 
 // Wait for all tasks to be finish
+// TODO: document me!
 void dispatch_queue_wait(dispatch_queue_t* ctx);
 
 #ifdef __cplusplus

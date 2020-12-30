@@ -7,59 +7,14 @@
 #include "unity_fixture.h"
 
 #if XCORE
-#include <xcore/hwtimer.h>
-typedef int thread_mutex_t;
-#define QUEUE_LENGTH (3)
-#define QUEUE_THREAD_COUNT (3)
-#define QUEUE_STACK_SIZE (1024)  // more than enough
+#include "test_dispatch_queue_xcore.h"
 #elif FREERTOS
-#include "FreeRTOS.h"
-#include "task.h"
-typedef int thread_mutex_t;
-#define QUEUE_LENGTH (10)
-#define QUEUE_THREAD_COUNT (3)
-#define QUEUE_STACK_SIZE (1024)  // more than enough
+#include "test_dispatch_queue_freertos.h"
 #elif HOST
-#include <pthread.h>
-#include <time.h>
-typedef pthread_mutex_t thread_mutex_t;
-#define QUEUE_LENGTH (10)
-#define QUEUE_THREAD_COUNT (3)
-#define QUEUE_STACK_SIZE (0)  // not necessary
+#include "test_dispatch_queue_host.h"
 #endif
 
 static thread_mutex_t lock;
-
-#if XCORE
-static void keep_busy() {
-  unsigned magic_duration = 100000000;
-  hwtimer_t timer = hwtimer_alloc();
-  unsigned time = hwtimer_get_time(timer);
-  hwtimer_wait_until(timer, time + magic_duration);
-  hwtimer_free(timer);
-}
-static void mutex_init(thread_mutex_t *lock) {}
-static void mutex_lock(thread_mutex_t *lock) {}
-static void mutex_unlock(thread_mutex_t *lock) {}
-static void mutex_destroy(thread_mutex_t *lock) {}
-#elif FREERTOS
-static void keep_busy() {
-  unsigned magic_duration = 1000;
-  vTaskDelay(magic_duration);
-}
-static void mutex_init(thread_mutex_t *lock) {}
-static void mutex_lock(thread_mutex_t *lock) {}
-static void mutex_unlock(thread_mutex_t *lock) {}
-static void mutex_destroy(thread_mutex_t *lock) {}
-#elif HOST
-static void keep_busy() {
-  nanosleep((const struct timespec[]){{0, 1000 * 1000000000L}}, NULL);
-}
-static void mutex_init(thread_mutex_t *lock) { pthread_mutex_init(lock, NULL); }
-static void mutex_lock(thread_mutex_t *lock) { pthread_mutex_lock(lock); }
-static void mutex_unlock(thread_mutex_t *lock) { pthread_mutex_unlock(lock); }
-static void mutex_destroy(thread_mutex_t *lock) { pthread_mutex_destroy(lock); }
-#endif
 
 DISPATCH_TASK_FUNCTION
 void do_dispatch_queue_work(void *p) {

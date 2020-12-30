@@ -39,7 +39,7 @@ TEST(dispatch_group, test_static) {
   arg.count = 0;
   dispatch_task_init(&task, do_dispatch_group_work, &arg);
 
-  group_s.max_length = TEST_STATIC_LENGTH;
+  group_s.length = TEST_STATIC_LENGTH;
   group_s.tasks = &tasks[0];
 
   dispatch_group_t *group = &group_s;
