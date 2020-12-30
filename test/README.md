@@ -1,54 +1,39 @@
 # lib_dispatch Unit Tests
 
-## XCORE
-
-### Building Tests
+## Building & running tests for XCORE bare-metal
 
 Run the following commands to build the test firmware:
 
-    $ mkdir build
-    $ cd build
-    $ cmake ../ -DXCORE=ON
-    $ make install
+    $ cmake -B build -DXCORE=ON
+    $ cmake --build build --target install
+    $ xrun --xscope --args bin/lib_dispatch_tests.xe -v
 
-### Running Tests
+## Building & running tests for XCORE FreeRTOS
 
-Run the following commands to run the test firmware:
+Run the following commands to build the test firmware:
 
-    $ xrun --xscope bin/lib_dispatch_tests.xe
+    $ cmake -B build -DFREERTOS=ON
+    $ cmake --build build --target install
+    $ xrun --xscope --args bin/lib_dispatch_tests.xe -v
 
-For more options:
+## Building & running tests for x86 host
 
-    $ xrun --xscope --args bin/lib_dispatch_tests.xe -h
+Run the following commands to build the test firmware:
 
-## x86
+    $ cmake -B build -DHOST=ON
+    $ cmake --build build --target install
+    $ ./bin/lib_dispatch_tests -v
 
-### Building Tests
+## For more unit test options
 
-    $ mkdir build
-    $ cd build
-    $ cmake ../ -DHOST=ON
-    $ make install
+To run a single test group, run with the `-g` option.
 
-### Running Tests
+    $ xrun --xscope --args bin/lib_dispatch_tests.xe -g {group name}
 
-    S ./lib_dispatch_tests
+To run a single test, run with the `-g` and `-n` options.
 
-## FreeRTOS
+    $ xrun --xscope --args bin/lib_dispatch_tests.xe -g {group name} -n {test name}
 
-### Building Tests
-
-    $ mkdir build
-    $ cd build
-    $ cmake ../ -DFREERTOS=ON
-    $ make install
-
-### Running Tests
-
-Run the following commands to run the test firmware:
-
-    $ xrun --xscope bin/lib_dispatch_tests.xe
-
-For more options:
+For more unit test options, run with the `-h` option.
 
     $ xrun --xscope --args bin/lib_dispatch_tests.xe -h

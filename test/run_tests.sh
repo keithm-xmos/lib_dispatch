@@ -2,25 +2,22 @@
 
 set -e
 
-mkdir -p build
-cd build
-
 # run freertos build and tests
-rm -rf *
-cmake ../ -DFREERTOS=ON
-make
-xrun --xscope --args lib_dispatch_tests.xe -v
+rm -rf build
+cmake -B build -DFREERTOS=ON
+cmake --build build --target install
+xrun --xscope --args bin/lib_dispatch_tests.xe -v
 
 # run xcore build and tests
-rm -rf *
-cmake ../ -DXCORE=ON
-make
-xrun --xscope --args lib_dispatch_tests.xe -v
+rm -rf build
+cmake -B build -DXCORE=ON
+cmake --build build --target install
+xrun --xscope --args bin/lib_dispatch_tests.xe -v
 
 # run host build and tests
-rm -rf *
-cmake ../ -DHOST=ON
-make
-./lib_dispatch_tests -v
+rm -rf build
+cmake -B build -DHOST=ON
+cmake --build build --target install
+./bin/lib_dispatch_tests -v
 
-cd ..
+#cd ..
