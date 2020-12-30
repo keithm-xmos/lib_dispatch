@@ -29,23 +29,34 @@ struct dispatch_task_struct {
 extern "C" {
 #endif  // __cplusplus
 
-// TODO: document me!
-// Create a new task with function pointer, void pointer arument, and name (for
-// debugging)
+/** Initialize a new task
+ *
+ * @param[in] ctx       Task object
+ * @param[in] fn        Function to perform, signature must be void my_fun(void
+ * *arg)
+ * @param[in] arg       Function argument
+ */
 size_t dispatch_task_init(dispatch_task_t *ctx, dispatch_function_t fn,
                           void *arg);
 
-// TODO: document me!
-// Schedules the execution of the notify task after the completion of the
-// current task
+/** Schedules the execution of the notify task after the completion of the
+ * current task
+ *
+ * @param[in] ctx       Task object
+ * @param[in] task      Task to notify
+ */
 void dispatch_task_notify(dispatch_task_t *ctx, dispatch_task_t *task);
 
-// TODO: document me!
-// Run the task in the caller's thread
+/** Run the task in the caller's thread
+ *
+ * @param[in] ctx       Task object
+ */
 void dispatch_task_perform(dispatch_task_t *ctx);
 
-// TODO: document me!
-// Causes the caller to wait synchronously until the task finishes executing
+/** Wait synchronously in the caller's thread for the task to finish executing
+ *
+ * @param[in] ctx       Task object
+ */
 void dispatch_task_wait(dispatch_task_t *ctx);
 
 #ifdef __cplusplus

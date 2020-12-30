@@ -19,5 +19,3 @@ rm -rf build
 cmake -B build -DHOST=ON
 cmake --build build --target install
 ./bin/lib_dispatch_tests -v
-
-#cd ..
