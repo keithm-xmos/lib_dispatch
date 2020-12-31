@@ -1,5 +1,5 @@
 // Copyright (c) 2020, XMOS Ltd, All rights reserved
-#include "lib_dispatch/api/dispatch_queue_xcore.h"
+#include "lib_dispatch/api/dispatch_queue_metal.h"
 
 #include <stdbool.h>
 #include <stdlib.h>

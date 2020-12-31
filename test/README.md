@@ -4,7 +4,7 @@
 
 Run the following commands to build the test firmware:
 
-    $ cmake -B build -DXCORE=ON
+    $ cmake -B build -DBARE_METAL=ON
     $ cmake --build build --target install
     $ xrun --xscope --args bin/lib_dispatch_tests.xe -v
 

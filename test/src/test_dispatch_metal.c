@@ -2,7 +2,7 @@
 #include <string.h>
 
 #include "lib_dispatch/api/dispatch.h"
-#include "lib_dispatch/api/dispatch_queue_xcore.h"
+#include "lib_dispatch/api/dispatch_queue_metal.h"
 #include "test_dispatch_queue.h"
 #include "unity.h"
 #include "unity_fixture.h"
@@ -11,13 +11,13 @@
 #define TEST_STATIC_THREAD_COUNT (3)
 #define TEST_STATIC_STACK_SIZE (1024)
 
-TEST_GROUP(dispatch_queue_xcore);
+TEST_GROUP(dispatch_queue_metal);
 
-TEST_SETUP(dispatch_queue_xcore) {}
+TEST_SETUP(dispatch_queue_metal) {}
 
-TEST_TEAR_DOWN(dispatch_queue_xcore) {}
+TEST_TEAR_DOWN(dispatch_queue_metal) {}
 
-TEST(dispatch_queue_xcore, test_static) {
+TEST(dispatch_queue_metal, test_static) {
   // create queue with data on the stack
   dispatch_xcore_queue_t queue_s;
   size_t thread_task_ids[TEST_STATIC_THREAD_COUNT];
@@ -55,6 +55,6 @@ TEST(dispatch_queue_xcore, test_static) {
   TEST_ASSERT_EQUAL_INT(task_count, arg.count);
 }
 
-TEST_GROUP_RUNNER(dispatch_queue_xcore) {
-  RUN_TEST_CASE(dispatch_queue_xcore, test_static);
+TEST_GROUP_RUNNER(dispatch_queue_metal) {
+  RUN_TEST_CASE(dispatch_queue_metal, test_static);
 }

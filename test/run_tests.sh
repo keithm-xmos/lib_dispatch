@@ -8,9 +8,9 @@ cmake -B build -DFREERTOS=ON
 cmake --build build --target install
 xrun --xscope --args bin/lib_dispatch_tests.xe -v
 
-# run xcore build and tests
+# run bare-metal build and tests
 rm -rf build
-cmake -B build -DXCORE=ON
+cmake -B build -DBARE_METAL=ON
 cmake --build build --target install
 xrun --xscope --args bin/lib_dispatch_tests.xe -v
 

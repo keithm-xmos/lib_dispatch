@@ -6,8 +6,8 @@
 #include "unity.h"
 #include "unity_fixture.h"
 
-#if XCORE
-#include "test_dispatch_queue_xcore.h"
+#if BARE_METAL
+#include "test_dispatch_queue_metal.h"
 #elif FREERTOS
 #include "test_dispatch_queue_freertos.h"
 #elif HOST

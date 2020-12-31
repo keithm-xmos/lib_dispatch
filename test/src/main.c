@@ -21,12 +21,12 @@ static void RunTests(void* unused) {
 }
 #endif
 
-#if defined(XCORE)
+#if defined(BARE_METAL)
 static void RunTests(void* unused) {
   RUN_TEST_GROUP(dispatch_task);
   RUN_TEST_GROUP(dispatch_group);
   RUN_TEST_GROUP(dispatch_queue);
-  RUN_TEST_GROUP(dispatch_queue_xcore);
+  RUN_TEST_GROUP(dispatch_queue_metal);
   UnityEnd();
 }
 #endif

@@ -3,14 +3,14 @@ cmake_minimum_required(VERSION 3.14)
 #**********************
 # Options
 #**********************
-OPTION (XCORE "If enabled, will build the XCORE version." OFF)
+OPTION (BARE_METAL "If enabled, will build the bare-metal version." OFF)
 OPTION (HOST "If enabled, will build the x86 version." OFF)
 OPTION (FREERTOS "If enabled, will build the FreeRTOS version." OFF)
 
 #**********************
 # Setup XMOS toolchain
 #**********************
-if(XCORE OR FREERTOS)
+if(BARE_METAL OR FREERTOS)
   set(CMAKE_C_COMPILER "xcc")
   set(CMAKE_AR "xmosar")
   set(CMAKE_C_COMPILER_AR "xmosar")
@@ -48,7 +48,7 @@ set(INSTALL_DIR "${PROJECT_SOURCE_DIR}/bin")
 #**********************
 # Build flags
 #**********************
-if(XCORE OR FREERTOS)
+if(BARE_METAL OR FREERTOS)
   set(BUILD_FLAGS
     "-target=XCORE-AI-EXPLORER"
     "-fcmdline-buffer-bytes=1024"
@@ -64,10 +64,10 @@ if(XCORE OR FREERTOS)
   )
 endif()
 
-if(XCORE)
+if(BARE_METAL)
   set(BUILD_FLAGS
     ${BUILD_FLAGS} 
-    "-DXCORE"
+    "-DBARE_METAL"
   )
 elseif(FREERTOS)
   set(BUILD_FLAGS
@@ -85,7 +85,7 @@ add_executable(lib_dispatch_tests)
 target_compile_options(lib_dispatch_tests PRIVATE ${BUILD_FLAGS})
 target_link_options(lib_dispatch_tests PRIVATE ${BUILD_FLAGS})
 
-if(XCORE OR FREERTOS)
+if(BARE_METAL OR FREERTOS)
   set_target_properties(lib_dispatch_tests PROPERTIES OUTPUT_NAME lib_dispatch_tests.xe)
 else()
   target_link_libraries(lib_dispatch_tests stdc++ m pthread)
@@ -149,8 +149,8 @@ elseif(FREERTOS)
     "${AIOTSDK_DIR}/modules/lib_rtos_support/src"
   )
 else()
-  set(LIB_DISPATCH_SOURCES ${LIB_DISPATCH_XCORE_SOURCES})
-  set(TEST_DISPATCH_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/test_dispatch_xcore.c")
+  set(LIB_DISPATCH_SOURCES ${LIB_DISPATCH_METAL_SOURCES})
+  set(TEST_DISPATCH_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/test_dispatch_metal.c")
 endif()
 
 target_sources(lib_dispatch_tests
