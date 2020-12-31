@@ -46,7 +46,7 @@ TEST(dispatch_queue_metal, test_static) {
   int task_count = 4;
 
   arg.count = 0;
-  dispatch_task_init(&task, do_dispatch_queue_work, &arg);
+  dispatch_task_init(&task, do_standard_work, &arg);
   for (int i = 0; i < task_count; i++) {
     dispatch_queue_async_task(queue, &task);
   }

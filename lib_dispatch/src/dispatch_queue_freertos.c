@@ -78,6 +78,8 @@ void dispatch_queue_init(dispatch_queue_t *ctx) {
 
   debug_printf("dispatch_queue_init: name=%s\n", queue->name);
 
+  queue->next_id = DISPATCH_TASK_NONE + 1;
+
   // create workers
   for (int i = 0; i < queue->thread_count; i++) {
     queue->thread_task_ids[i] = DISPATCH_TASK_NONE;
@@ -90,17 +92,22 @@ void dispatch_queue_init(dispatch_queue_t *ctx) {
   }
 }
 
-void dispatch_queue_async_task(dispatch_queue_t *ctx, dispatch_task_t *task) {
+size_t dispatch_queue_async_task(dispatch_queue_t *ctx, dispatch_task_t *task) {
   assert(ctx);
   assert(task);
   dispatch_freertos_queue_t *queue = (dispatch_freertos_queue_t *)ctx;
 
-  debug_printf("dispatch_queue_async_task: name=%s\n", queue->name);
-
   // assign to this queue
   task->queue = ctx;
+  task->id = queue->next_id++;
+
+  debug_printf("dispatch_queue_async_task: name=%s   task=%d\n", queue->name,
+               task->id);
+
   // send to queue
   xQueueSend(queue->xQueue, task, portMAX_DELAY);
+
+  return task->id;
 }
 
 void dispatch_queue_wait(dispatch_queue_t *ctx) {
@@ -115,7 +122,7 @@ void dispatch_queue_wait(dispatch_queue_t *ctx) {
     busy_count = uxQueueMessagesWaiting(
         queue->xQueue);  // tasks on the queue are considered busy
     for (int i = 0; i < queue->thread_count; i++) {
-      if (queue->thread_task_ids[i] != DISPATCH_TASK_NONE) busy_count++;
+      if (VALID_TASK_ID(queue->thread_task_ids[i])) busy_count++;
     }
     // debug_printf("   dispatch_queue_wait: busy_count=%d\n", busy_count);
     if (busy_count == 0) return;
@@ -124,30 +131,80 @@ void dispatch_queue_wait(dispatch_queue_t *ctx) {
 
 void dispatch_queue_task_wait(dispatch_queue_t *ctx, int task_id) {
   assert(ctx);
-  assert(task_id > DISPATCH_TASK_NONE);
+  assert(VALID_TASK_ID(task_id));
 
   dispatch_freertos_queue_t *queue = (dispatch_freertos_queue_t *)ctx;
+  assert(task_id <= queue->next_id);
 
-  bool done_waiting = true;
+  debug_printf("dispatch_queue_task_wait: queue=%s   task=%d\n", queue->name,
+               task_id);
+
+  bool task_is_running;
+  bool tasks_are_waiting;
+  size_t num_running_tasks;
+  size_t min_running_task_id;
+  size_t front_task_id;
+  dispatch_task_t front_task;
 
   for (;;) {
-    done_waiting = true;
-    for (int i = 0; i < uxQueueMessagesWaiting(queue->xQueue); i++) {
-      dispatch_task_t queued_task;
-      if (xQueuePeek(queue->xQueue, &queued_task, 10)) {
-        if (queued_task.id == task_id) {
-          done_waiting = false;
-          break;
-        }
-      }
+    num_running_tasks = 0;
+    task_is_running = false;
+
+    // peek at the task at the front of the queue
+    if (xQueuePeek(queue->xQueue, &front_task, 10)) {
+      tasks_are_waiting = true;
+      front_task_id = front_task.id;
+      min_running_task_id = front_task_id;  // it must be lower
+    } else {
+      tasks_are_waiting = false;
+      front_task_id = DISPATCH_TASK_NONE;
+      min_running_task_id = queue->next_id;  // it must be lower, worst case
     }
+
+    // check currently running tasks
     for (int i = 0; i < queue->thread_count; i++) {
+      if (VALID_TASK_ID(queue->thread_task_ids[i])) {
+        num_running_tasks++;
+        min_running_task_id =
+            MIN_TASK_ID(queue->thread_task_ids[i], min_running_task_id);
+      }
+
       if (queue->thread_task_ids[i] == task_id) {
-        done_waiting = false;
-        break;
+        // this task is still running
+        task_is_running = true;
       }
     }
-    if (done_waiting) break;
+
+    if (task_is_running == false) {
+      // task_id is NOT running so...
+
+      // if task_id is less than the id of the task at the front of the queue,
+      // then task_id must be finished (or it would be running)
+      if (task_id < front_task_id) {
+        return;
+      }
+
+      // if no tasks are running and tasks are waiting in the queue,
+      // the worker threads need a moment so back off a bit and continue loop.
+      if ((num_running_tasks == 0) && (tasks_are_waiting)) {
+        vTaskDelay(10);
+        continue;
+      }
+
+      // when the lowest running task id equals the queue's next_id,
+      // it means the queue is empty so the task_id must be finished (or
+      // something would be running)
+      if (min_running_task_id == queue->next_id) {
+        return;
+      }
+
+      // if task_id is greater than the lowest running task id,
+      //  but is not running and nothig is waiting, it must have finished
+      //  already
+      if ((task_id > min_running_task_id) && (tasks_are_waiting == false)) {
+        return;
+      }
+    }
   }
 }
 

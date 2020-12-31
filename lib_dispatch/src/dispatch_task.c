@@ -6,20 +6,15 @@
 #include "debug_print.h"
 #include "lib_dispatch/api/dispatch.h"
 
-size_t dispatch_task_init(dispatch_task_t *ctx, dispatch_function_t fn,
-                          void *arg) {
+void dispatch_task_init(dispatch_task_t *ctx, dispatch_function_t fn,
+                        void *arg) {
   assert(ctx);
   assert(fn);
 
-  static int next_id = DISPATCH_TASK_NONE + 1;
-
-  ctx->id = next_id++;
   ctx->fn = fn;
   ctx->arg = arg;
   ctx->notify = NULL;
   ctx->queue = NULL;
-
-  return ctx->id;
 }
 
 void dispatch_task_notify(dispatch_task_t *ctx, dispatch_task_t *task) {
@@ -30,6 +25,8 @@ void dispatch_task_notify(dispatch_task_t *ctx, dispatch_task_t *task) {
 
 void dispatch_task_perform(dispatch_task_t *ctx) {
   assert(ctx);
+
+  debug_printf("dispatch_task_perform:  id=%d\n", ctx->id);
 
   // call function in current thread
   ctx->fn(ctx->arg);

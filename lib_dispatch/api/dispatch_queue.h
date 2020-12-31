@@ -40,19 +40,23 @@ void dispatch_queue_destroy(dispatch_queue_t* ctx);
 /** Run task asyncronously
  *
  * Note: The XCORE bare-metal implementation is currently limited and does not
- * store queued tasks in a container.  Instead, it will run the N+1th task
- * syncronously in the callers thread if all N workers are busy.  This
- * limitation may be eliminated in a future release.
+ * store queued tasks in a container.  Instead, this function blocks the callers
+ * thread until a worker thread is available.  This limitation may be eliminated
+ * in a future release.
  *
  * @param[in] ctx   Dispatch queue object
  * @param[in] task  Task object
+ *
+ * @return          Task ID that can be used in a call to
+ * dispatch_queue_task_wait
  */
-void dispatch_queue_async_task(dispatch_queue_t* ctx, dispatch_task_t* task);
+size_t dispatch_queue_async_task(dispatch_queue_t* ctx, dispatch_task_t* task);
 
 /** Run group asyncronously
  *
  * @param[in] ctx    Dispatch queue object
  * @param[in] group  Group object
+ *
  */
 void dispatch_queue_async_group(dispatch_queue_t* ctx, dispatch_group_t* group);
 
@@ -61,8 +65,11 @@ void dispatch_queue_async_group(dispatch_queue_t* ctx, dispatch_group_t* group);
  * @param[in] ctx   Dispatch queue object
  * @param[in] N     Number of iterations to run the task
  * @param[in] task  Task object
+ *
+ * @return          Task ID that can be used in a call to
+ * dispatch_queue_task_wait
  */
-void dispatch_queue_for(dispatch_queue_t* ctx, int N, dispatch_task_t* task);
+size_t dispatch_queue_for(dispatch_queue_t* ctx, int N, dispatch_task_t* task);
 
 /** Wait synchronously in the caller's thread for the task with the given ID to
  * finish executing

@@ -9,6 +9,12 @@ typedef struct test_work_arg {
 } test_work_arg_t;
 
 DISPATCH_TASK_FUNCTION
-void do_dispatch_queue_work(void *p);
+void do_limited_work(void *p);
+
+DISPATCH_TASK_FUNCTION
+void do_standard_work(void *p);
+
+DISPATCH_TASK_FUNCTION
+void do_extended_work(void *p);
 
 #endif  // TEST_DISPATCH_QUEUE_H_

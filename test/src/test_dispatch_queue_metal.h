@@ -18,7 +18,7 @@ void mutex_unlock(thread_mutex_t *lock);
 void mutex_destroy(thread_mutex_t *lock);
 
 inline void look_busy(int milliseconds) {
-  uint32_t ticks = milliseconds * PLATFORM_REFERENCE_MHZ;
+  uint32_t ticks = milliseconds * 1000 * PLATFORM_REFERENCE_MHZ;
   hwtimer_t timer = hwtimer_alloc();
   hwtimer_delay(timer, ticks);
   hwtimer_free(timer);

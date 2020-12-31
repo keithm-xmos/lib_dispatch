@@ -94,6 +94,8 @@ void dispatch_queue_init(dispatch_queue_t *ctx) {
 
   int stack_offset = 0;
 
+  queue->next_id = DISPATCH_TASK_NONE + 1;
+
   // create workers
   for (int i = 0; i < queue->thread_count; i++) {
     queue->thread_task_ids[i] = DISPATCH_TASK_NONE;
@@ -111,7 +113,7 @@ void dispatch_queue_init(dispatch_queue_t *ctx) {
   }
 }
 
-void dispatch_queue_async_task(dispatch_queue_t *ctx, dispatch_task_t *task) {
+size_t dispatch_queue_async_task(dispatch_queue_t *ctx, dispatch_task_t *task) {
   assert(ctx);
   assert(task);
   dispatch_xcore_queue_t *queue = (dispatch_xcore_queue_t *)ctx;
@@ -120,16 +122,21 @@ void dispatch_queue_async_task(dispatch_queue_t *ctx, dispatch_task_t *task) {
 
   // lookup READY task
   int worker_index = -1;
-  for (int i = 0; i < queue->thread_count; i++) {
-    if (queue->thread_task_ids[i] == DISPATCH_TASK_NONE) {
-      worker_index = i;
-      break;
+  for (;;) {
+    for (int i = 0; i < queue->thread_count; i++) {
+      if (INVALID_TASK_ID(queue->thread_task_ids[i])) {
+        worker_index = i;
+        break;
+      }
     }
+    if (worker_index >= 0) break;
   }
 
   if (worker_index >= 0) {
     // assign to this queue
     task->queue = ctx;
+    task->id = queue->next_id++;
+
     // signal worker to wake up (blocks waiting for worker)
     chan_out_byte(queue->thread_chanends[worker_index], DISPATCH_WAKE_EVT);
     // set thread task to the task ID it is about to execute
@@ -137,10 +144,9 @@ void dispatch_queue_async_task(dispatch_queue_t *ctx, dispatch_task_t *task) {
     // send task to worker
     chan_out_buf_byte(queue->thread_chanends[worker_index], (void *)&task[0],
                       sizeof(dispatch_task_t));
-  } else {
-    // run in callers thread
-    dispatch_task_perform(task);
   }
+
+  return task->id;
 }
 
 void dispatch_queue_wait(dispatch_queue_t *ctx) {
@@ -154,7 +160,7 @@ void dispatch_queue_wait(dispatch_queue_t *ctx) {
   for (;;) {
     busy_count = 0;
     for (int i = 0; i < queue->thread_count; i++) {
-      if (queue->thread_task_ids[i] != DISPATCH_TASK_NONE) busy_count++;
+      if (VALID_TASK_ID(queue->thread_task_ids[i])) busy_count++;
     }
     if (busy_count == 0) return;
   }
@@ -166,17 +172,17 @@ void dispatch_queue_task_wait(dispatch_queue_t *ctx, int task_id) {
 
   dispatch_xcore_queue_t *queue = (dispatch_xcore_queue_t *)ctx;
 
-  bool done_waiting = true;
+  bool task_is_running = false;
 
   for (;;) {
-    done_waiting = true;
+    task_is_running = false;
     for (int i = 0; i < queue->thread_count; i++) {
       if (queue->thread_task_ids[i] == task_id) {
-        done_waiting = false;
+        task_is_running = true;
         break;
       }
     }
-    if (done_waiting) break;
+    if (!task_is_running) return;
   }
 }
 

@@ -11,6 +11,9 @@
 #endif
 
 #define DISPATCH_TASK_NONE (0)
+#define VALID_TASK_ID(X) (X > DISPATCH_TASK_NONE)
+#define INVALID_TASK_ID(X) (X <= DISPATCH_TASK_NONE)
+#define MIN_TASK_ID(X, Y) (((X) < (Y)) ? (X) : (Y))
 
 typedef void (*dispatch_function_t)(void *);
 
@@ -18,11 +21,11 @@ struct dispatch_queue_struct;
 
 typedef struct dispatch_task_struct dispatch_task_t;
 struct dispatch_task_struct {
-  size_t id;                            // unique identifier
   dispatch_function_t fn;               // the function to perform
   void *arg;                            // argument to pass to the function
   struct dispatch_task_struct *notify;  // the task to notify
   struct dispatch_queue_struct *queue;  // parent queue
+  size_t id;                            // unique identifier
 };
 
 #ifdef __cplusplus
@@ -35,11 +38,9 @@ extern "C" {
  * @param[in] fn       Function to perform, signature must be void my_fun(void
  * *arg)
  * @param[in] arg      Function argument
- *
- * @return             Task ID
  */
-size_t dispatch_task_init(dispatch_task_t *ctx, dispatch_function_t fn,
-                          void *arg);
+void dispatch_task_init(dispatch_task_t *ctx, dispatch_function_t fn,
+                        void *arg);
 
 /** Schedules the execution of the notify task after the completion of the
  * current task

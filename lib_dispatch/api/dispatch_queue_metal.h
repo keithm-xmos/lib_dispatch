@@ -13,9 +13,10 @@ struct dispatch_thread_data_struct {
 typedef struct dispatch_xcore_struct dispatch_xcore_queue_t;
 struct dispatch_xcore_struct {
   char name[32];  // to identify it when debugging
-  int length;
-  int thread_count;
-  int thread_stack_size;
+  size_t length;
+  size_t thread_count;
+  size_t thread_stack_size;
+  size_t next_id;
   char *thread_stack;
   size_t *thread_task_ids;
   dispatch_thread_data_t *thread_data;

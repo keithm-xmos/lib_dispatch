@@ -9,8 +9,6 @@
 #include "lib_dispatch/api/dispatch_queue.h"
 #include "lib_dispatch/api/dispatch_task.h"
 
-#define DISPATCH_TASK_NONE (0)
-
 void dispatch_thread_handler(dispatch_host_queue_t *queue, int *task_id) {
   std::unique_lock<std::mutex> lock(queue->lock);
 
@@ -72,6 +70,7 @@ void dispatch_queue_init(dispatch_queue_t *ctx) {
   std::printf("dispatch_queue_init: name=%s\n", queue->name.c_str());
 
   queue->quit = false;
+  queue->next_id = DISPATCH_TASK_NONE + 1;
   for (size_t i = 0; i < queue->threads.size(); i++) {
     queue->thread_task_ids[i] = DISPATCH_TASK_NONE;
     queue->threads[i] = std::thread(&dispatch_thread_handler, queue,
@@ -79,7 +78,7 @@ void dispatch_queue_init(dispatch_queue_t *ctx) {
   }
 }
 
-void dispatch_queue_async_task(dispatch_queue_t *ctx, dispatch_task_t *task) {
+size_t dispatch_queue_async_task(dispatch_queue_t *ctx, dispatch_task_t *task) {
   assert(ctx);
   assert(task);
   dispatch_host_queue_t *queue = static_cast<dispatch_host_queue_t *>(ctx);
@@ -88,6 +87,7 @@ void dispatch_queue_async_task(dispatch_queue_t *ctx, dispatch_task_t *task) {
 
   // assign to this queue
   task->queue = static_cast<dispatch_queue_struct *>(ctx);
+  task->id = queue->next_id++;
 
   std::unique_lock<std::mutex> lock(queue->lock);
   queue->deque.push_back(*task);
@@ -96,6 +96,8 @@ void dispatch_queue_async_task(dispatch_queue_t *ctx, dispatch_task_t *task) {
   lock.unlock();
 
   queue->cv.notify_one();
+
+  return task->id;
 }
 
 void dispatch_queue_wait(dispatch_queue_t *ctx) {
@@ -111,7 +113,7 @@ void dispatch_queue_wait(dispatch_queue_t *ctx) {
     busy_count = queue->deque.size();  // tasks on the queue are considered busy
     lock.unlock();
     for (int i = 0; i < queue->threads.size(); i++) {
-      if (queue->thread_task_ids[i] != DISPATCH_TASK_NONE) busy_count++;
+      if (VALID_TASK_ID(queue->thread_task_ids[i])) busy_count++;
     }
     if (busy_count == 0) return;
   }
@@ -119,7 +121,7 @@ void dispatch_queue_wait(dispatch_queue_t *ctx) {
 
 void dispatch_queue_task_wait(dispatch_queue_t *ctx, int task_id) {
   assert(ctx);
-  assert(task_id > DISPATCH_TASK_NONE);
+  assert(VALID_TASK_ID(task_id));
 
   dispatch_host_queue_t *queue = (dispatch_host_queue_t *)ctx;
 

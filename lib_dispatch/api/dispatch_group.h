@@ -6,13 +6,10 @@
 
 #include "lib_dispatch/api/dispatch_task.h"
 
-#define DISPATCH_GROUP_NONE (0)
-
 struct dispatch_queue_struct;
 
 typedef struct dispatch_group_struct dispatch_group_t;
 struct dispatch_group_struct {
-  size_t id;
   size_t length;
   size_t count;
   dispatch_task_t *tasks;
@@ -36,10 +33,8 @@ dispatch_group_t *dispatch_group_create(size_t length);
 /** Initialize a new task group
  *
  * @param[in,out] ctx  Group object
- *
- * @return    New group object
  */
-size_t dispatch_group_init(dispatch_group_t *ctx);
+void dispatch_group_init(dispatch_group_t *ctx);
 
 /** Free memory allocated by dispatch_group_create
  *
