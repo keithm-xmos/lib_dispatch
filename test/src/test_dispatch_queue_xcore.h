@@ -2,6 +2,7 @@
 #ifndef TEST_DISPATCH_QUEUE_XCORE_H_
 #define TEST_DISPATCH_QUEUE_XCORE_H_
 
+#include <platform.h>  // for PLATFORM_REFERENCE_MHZ
 #include <xcore/hwtimer.h>
 
 #define QUEUE_LENGTH (3)
@@ -10,17 +11,16 @@
 
 typedef int thread_mutex_t;
 
-void keep_busy();
+void look_busy(int milliseconds);
 void mutex_init(thread_mutex_t *lock);
 void mutex_lock(thread_mutex_t *lock);
 void mutex_unlock(thread_mutex_t *lock);
 void mutex_destroy(thread_mutex_t *lock);
 
-inline void keep_busy() {
-  unsigned magic_duration = 100000000;
+inline void look_busy(int milliseconds) {
+  uint32_t ticks = milliseconds * PLATFORM_REFERENCE_MHZ;
   hwtimer_t timer = hwtimer_alloc();
-  unsigned time = hwtimer_get_time(timer);
-  hwtimer_wait_until(timer, time + magic_duration);
+  hwtimer_delay(timer, ticks);
   hwtimer_free(timer);
 }
 

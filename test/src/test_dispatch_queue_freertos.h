@@ -11,15 +11,15 @@
 
 typedef SemaphoreHandle_t thread_mutex_t;
 
-void keep_busy();
+void look_busy(int milliseconds);
 void mutex_init(thread_mutex_t *lock);
 void mutex_lock(thread_mutex_t *lock);
 void mutex_unlock(thread_mutex_t *lock);
 void mutex_destroy(thread_mutex_t *lock);
 
-inline void keep_busy() {
-  unsigned magic_duration = 1000;
-  vTaskDelay(magic_duration);
+inline void look_busy(int milliseconds) {
+  const TickType_t xDelay = milliseconds / portTICK_PERIOD_MS;
+  vTaskDelay(xDelay);
 }
 
 inline void mutex_init(thread_mutex_t *lock) {

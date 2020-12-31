@@ -20,7 +20,7 @@ DISPATCH_TASK_FUNCTION
 void do_dispatch_queue_work(void *p) {
   test_work_arg_t *arg = (test_work_arg_t *)p;
 
-  keep_busy();
+  look_busy(500);
 
   mutex_lock(&lock);
   arg->count++;

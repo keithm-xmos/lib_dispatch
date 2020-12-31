@@ -31,10 +31,12 @@ extern "C" {
 
 /** Initialize a new task
  *
- * @param[in] ctx       Task object
- * @param[in] fn        Function to perform, signature must be void my_fun(void
+ * @param[in,out] ctx  Task object
+ * @param[in] fn       Function to perform, signature must be void my_fun(void
  * *arg)
- * @param[in] arg       Function argument
+ * @param[in] arg      Function argument
+ *
+ * @return             Task ID
  */
 size_t dispatch_task_init(dispatch_task_t *ctx, dispatch_function_t fn,
                           void *arg);
@@ -42,20 +44,20 @@ size_t dispatch_task_init(dispatch_task_t *ctx, dispatch_function_t fn,
 /** Schedules the execution of the notify task after the completion of the
  * current task
  *
- * @param[in] ctx       Task object
- * @param[in] task      Task to notify
+ * @param[in] ctx   Task object
+ * @param[in] task  Task to notify
  */
 void dispatch_task_notify(dispatch_task_t *ctx, dispatch_task_t *task);
 
 /** Run the task in the caller's thread
  *
- * @param[in] ctx       Task object
+ * @param[in] ctx  Task object
  */
 void dispatch_task_perform(dispatch_task_t *ctx);
 
 /** Wait synchronously in the caller's thread for the task to finish executing
  *
- * @param[in] ctx       Task object
+ * @param[in] ctx  Task object
  */
 void dispatch_task_wait(dispatch_task_t *ctx);
 

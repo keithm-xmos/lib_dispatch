@@ -15,25 +15,25 @@ extern "C" {
 
 /** Create a new dispatch queue
  *
- * @param[in] length       Maximum number of tasks in the queue
- * @param[in] thread_count Number of thread workers
- * @param[in] stack_size   Size (in words) of the stack for each thread worker
- * @param[in] name         Queue name used for debugging
+ * @param[in] length        Maximum number of tasks in the queue
+ * @param[in] thread_count  Number of thread workers
+ * @param[in] stack_size    Size (in words) of the stack for each thread worker
+ * @param[in] name          Queue name used for debugging
  *
- * @return    New dispatch queue object
+ * @return                  New dispatch queue object
  */
 dispatch_queue_t* dispatch_queue_create(size_t length, size_t thread_count,
                                         size_t stack_size, const char* name);
 
 /** Initialize a new dispatch queue
  *
- * @param[in] ctx       Dispatch queue object
+ * @param[in,out] ctx  Dispatch queue object
  */
 void dispatch_queue_init(dispatch_queue_t* ctx);
 
 /** Free memory allocated by dispatch_queue_create
  *
- * @param[in] ctx       Dispatch queue object
+ * @param[in] ctx  Dispatch queue object
  */
 void dispatch_queue_destroy(dispatch_queue_t* ctx);
 
@@ -44,37 +44,37 @@ void dispatch_queue_destroy(dispatch_queue_t* ctx);
  * syncronously in the callers thread if all N workers are busy.  This
  * limitation may be eliminated in a future release.
  *
- * @param[in] ctx       Dispatch queue object
- * @param[in] task      Task object
+ * @param[in] ctx   Dispatch queue object
+ * @param[in] task  Task object
  */
 void dispatch_queue_async_task(dispatch_queue_t* ctx, dispatch_task_t* task);
 
 /** Run group asyncronously
  *
- * @param[in] ctx       Dispatch queue object
- * @param[in] group     Group object
+ * @param[in] ctx    Dispatch queue object
+ * @param[in] group  Group object
  */
 void dispatch_queue_async_group(dispatch_queue_t* ctx, dispatch_group_t* group);
 
 /** Run a task asyncronously N times
  *
- * @param[in] ctx       Dispatch queue object
- * @param[in] N         Number of iterations to run the task
- * @param[in] task      Task object
+ * @param[in] ctx   Dispatch queue object
+ * @param[in] N     Number of iterations to run the task
+ * @param[in] task  Task object
  */
 void dispatch_queue_for(dispatch_queue_t* ctx, int N, dispatch_task_t* task);
 
 /** Wait synchronously in the caller's thread for the task with the given ID to
  * finish executing
  *
- * @param[in] ctx       Dispatch queue object
- * @param[in] task_id   Task ID
+ * @param[in] ctx      Dispatch queue object
+ * @param[in] task_id  Task ID
  */
 void dispatch_queue_task_wait(dispatch_queue_t* ctx, int task_id);
 
 /** Wait synchronously in the caller's thread for all tasks to finish executing
  *
- * @param[in] ctx       Dispatch queue object
+ * @param[in] ctx  Dispatch queue object
  */
 void dispatch_queue_wait(dispatch_queue_t* ctx);
 
