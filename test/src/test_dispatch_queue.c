@@ -183,7 +183,7 @@ TEST(dispatch_queue, test_async_group) {
   dispatch_queue_destroy(queue);
 }
 
-TEST(dispatch_queue, test_mixed_durations) {
+TEST(dispatch_queue, test_mixed_durations1) {
   dispatch_queue_t *queue;
   dispatch_task_t limited_task;
   dispatch_task_t *extended_tasks;
@@ -195,7 +195,7 @@ TEST(dispatch_queue, test_mixed_durations) {
 
   for (int i = 0; i < max_extended_task_count; i++) {
     queue = dispatch_queue_create(queue_length, queue_thread_count,
-                                  QUEUE_STACK_SIZE, "test_mixed_durations");
+                                  QUEUE_STACK_SIZE, "test_mixed_durations1");
 
     extended_task_count = i + 1;
 
@@ -228,15 +228,69 @@ TEST(dispatch_queue, test_mixed_durations) {
     dispatch_queue_task_wait(queue, extended_tasks[i].id);
     TEST_ASSERT_EQUAL_INT(extended_task_count + 1, arg.count);
 
+    free(extended_tasks);
     dispatch_queue_destroy(queue);
   }
+}
+
+TEST(dispatch_queue, test_mixed_durations2) {
+  dispatch_queue_t *queue;
+  dispatch_task_t extended_task1;
+  dispatch_task_t extended_task2;
+  dispatch_task_t limited_task1;
+  dispatch_task_t limited_task2;
+  dispatch_task_t limited_task3;
+  dispatch_group_t *limited_group;
+  test_work_arg_t extended_arg;
+  test_work_arg_t limited_arg;
+  int queue_length = QUEUE_LENGTH;
+  int queue_thread_count = QUEUE_THREAD_COUNT;
+
+  queue = dispatch_queue_create(queue_length, queue_thread_count,
+                                QUEUE_STACK_SIZE, "test_mixed_durations2");
+  limited_group = dispatch_group_create(3);
+
+  dispatch_task_init(&extended_task1, do_extended_work, &extended_arg);
+  dispatch_task_init(&extended_task2, do_extended_work, &extended_arg);
+  dispatch_task_init(&limited_task1, do_limited_work, &limited_arg);
+  dispatch_task_init(&limited_task2, do_limited_work, &limited_arg);
+  dispatch_task_init(&limited_task3, do_limited_work, &limited_arg);
+  dispatch_group_add(limited_group, &limited_task1);
+  dispatch_group_add(limited_group, &limited_task2);
+  dispatch_group_add(limited_group, &limited_task3);
+
+  extended_arg.count = 0;
+  limited_arg.count = 0;
+
+  // add first extended task
+  dispatch_queue_async_task(queue, &extended_task1);
+
+  // now wait for the first extended task
+  dispatch_task_wait(&extended_task1);
+  TEST_ASSERT_EQUAL_INT(1, extended_arg.count);
+
+  // add limited task group, and second extended task
+  dispatch_queue_async_group(queue, limited_group);
+  dispatch_queue_async_task(queue, &extended_task2);
+
+  // now wait for the limited tasks
+  dispatch_group_wait(limited_group);
+  TEST_ASSERT_EQUAL_INT(3, limited_arg.count);
+
+  // now wait for the second extended task
+  dispatch_task_wait(&extended_task2);
+  TEST_ASSERT_EQUAL_INT(2, extended_arg.count);
+
+  dispatch_group_destroy(limited_group);
+  dispatch_queue_destroy(queue);
 }
 
 TEST_GROUP_RUNNER(dispatch_queue) {
   RUN_TEST_CASE(dispatch_queue, test_wait_task);
   RUN_TEST_CASE(dispatch_queue, test_wait_group);
   RUN_TEST_CASE(dispatch_queue, test_async_task);
-  RUN_TEST_CASE(dispatch_queue, test_mixed_durations);
+  RUN_TEST_CASE(dispatch_queue, test_mixed_durations1);
+  RUN_TEST_CASE(dispatch_queue, test_mixed_durations2);
   RUN_TEST_CASE(dispatch_queue, test_async_group);
   RUN_TEST_CASE(dispatch_queue, test_for);
 }
