@@ -1,16 +1,16 @@
 [submodule "lib_logging"]
 	path = lib_logging
 	url = git@github.com:xmos/lib_logging.git
+[submodule "lib_xassert"]
+	path = lib_xassert
+	url = git@github.com:xmos/lib_xassert.git
 [submodule "test/Unity"]
 	path = test/Unity
 	url = git@github.com:ThrowTheSwitch/Unity.git
-[submodule "FreeRTOS"]
-	path = test/FreeRTOS
+[submodule "extern/FreeRTOS"]
+	path = extern/FreeRTOS
 	url = git@github.com:xmos/FreeRTOS.git
 	branch = release/xcore-smp
-[submodule "test/aiot_sdk"]
-	path = test/aiot_sdk
+[submodule "extern/aiot_sdk"]
+	path = extern/aiot_sdk
 	url = git@github.com:xmos/aiot_sdk.git
-[submodule "test/lib_xassert"]
-	path = lib_xassert
-	url = git@github.com:xmos/lib_xassert.git
