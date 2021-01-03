@@ -50,7 +50,7 @@ set(BUILD_FLAGS
   "-Wno-xcore-fptrgroup"
   "-Wno-unknown-pragmas"
   "-report"
-  "-DDEBUG_PRINT_ENABLE=1"
+  "-DDEBUG_PRINT_ENABLE=0"
   "-march=xs3a"
   "-Os"
 )

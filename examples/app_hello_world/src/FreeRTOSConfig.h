@@ -66,7 +66,7 @@ your application. */
 #define configASSERT(x) xassert(x)
 
 /* Define to enable debug_printf() */
-#define configENABLE_DEBUG_PRINTF 1
+#define configENABLE_DEBUG_PRINTF 0
 
 /* Define to map sprintf and snprintf to the
  * lite versions in lib_rtos_support */
@@ -74,7 +74,7 @@ your application. */
 #define configUSE_DEBUG_SPRINTF 1
 
 /* Define to enable debug prints from tasks.c */
-#define configTASKS_DEBUG 1
+#define configTASKS_DEBUG 0
 
 /* FreeRTOS MPU specific definitions. */
 #define configINCLUDE_APPLICATION_DEFINED_PRIVILEGED_FUNCTIONS 0
