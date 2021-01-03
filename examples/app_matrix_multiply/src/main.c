@@ -110,7 +110,7 @@ static int multi_thread_mat_mul() {
   ticks = hwtimer_get_time(hwtimer);
 
   // add group to dispatch queue
-  dispatch_queue_async_group(queue, group);
+  dispatch_queue_add_group(queue, group);
   // wait for all tasks in the group to finish executing
   dispatch_group_wait(group);
 

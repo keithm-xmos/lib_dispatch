@@ -36,7 +36,7 @@ static void hello_world(void* unused) {
 
   // add 3 tasks to the dispatch queue
   for (int i = 0; i < 3; i++) {
-    dispatch_queue_async_task(queue, &tasks[i]);
+    dispatch_queue_add_task(queue, &tasks[i]);
   }
 
   // wait for all tasks to finish executing

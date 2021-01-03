@@ -78,12 +78,12 @@ void dispatch_queue_init(dispatch_queue_t *ctx) {
   }
 }
 
-size_t dispatch_queue_async_task(dispatch_queue_t *ctx, dispatch_task_t *task) {
+size_t dispatch_queue_add_task(dispatch_queue_t *ctx, dispatch_task_t *task) {
   assert(ctx);
   assert(task);
   dispatch_host_queue_t *queue = static_cast<dispatch_host_queue_t *>(ctx);
 
-  std::printf("dispatch_queue_async_task: name=%s\n", queue->name.c_str());
+  std::printf("dispatch_queue_add_task: name=%s\n", queue->name.c_str());
 
   // assign to this queue
   task->queue = static_cast<dispatch_queue_struct *>(ctx);

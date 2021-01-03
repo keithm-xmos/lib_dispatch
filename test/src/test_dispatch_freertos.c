@@ -46,7 +46,7 @@ TEST(dispatch_queue_freertos, test_static) {
   arg.count = 0;
   dispatch_task_init(&task, do_standard_work, &arg);
   for (int i = 0; i < task_count; i++) {
-    dispatch_queue_async_task(queue, &task);
+    dispatch_queue_add_task(queue, &task);
   }
   dispatch_queue_wait(queue);
 
@@ -103,7 +103,7 @@ TEST(dispatch_queue_freertos, test_parallel) {
   multi_thread_ticks = hwtimer_get_time(hwtimer);
 
   // add group to dispatch queue
-  dispatch_queue_async_group(queue, group);
+  dispatch_queue_add_group(queue, group);
   // wait for all tasks in the group to finish executing
   dispatch_group_wait(group);
 

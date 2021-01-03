@@ -92,7 +92,7 @@ void dispatch_queue_init(dispatch_queue_t *ctx) {
   }
 }
 
-size_t dispatch_queue_async_task(dispatch_queue_t *ctx, dispatch_task_t *task) {
+size_t dispatch_queue_add_task(dispatch_queue_t *ctx, dispatch_task_t *task) {
   assert(ctx);
   assert(task);
   dispatch_freertos_queue_t *queue = (dispatch_freertos_queue_t *)ctx;
@@ -101,7 +101,7 @@ size_t dispatch_queue_async_task(dispatch_queue_t *ctx, dispatch_task_t *task) {
   task->queue = ctx;
   task->id = queue->next_id++;
 
-  debug_printf("dispatch_queue_async_task: name=%s   task=%d\n", queue->name,
+  debug_printf("dispatch_queue_add_task: name=%s   task=%d\n", queue->name,
                task->id);
 
   // send to queue

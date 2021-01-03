@@ -37,7 +37,7 @@ void dispatch_queue_init(dispatch_queue_t* ctx);
  */
 void dispatch_queue_destroy(dispatch_queue_t* ctx);
 
-/** Run task asyncronously
+/** Add a task to the dispatch queue
  *
  * Note: The XCORE bare-metal implementation is currently limited and does not
  * store queued tasks in a container.  Instead, this function blocks the callers
@@ -50,15 +50,28 @@ void dispatch_queue_destroy(dispatch_queue_t* ctx);
  * @return          Task ID that can be used in a call to
  * dispatch_queue_task_wait
  */
-size_t dispatch_queue_async_task(dispatch_queue_t* ctx, dispatch_task_t* task);
+size_t dispatch_queue_add_task(dispatch_queue_t* ctx, dispatch_task_t* task);
 
-/** Run group asyncronously
+/** Add a group to the dispatch queue
  *
  * @param[in] ctx    Dispatch queue object
  * @param[in] group  Group object
  *
  */
-void dispatch_queue_async_group(dispatch_queue_t* ctx, dispatch_group_t* group);
+void dispatch_queue_add_group(dispatch_queue_t* ctx, dispatch_group_t* group);
+
+/** Create a task and add to the dispatch queue
+ *
+ * @param[in] ctx Dispatch queue object
+ * @param[in] fn  Function to perform, signature must be void my_fun(void
+ * *arg)
+ * @param[in] arg  Function argument
+ *
+ * @return         Task ID that can be used in a call to
+ * dispatch_queue_task_wait
+ */
+size_t dispatch_queue_add_function(dispatch_queue_t* ctx,
+                                   dispatch_function_t fn, void* arg);
 
 /** Run a task asyncronously N times
  *
