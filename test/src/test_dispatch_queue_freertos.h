@@ -23,19 +23,15 @@ inline void look_busy(int milliseconds) {
 }
 
 inline void mutex_init(thread_mutex_t *lock) {
-  // *lock = xSemaphoreCreateMutex();
+  *lock = xSemaphoreCreateMutex();
 }
 
 inline void mutex_lock(thread_mutex_t *lock) {
-  // xSemaphoreTake(*lock, portMAX_DELAY);
+  xSemaphoreTake(*lock, portMAX_DELAY);
 }
 
-inline void mutex_unlock(thread_mutex_t *lock) {
-  // xSemaphoreGive(*lock);
-}
+inline void mutex_unlock(thread_mutex_t *lock) { xSemaphoreGive(*lock); }
 
-inline void mutex_destroy(thread_mutex_t *lock) {
-  // vSemaphoreDelete(*lock);
-}
+inline void mutex_destroy(thread_mutex_t *lock) { vSemaphoreDelete(*lock); }
 
 #endif  // TEST_DISPATCH_QUEUE_FREERTOS_H_
