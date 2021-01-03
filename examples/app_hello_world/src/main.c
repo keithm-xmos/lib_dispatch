@@ -34,7 +34,7 @@ static void hello_world(void* unused) {
     dispatch_task_init(&tasks[i], do_work, &args[i]);
   }
 
-  // initialize 3 tasks to the dispatch queue
+  // add 3 tasks to the dispatch queue
   for (int i = 0; i < 3; i++) {
     dispatch_queue_async_task(queue, &tasks[i]);
   }

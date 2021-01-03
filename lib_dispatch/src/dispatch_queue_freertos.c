@@ -124,7 +124,6 @@ void dispatch_queue_wait(dispatch_queue_t *ctx) {
     for (int i = 0; i < queue->thread_count; i++) {
       if (VALID_TASK_ID(queue->thread_task_ids[i])) busy_count++;
     }
-    // debug_printf("   dispatch_queue_wait: busy_count=%d\n", busy_count);
     if (busy_count == 0) return;
   }
 }
@@ -151,7 +150,7 @@ void dispatch_queue_task_wait(dispatch_queue_t *ctx, int task_id) {
     task_is_running = false;
 
     // peek at the task at the front of the queue
-    if (xQueuePeek(queue->xQueue, &front_task, 10)) {
+    if (xQueuePeek(queue->xQueue, &front_task, 0)) {
       tasks_are_waiting = true;
       front_task_id = front_task.id;
       min_running_task_id = front_task_id;  // it must be lower
@@ -175,7 +174,9 @@ void dispatch_queue_task_wait(dispatch_queue_t *ctx, int task_id) {
       }
     }
 
-    if (task_is_running == false) {
+    if (task_is_running == true)
+      continue;
+    else {
       // task_id is NOT running so...
 
       // if task_id is less than the id of the task at the front of the queue,
@@ -199,7 +200,7 @@ void dispatch_queue_task_wait(dispatch_queue_t *ctx, int task_id) {
       }
 
       // if task_id is greater than the lowest running task id,
-      //  but is not running and nothig is waiting, it must have finished
+      //  but is not running and nothing is waiting, it must have finished
       //  already
       if ((task_id > min_running_task_id) && (tasks_are_waiting == false)) {
         return;
