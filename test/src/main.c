@@ -4,7 +4,10 @@
 #include "task.h"
 //#define UNITY_MALLOC(size) pvPortMalloc(size)
 //#define UNITY_FREE(ptr) vPortFree(ptr)
-void vApplicationMallocFailedHook(void) { debug_printf("Malloc failed!\n"); }
+void vApplicationMallocFailedHook(void) {
+  debug_printf("Malloc failed!\n");
+  exit(1);
+}
 #endif
 
 #include "unity.h"

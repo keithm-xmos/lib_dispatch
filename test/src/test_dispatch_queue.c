@@ -49,6 +49,14 @@ void do_extended_work(void *p) {
   mutex_unlock(&lock);
 }
 
+DISPATCH_TASK_FUNCTION
+void do_parallel_work(void *p) {
+  // NOTE: the "volatile" is needed here or the compiler may optimize this away
+  test_parallel_work_arg volatile *arg = (test_parallel_work_arg volatile *)p;
+
+  for (int i = arg->begin; i < arg->end; i++) arg->count++;
+}
+
 TEST_GROUP(dispatch_queue);
 
 TEST_SETUP(dispatch_queue) { mutex_init(&lock); }

@@ -36,14 +36,14 @@ your application. */
 /* Memory allocation related definitions. */
 #define configSUPPORT_STATIC_ALLOCATION 0
 #define configSUPPORT_DYNAMIC_ALLOCATION 1
-#define configTOTAL_HEAP_SIZE 200 * 1024
+#define configTOTAL_HEAP_SIZE 104 * 1024
 #define configAPPLICATION_ALLOCATED_HEAP 0
 
 /* Hook function related definitions. */
 #define configUSE_IDLE_HOOK 0
 #define configUSE_TICK_HOOK 0
 #define configCHECK_FOR_STACK_OVERFLOW 0
-#define configUSE_MALLOC_FAILED_HOOK 1
+#define configUSE_MALLOC_FAILED_HOOK 0
 #define configUSE_DAEMON_TASK_STARTUP_HOOK 0
 
 /* Run time and task stats gathering related definitions. */
@@ -66,15 +66,15 @@ your application. */
 #define configASSERT(x) xassert(x)
 
 /* Define to enable debug_printf() */
-#define configENABLE_DEBUG_PRINTF 1
+#define configENABLE_DEBUG_PRINTF 0
 
 /* Define to map sprintf and snprintf to the
  * lite versions in lib_rtos_support */
 #include <stdio.h>
-#define configUSE_DEBUG_SPRINTF 1
+#define configUSE_DEBUG_SPRINTF 0
 
 /* Define to enable debug prints from tasks.c */
-#define configTASKS_DEBUG 1
+#define configTASKS_DEBUG 0
 
 /* FreeRTOS MPU specific definitions. */
 #define configINCLUDE_APPLICATION_DEFINED_PRIVILEGED_FUNCTIONS 0
