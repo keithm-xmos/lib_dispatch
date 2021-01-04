@@ -36,6 +36,8 @@ TEST(dispatch_task, test_create) {
 
   TEST_ASSERT_EQUAL(do_dispatch_task_work, task.fn);
   TEST_ASSERT_EQUAL(arg, task.arg);
+  TEST_ASSERT_EQUAL_INT(DISPATCH_TASK_NONE, task.id);
+  TEST_ASSERT_NULL(task.queue);
 }
 
 TEST(dispatch_task, test_perform) {

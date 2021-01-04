@@ -65,19 +65,18 @@ TEST_TEAR_DOWN(dispatch_queue) { mutex_destroy(&lock); }
 
 TEST(dispatch_queue, test_wait_task) {
   dispatch_queue_t *queue;
-  dispatch_task_t task;
   test_work_arg_t arg;
   int queue_length = QUEUE_LENGTH;
   int queue_thread_count = QUEUE_THREAD_COUNT;
+  size_t task_id;
 
   queue = dispatch_queue_create(queue_length, queue_thread_count,
                                 QUEUE_STACK_SIZE, "test_wait_task");
-  dispatch_task_init(&task, do_standard_work, &arg);
 
   arg.count = 0;
 
-  dispatch_queue_add_task(queue, &task);
-  dispatch_task_wait(&task);
+  task_id = dispatch_queue_add_function(queue, do_standard_work, &arg);
+  dispatch_queue_task_wait(queue, task_id);
 
   TEST_ASSERT_EQUAL_INT(1, arg.count);
 
@@ -114,7 +113,6 @@ TEST(dispatch_queue, test_wait_group) {
 
 TEST(dispatch_queue, test_add_task) {
   dispatch_queue_t *queue;
-  dispatch_task_t task;
   test_work_arg_t arg;
   int queue_length = QUEUE_LENGTH;
   int queue_thread_count = QUEUE_THREAD_COUNT;
@@ -122,11 +120,10 @@ TEST(dispatch_queue, test_add_task) {
 
   queue = dispatch_queue_create(queue_length, queue_thread_count,
                                 QUEUE_STACK_SIZE, "test_add_task");
-  dispatch_task_init(&task, do_standard_work, &arg);
 
   arg.count = 0;
   for (int i = 0; i < task_count; i++) {
-    dispatch_queue_add_task(queue, &task);
+    dispatch_queue_add_function(queue, do_standard_work, &arg);
   }
   dispatch_queue_wait(queue);
 
@@ -264,7 +261,7 @@ TEST(dispatch_queue, test_mixed_durations2) {
   dispatch_queue_add_task(queue, &extended_task1);
 
   // now wait for the first extended task
-  dispatch_task_wait(&extended_task1);
+  dispatch_queue_task_wait(queue, extended_task1.id);
   TEST_ASSERT_EQUAL_INT(1, extended_arg.count);
 
   // add limited task group, and second extended task
@@ -276,7 +273,7 @@ TEST(dispatch_queue, test_mixed_durations2) {
   TEST_ASSERT_EQUAL_INT(3, limited_arg.count);
 
   // now wait for the second extended task
-  dispatch_task_wait(&extended_task2);
+  dispatch_queue_task_wait(queue, extended_task2.id);
   TEST_ASSERT_EQUAL_INT(2, extended_arg.count);
 
   dispatch_group_destroy(limited_group);

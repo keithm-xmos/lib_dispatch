@@ -13,6 +13,7 @@ void dispatch_task_init(dispatch_task_t *ctx, dispatch_function_t fn,
 
   ctx->fn = fn;
   ctx->arg = arg;
+  ctx->id = DISPATCH_TASK_NONE;
   ctx->queue = NULL;
 }
 
@@ -23,13 +24,4 @@ void dispatch_task_perform(dispatch_task_t *ctx) {
 
   // call function in current thread
   ctx->fn(ctx->arg);
-}
-
-void dispatch_task_wait(dispatch_task_t *ctx) {
-  assert(ctx);
-
-  debug_printf("dispatch_task_wait:  id=%d\n", ctx->id);
-  if (ctx->queue) {
-    dispatch_queue_task_wait(ctx->queue, ctx->id);
-  }
 }

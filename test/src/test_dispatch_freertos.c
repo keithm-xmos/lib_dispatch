@@ -39,14 +39,12 @@ TEST(dispatch_queue_freertos, test_static) {
   dispatch_queue_init(queue);
 
   // now use the static queue
-  dispatch_task_t task;
   test_work_arg_t arg;
   int task_count = 4;
 
   arg.count = 0;
-  dispatch_task_init(&task, do_standard_work, &arg);
   for (int i = 0; i < task_count; i++) {
-    dispatch_queue_add_task(queue, &task);
+    dispatch_queue_add_function(queue, do_standard_work, &arg);
   }
   dispatch_queue_wait(queue);
 

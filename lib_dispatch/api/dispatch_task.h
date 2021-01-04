@@ -47,12 +47,6 @@ void dispatch_task_init(dispatch_task_t *ctx, dispatch_function_t fn,
  */
 void dispatch_task_perform(dispatch_task_t *ctx);
 
-/** Wait synchronously in the caller's thread for the task to finish executing
- *
- * @param[in] ctx  Task object
- */
-void dispatch_task_wait(dispatch_task_t *ctx);
-
 #ifdef __cplusplus
 }  // extern "C"
 #endif  // __cplusplus

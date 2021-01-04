@@ -52,14 +52,6 @@ void dispatch_queue_destroy(dispatch_queue_t* ctx);
  */
 size_t dispatch_queue_add_task(dispatch_queue_t* ctx, dispatch_task_t* task);
 
-/** Add a group to the dispatch queue
- *
- * @param[in] ctx    Dispatch queue object
- * @param[in] group  Group object
- *
- */
-void dispatch_queue_add_group(dispatch_queue_t* ctx, dispatch_group_t* group);
-
 /** Create a task and add to the dispatch queue
  *
  * @param[in] ctx Dispatch queue object
@@ -72,6 +64,14 @@ void dispatch_queue_add_group(dispatch_queue_t* ctx, dispatch_group_t* group);
  */
 size_t dispatch_queue_add_function(dispatch_queue_t* ctx,
                                    dispatch_function_t fn, void* arg);
+
+/** Add a group to the dispatch queue
+ *
+ * @param[in] ctx    Dispatch queue object
+ * @param[in] group  Group object
+ *
+ */
+void dispatch_queue_add_group(dispatch_queue_t* ctx, dispatch_group_t* group);
 
 /** Wait synchronously in the caller's thread for the task with the given ID to
  * finish executing
