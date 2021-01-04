@@ -80,7 +80,6 @@ static int single_thread_mat_mul() {
 static int multi_thread_mat_mul() {
   dispatch_queue_t* queue;
   dispatch_group_t* group;
-  dispatch_task_t tasks[NUM_THREADS];
   worker_arg_t args[NUM_THREADS];
   int queue_length = NUM_THREADS;
   int queue_thread_count = NUM_THREADS;
@@ -102,8 +101,7 @@ static int multi_thread_mat_mul() {
     args[i].start_row = i * num_rows;
     args[i].end_row = args[i].start_row + num_rows;
 
-    dispatch_task_init(&tasks[i], do_matrix_multiply, &args[i]);
-    dispatch_group_add(group, &tasks[i]);
+    dispatch_group_add(group, do_matrix_multiply, &args[i]);
   }
 
   hwtimer = hwtimer_alloc();

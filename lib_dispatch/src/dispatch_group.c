@@ -31,11 +31,15 @@ void dispatch_group_init(dispatch_group_t *ctx) {
   ctx->queue = NULL;
 }
 
-void dispatch_group_add(dispatch_group_t *ctx, dispatch_task_t *task) {
+void dispatch_group_add(dispatch_group_t *ctx, dispatch_function_t fn,
+                        void *arg) {
   assert(ctx);
   assert(ctx->count < ctx->length);
 
-  memcpy(&ctx->tasks[ctx->count], task, sizeof(dispatch_task_t));
+  ctx->tasks[ctx->count].fn = fn;
+  ctx->tasks[ctx->count].arg = arg;
+  ctx->tasks[ctx->count].id = DISPATCH_TASK_NONE;
+  ctx->tasks[ctx->count].queue = NULL;
   ctx->count++;
 }
 

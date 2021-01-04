@@ -32,12 +32,10 @@ TEST_TEAR_DOWN(dispatch_group) {}
 TEST(dispatch_group, test_static) {
   dispatch_group_t group_s;
   dispatch_task_t tasks[TEST_STATIC_LENGTH];
-  dispatch_task_t task;
 
   test_work_arg_t arg;
 
   arg.count = 0;
-  dispatch_task_init(&task, do_dispatch_group_work, &arg);
 
   group_s.length = TEST_STATIC_LENGTH;
   group_s.tasks = &tasks[0];
@@ -46,7 +44,7 @@ TEST(dispatch_group, test_static) {
   dispatch_group_init(group);
 
   for (int i = 0; i < TEST_STATIC_LENGTH; i++) {
-    dispatch_group_add(group, &task);
+    dispatch_group_add(group, do_dispatch_group_work, &arg);
   }
   dispatch_group_perform(group);
 
@@ -55,16 +53,14 @@ TEST(dispatch_group, test_static) {
 
 TEST(dispatch_group, test_perform) {
   dispatch_group_t *group;
-  dispatch_task_t task;
   test_work_arg_t arg;
   int length = 3;
 
   arg.count = 0;
-  dispatch_task_init(&task, do_dispatch_group_work, &arg);
 
   group = dispatch_group_create(length);
   for (int i = 0; i < length; i++) {
-    dispatch_group_add(group, &task);
+    dispatch_group_add(group, do_dispatch_group_work, &arg);
   }
   dispatch_group_perform(group);
 

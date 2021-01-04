@@ -79,7 +79,6 @@ TEST(dispatch_queue_freertos, test_parallel) {
   int queue_length = 4;
   dispatch_queue_t* queue;
   dispatch_group_t* group;
-  dispatch_task_t tasks[thread_count];
   int num_values_in_chunk = num_values / thread_count;
   int multi_thread_ticks;
 
@@ -95,8 +94,7 @@ TEST(dispatch_queue_freertos, test_parallel) {
     args[i].count = 0;
     args[i].begin = i * num_values_in_chunk;
     args[i].end = args[i].begin + num_values_in_chunk;
-    dispatch_task_init(&tasks[i], do_parallel_work, &args[i]);
-    dispatch_group_add(group, &tasks[i]);
+    dispatch_group_add(group, do_parallel_work, &args[i]);
   }
 
   hwtimer = hwtimer_alloc();

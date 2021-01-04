@@ -43,9 +43,12 @@ void dispatch_group_destroy(dispatch_group_t *ctx);
 /** Add a task to the group
  *
  * @param[in] ctx   Group object
- * @param[in] task  Task object
+ * @param[in] fn  Function to perform, signature must be void my_fun(void
+ * *arg)
+ * @param[in] arg  Function argument
  */
-void dispatch_group_add(dispatch_group_t *ctx, dispatch_task_t *task);
+void dispatch_group_add(dispatch_group_t *ctx, dispatch_function_t fn,
+                        void *arg);
 
 /** Run the group's tasks in the caller's thread
  *

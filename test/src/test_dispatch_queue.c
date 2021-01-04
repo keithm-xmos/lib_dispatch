@@ -87,7 +87,6 @@ TEST(dispatch_queue, test_wait_task) {
 TEST(dispatch_queue, test_wait_group) {
   dispatch_queue_t *queue;
   dispatch_group_t *group;
-  dispatch_task_t task;
   test_work_arg_t arg;
   int queue_length = QUEUE_LENGTH;
   int queue_thread_count = QUEUE_THREAD_COUNT;
@@ -96,13 +95,12 @@ TEST(dispatch_queue, test_wait_group) {
   queue = dispatch_queue_create(queue_length, queue_thread_count,
                                 QUEUE_STACK_SIZE, "test_add_group");
   group = dispatch_group_create(group_length);
-  dispatch_task_init(&task, do_standard_work, &arg);
 
   arg.count = 0;
 
   // add tasks to group
   for (int i = 0; i < group_length; i++) {
-    dispatch_group_add(group, &task);
+    dispatch_group_add(group, do_standard_work, &arg);
   }
 
   dispatch_queue_add_group(queue, group);
@@ -161,7 +159,6 @@ TEST(dispatch_queue, test_add_function) {
 TEST(dispatch_queue, test_add_group) {
   dispatch_queue_t *queue;
   dispatch_group_t *group;
-  dispatch_task_t task;
   test_work_arg_t arg;
   int queue_length = QUEUE_LENGTH;
   int queue_thread_count = QUEUE_THREAD_COUNT;
@@ -171,13 +168,12 @@ TEST(dispatch_queue, test_add_group) {
   queue = dispatch_queue_create(queue_length, queue_thread_count,
                                 QUEUE_STACK_SIZE, "test_add_group");
   group = dispatch_group_create(group_length);
-  dispatch_task_init(&task, do_standard_work, &arg);
 
   arg.count = 0;
 
   // add tasks to group
   for (int i = 0; i < group_length; i++) {
-    dispatch_group_add(group, &task);
+    dispatch_group_add(group, do_standard_work, &arg);
   }
 
   for (int i = 0; i < group_count; i++) {
@@ -245,9 +241,6 @@ TEST(dispatch_queue, test_mixed_durations2) {
   dispatch_queue_t *queue;
   dispatch_task_t extended_task1;
   dispatch_task_t extended_task2;
-  dispatch_task_t limited_task1;
-  dispatch_task_t limited_task2;
-  dispatch_task_t limited_task3;
   dispatch_group_t *limited_group;
   test_work_arg_t extended_arg;
   test_work_arg_t limited_arg;
@@ -260,12 +253,9 @@ TEST(dispatch_queue, test_mixed_durations2) {
 
   dispatch_task_init(&extended_task1, do_extended_work, &extended_arg);
   dispatch_task_init(&extended_task2, do_extended_work, &extended_arg);
-  dispatch_task_init(&limited_task1, do_limited_work, &limited_arg);
-  dispatch_task_init(&limited_task2, do_limited_work, &limited_arg);
-  dispatch_task_init(&limited_task3, do_limited_work, &limited_arg);
-  dispatch_group_add(limited_group, &limited_task1);
-  dispatch_group_add(limited_group, &limited_task2);
-  dispatch_group_add(limited_group, &limited_task3);
+  dispatch_group_add(limited_group, do_limited_work, &limited_arg);
+  dispatch_group_add(limited_group, do_limited_work, &limited_arg);
+  dispatch_group_add(limited_group, do_limited_work, &limited_arg);
 
   extended_arg.count = 0;
   limited_arg.count = 0;
