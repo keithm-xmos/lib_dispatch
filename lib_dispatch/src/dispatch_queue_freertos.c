@@ -1,15 +1,11 @@
 // Copyright (c) 2020, XMOS Ltd, All rights reserved
-#include "lib_dispatch/api/dispatch_queue_freertos.h"
+#include "dispatch_queue_freertos.h"
 
-#include <assert.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "debug_print.h"
-#include "lib_dispatch/api/dispatch_group.h"
-#include "lib_dispatch/api/dispatch_queue.h"
-#include "lib_dispatch/api/dispatch_task.h"
+#include "dispatch.h"
 
 void dispatch_thread_handler(void *param) {
   dispatch_thread_data_t *thread_data = (dispatch_thread_data_t *)param;
@@ -32,7 +28,9 @@ void dispatch_thread_handler(void *param) {
 }
 
 dispatch_queue_t *dispatch_queue_create(size_t length, size_t thread_count,
-                                        size_t stack_size, const char *name) {
+                                        size_t thread_stack_size,
+                                        size_t thread_priority,
+                                        const char *name) {
   dispatch_freertos_queue_t *queue;
 
   debug_printf("dispatch_queue_create: length=%d, thread_count=%d\n", length,
@@ -43,7 +41,7 @@ dispatch_queue_t *dispatch_queue_create(size_t length, size_t thread_count,
 
   queue->length = length;
   queue->thread_count = thread_count;
-  queue->thread_stack_size = stack_size;
+  queue->thread_stack_size = thread_stack_size;
 #if !NDEBUG
   if (name)
     strncpy(queue->name, name, 32);
@@ -65,15 +63,15 @@ dispatch_queue_t *dispatch_queue_create(size_t length, size_t thread_count,
       pvPortMalloc(sizeof(dispatch_thread_data_t) * thread_count);
 
   // initialize the queue
-  dispatch_queue_init(queue);
+  dispatch_queue_init(queue, thread_priority);
 
   debug_printf("dispatch_queue_create: name=%s\n", queue->name);
 
   return queue;
 }
 
-void dispatch_queue_init(dispatch_queue_t *ctx) {
-  assert(ctx);
+void dispatch_queue_init(dispatch_queue_t *ctx, size_t thread_priority) {
+  xassert(ctx);
   dispatch_freertos_queue_t *queue = (dispatch_freertos_queue_t *)ctx;
 
   debug_printf("dispatch_queue_init: name=%s\n", queue->name);
@@ -87,14 +85,14 @@ void dispatch_queue_init(dispatch_queue_t *ctx) {
     queue->thread_data[i].xQueue = queue->xQueue;
     // create task
     xTaskCreate(dispatch_thread_handler, "", queue->thread_stack_size,
-                (void *)&queue->thread_data[i], configMAX_PRIORITIES,
+                (void *)&queue->thread_data[i], thread_priority,
                 &queue->threads[i]);
   }
 }
 
 size_t dispatch_queue_task_add(dispatch_queue_t *ctx, dispatch_task_t *task) {
-  assert(ctx);
-  assert(task);
+  xassert(ctx);
+  xassert(task);
   dispatch_freertos_queue_t *queue = (dispatch_freertos_queue_t *)ctx;
 
   // assign to this queue
@@ -111,7 +109,7 @@ size_t dispatch_queue_task_add(dispatch_queue_t *ctx, dispatch_task_t *task) {
 }
 
 void dispatch_queue_wait(dispatch_queue_t *ctx) {
-  assert(ctx);
+  xassert(ctx);
   dispatch_freertos_queue_t *queue = (dispatch_freertos_queue_t *)ctx;
 
   debug_printf("dispatch_queue_wait: name=%s\n", queue->name);
@@ -129,11 +127,11 @@ void dispatch_queue_wait(dispatch_queue_t *ctx) {
 }
 
 void dispatch_queue_task_wait(dispatch_queue_t *ctx, int task_id) {
-  assert(ctx);
-  assert(VALID_TASK_ID(task_id));
+  xassert(ctx);
+  xassert(VALID_TASK_ID(task_id));
 
   dispatch_freertos_queue_t *queue = (dispatch_freertos_queue_t *)ctx;
-  assert(task_id <= queue->next_id);
+  xassert(task_id <= queue->next_id);
 
   debug_printf("dispatch_queue_task_wait: queue=%s   task=%d\n", queue->name,
                task_id);
@@ -210,13 +208,13 @@ void dispatch_queue_task_wait(dispatch_queue_t *ctx, int task_id) {
 }
 
 void dispatch_queue_destroy(dispatch_queue_t *ctx) {
-  assert(ctx);
+  xassert(ctx);
   dispatch_freertos_queue_t *queue = (dispatch_freertos_queue_t *)ctx;
 
-  assert(queue);
-  assert(queue->thread_task_ids);
-  assert(queue->thread_data);
-  assert(queue->threads);
+  xassert(queue);
+  xassert(queue->thread_task_ids);
+  xassert(queue->thread_data);
+  xassert(queue->threads);
 
   debug_printf("dispatch_queue_destroy: name=%s\n", queue->name);
 

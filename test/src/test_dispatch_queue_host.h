@@ -7,7 +7,8 @@
 
 #define QUEUE_LENGTH (10)
 #define QUEUE_THREAD_COUNT (3)
-#define QUEUE_STACK_SIZE (0)  // not necessary
+#define QUEUE_THREAD_STACK_SIZE (0)  // ignored
+#define QUEUE_THREAD_PRIORITY (0)    // ignored
 
 typedef pthread_mutex_t thread_mutex_t;
 

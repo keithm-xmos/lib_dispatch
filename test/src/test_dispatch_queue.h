@@ -2,7 +2,7 @@
 #ifndef TEST_DISPATCH_QUEUE_H_
 #define TEST_DISPATCH_QUEUE_H_
 
-#include "lib_dispatch/api/dispatch.h"
+#include "dispatch.h"
 
 typedef struct test_work_arg {
   int count;

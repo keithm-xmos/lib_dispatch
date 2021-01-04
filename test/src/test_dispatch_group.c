@@ -1,7 +1,7 @@
 // Copyright (c) 2020, XMOS Ltd, All rights reserved
 #include <string.h>
 
-#include "lib_dispatch/api/dispatch.h"
+#include "dispatch.h"
 #include "unity.h"
 #include "unity_fixture.h"
 

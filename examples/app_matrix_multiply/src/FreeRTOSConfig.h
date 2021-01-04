@@ -1,10 +1,6 @@
 #ifndef FREERTOS_CONFIG_H
 #define FREERTOS_CONFIG_H
 
-/* Here is a good place to include header files that are required across
-your application. */
-#include "xassert.h"
-
 #define configUSE_PREEMPTION 1
 #define configUSE_PORT_OPTIMISED_TASK_SELECTION 0
 #define configUSE_TICKLESS_IDLE 0
@@ -87,7 +83,6 @@ your application. */
 #define INCLUDE_xResumeFromISR 1
 #define INCLUDE_vTaskDelayUntil 1
 #define INCLUDE_vTaskDelay 1
-//#define INCLUDE_vTaskEndScheduler 1
 #define INCLUDE_xTaskGetSchedulerState 1
 #define INCLUDE_xTaskGetCurrentTaskHandle 1
 #define INCLUDE_uxTaskGetStackHighWaterMark 1

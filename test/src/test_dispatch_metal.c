@@ -2,8 +2,8 @@
 #include <string.h>
 #include <xcore/hwtimer.h>
 
-#include "lib_dispatch/api/dispatch.h"
-#include "lib_dispatch/api/dispatch_queue_metal.h"
+#include "dispatch.h"
+#include "dispatch_queue_metal.h"
 #include "test_dispatch_queue.h"
 #include "unity.h"
 #include "unity_fixture.h"
@@ -39,7 +39,7 @@ TEST(dispatch_queue_metal, test_static) {
 #endif
 
   dispatch_queue_t* queue = &queue_s;
-  dispatch_queue_init(queue);
+  dispatch_queue_init(queue, 0);
 
   // now use the static queue
   test_work_arg_t arg;
@@ -84,8 +84,8 @@ TEST(dispatch_queue_metal, test_parallel) {
   int multi_thread_ticks;
 
   // create the dispatch queue
-  queue =
-      dispatch_queue_create(queue_length, thread_count, 1024, "test_parallel");
+  queue = dispatch_queue_create(queue_length, thread_count,
+                                TEST_STATIC_STACK_SIZE, 0, "test_parallel");
 
   // create the dispatch group
   group = dispatch_group_create(thread_count);

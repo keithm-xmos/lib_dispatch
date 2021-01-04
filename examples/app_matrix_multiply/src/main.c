@@ -5,11 +5,13 @@
 #if FREERTOS
 #include "FreeRTOS.h"
 #include "task.h"
+#define THREAD_PRIORITY (configMAX_PRIORITIES - 1)
 #else
 #include "debug_print.h"
+#define THREAD_PRIORITY (0)
 #endif
 
-#include "lib_dispatch/api/dispatch.h"
+#include "dispatch.h"
 
 #define NUM_THREADS 4
 #define ROWS 100  // must be a multiple of NUM_THREADS
@@ -89,8 +91,8 @@ static int multi_thread_mat_mul() {
   reset_matrices();
 
   // create the dispatch queue
-  queue =
-      dispatch_queue_create(queue_length, queue_thread_count, 1024, "mat_mul");
+  queue = dispatch_queue_create(queue_length, queue_thread_count, 1024,
+                                THREAD_PRIORITY, "mat_mul");
 
   // create the dispatch group
   group = dispatch_group_create(queue_thread_count);

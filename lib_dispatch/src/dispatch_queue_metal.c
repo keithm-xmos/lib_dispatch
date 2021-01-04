@@ -1,19 +1,16 @@
 // Copyright (c) 2020, XMOS Ltd, All rights reserved
-#include "lib_dispatch/api/dispatch_queue_metal.h"
+#include "dispatch_queue_metal.h"
 
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include <xassert.h>
+#include <xcore/assert.h>
 #include <xcore/chanend.h>
 #include <xcore/channel.h>
 #include <xcore/hwtimer.h>
 #include <xcore/thread.h>
 
-#include "debug_print.h"
-#include "lib_dispatch/api/dispatch_group.h"
-#include "lib_dispatch/api/dispatch_queue.h"
-#include "lib_dispatch/api/dispatch_task.h"
+#include "dispatch.h"
 
 #define DISPATCH_WAKE_EVT (0x1)
 #define DISPATCH_EXIT_EVT (0x2)
@@ -47,8 +44,10 @@ void dispatch_thread_handler(void *param) {
 }
 
 dispatch_queue_t *dispatch_queue_create(size_t length, size_t thread_count,
-                                        size_t stack_size, const char *name) {
-  assert(length <= (thread_count + 1));  // NOTE: this is true for now
+                                        size_t thread_stack_size,
+                                        size_t thread_priority,
+                                        const char *name) {
+  xassert(length <= (thread_count + 1));  // NOTE: this is true for now
   dispatch_xcore_queue_t *queue;
 
   debug_printf("dispatch_queue_create: length=%d, thread_count=%d\n", length,
@@ -72,19 +71,19 @@ dispatch_queue_t *dispatch_queue_create(size_t length, size_t thread_count,
   queue->thread_data = malloc(sizeof(dispatch_thread_data_t) * thread_count);
 
   // allocate thread stack
-  queue->thread_stack_size = stack_size;
+  queue->thread_stack_size = thread_stack_size;
   queue->thread_stack = malloc(queue->thread_stack_size * thread_count);
 
   // initialize the queue
-  dispatch_queue_init(queue);
+  dispatch_queue_init(queue, thread_priority);
 
   debug_printf("dispatch_queue_create: name=%s\n", queue->name);
 
   return queue;
 }
 
-void dispatch_queue_init(dispatch_queue_t *ctx) {
-  assert(ctx);
+void dispatch_queue_init(dispatch_queue_t *ctx, size_t thread_priority) {
+  xassert(ctx);
   dispatch_xcore_queue_t *queue = (dispatch_xcore_queue_t *)ctx;
 
   debug_printf("dispatch_queue_init: name=%s\n", queue->name);
@@ -97,6 +96,7 @@ void dispatch_queue_init(dispatch_queue_t *ctx) {
 
   // create workers
   for (int i = 0; i < queue->thread_count; i++) {
+    debug_printf("dispatch_queue_init: i=%d\n", i);
     queue->thread_task_ids[i] = DISPATCH_TASK_NONE;
     queue->thread_data[i].task_id = &queue->thread_task_ids[i];
     // create and setup chanends
@@ -110,8 +110,8 @@ void dispatch_queue_init(dispatch_queue_t *ctx) {
 }
 
 size_t dispatch_queue_task_add(dispatch_queue_t *ctx, dispatch_task_t *task) {
-  assert(ctx);
-  assert(task);
+  xassert(ctx);
+  xassert(task);
   dispatch_xcore_queue_t *queue = (dispatch_xcore_queue_t *)ctx;
 
   debug_printf("dispatch_queue_add_task: name=%s\n", queue->name);
@@ -151,7 +151,7 @@ size_t dispatch_queue_task_add(dispatch_queue_t *ctx, dispatch_task_t *task) {
 }
 
 void dispatch_queue_wait(dispatch_queue_t *ctx) {
-  assert(ctx);
+  xassert(ctx);
   dispatch_xcore_queue_t *queue = (dispatch_xcore_queue_t *)ctx;
 
   debug_printf("dispatch_queue_wait: name=%s\n", queue->name);
@@ -168,8 +168,8 @@ void dispatch_queue_wait(dispatch_queue_t *ctx) {
 }
 
 void dispatch_queue_task_wait(dispatch_queue_t *ctx, int task_id) {
-  assert(ctx);
-  assert(task_id > 0);
+  xassert(ctx);
+  xassert(task_id > 0);
 
   dispatch_xcore_queue_t *queue = (dispatch_xcore_queue_t *)ctx;
 
@@ -188,13 +188,13 @@ void dispatch_queue_task_wait(dispatch_queue_t *ctx, int task_id) {
 }
 
 void dispatch_queue_destroy(dispatch_queue_t *ctx) {
-  assert(ctx);
+  xassert(ctx);
   dispatch_xcore_queue_t *queue = (dispatch_xcore_queue_t *)ctx;
 
-  assert(queue);
-  assert(queue->thread_task_ids);
-  assert(queue->thread_data);
-  assert(queue->thread_stack);
+  xassert(queue);
+  xassert(queue->thread_task_ids);
+  xassert(queue->thread_data);
+  xassert(queue->thread_stack);
 
   debug_printf("dispatch_queue_destroy: name=%s\n", queue->name);
 

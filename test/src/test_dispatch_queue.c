@@ -2,7 +2,7 @@
 
 #include "test_dispatch_queue.h"
 
-#include "lib_dispatch/api/dispatch.h"
+#include "dispatch.h"
 #include "unity.h"
 #include "unity_fixture.h"
 
@@ -71,7 +71,8 @@ TEST(dispatch_queue, test_wait_task) {
   size_t task_id;
 
   queue = dispatch_queue_create(queue_length, queue_thread_count,
-                                QUEUE_STACK_SIZE, "test_wait_task");
+                                QUEUE_THREAD_STACK_SIZE, QUEUE_THREAD_PRIORITY,
+                                "test_wait_task");
 
   arg.count = 0;
 
@@ -92,7 +93,8 @@ TEST(dispatch_queue, test_wait_group) {
   int group_length = 3;
 
   queue = dispatch_queue_create(queue_length, queue_thread_count,
-                                QUEUE_STACK_SIZE, "test_add_group");
+                                QUEUE_THREAD_STACK_SIZE, QUEUE_THREAD_PRIORITY,
+                                "test_add_group");
   group = dispatch_group_create(group_length);
 
   arg.count = 0;
@@ -119,7 +121,8 @@ TEST(dispatch_queue, test_add_task) {
   int task_count = 8;
 
   queue = dispatch_queue_create(queue_length, queue_thread_count,
-                                QUEUE_STACK_SIZE, "test_add_task");
+                                QUEUE_THREAD_STACK_SIZE, QUEUE_THREAD_PRIORITY,
+                                "test_add_task");
 
   arg.count = 0;
   for (int i = 0; i < task_count; i++) {
@@ -140,7 +143,8 @@ TEST(dispatch_queue, test_add_function) {
   int function_count = 3;
 
   queue = dispatch_queue_create(queue_length, queue_thread_count,
-                                QUEUE_STACK_SIZE, "test_add_task");
+                                QUEUE_THREAD_STACK_SIZE, QUEUE_THREAD_PRIORITY,
+                                "test_add_task");
 
   arg.count = 0;
   for (int i = 0; i < function_count; i++) {
@@ -163,7 +167,8 @@ TEST(dispatch_queue, test_add_group) {
   int group_count = 2;
 
   queue = dispatch_queue_create(queue_length, queue_thread_count,
-                                QUEUE_STACK_SIZE, "test_add_group");
+                                QUEUE_THREAD_STACK_SIZE, QUEUE_THREAD_PRIORITY,
+                                "test_add_group");
   group = dispatch_group_create(group_length);
 
   arg.count = 0;
@@ -195,8 +200,9 @@ TEST(dispatch_queue, test_mixed_durations1) {
   int extended_task_count;
 
   for (int i = 0; i < max_extended_task_count; i++) {
-    queue = dispatch_queue_create(queue_length, queue_thread_count,
-                                  QUEUE_STACK_SIZE, "test_mixed_durations1");
+    queue = dispatch_queue_create(
+        queue_length, queue_thread_count, QUEUE_THREAD_STACK_SIZE,
+        QUEUE_THREAD_PRIORITY, "test_mixed_durations1");
 
     extended_task_count = i + 1;
 
@@ -245,7 +251,8 @@ TEST(dispatch_queue, test_mixed_durations2) {
   int queue_thread_count = QUEUE_THREAD_COUNT;
 
   queue = dispatch_queue_create(queue_length, queue_thread_count,
-                                QUEUE_STACK_SIZE, "test_mixed_durations2");
+                                QUEUE_THREAD_STACK_SIZE, QUEUE_THREAD_PRIORITY,
+                                "test_mixed_durations2");
   limited_group = dispatch_group_create(3);
 
   dispatch_task_init(&extended_task1, do_extended_work, &extended_arg);

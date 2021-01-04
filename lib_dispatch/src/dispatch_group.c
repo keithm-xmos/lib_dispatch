@@ -1,12 +1,10 @@
 // Copyright (c) 2020, XMOS Ltd, All rights reserved
-#include "lib_dispatch/api/dispatch_group.h"
+#include "dispatch_group.h"
 
 #include <stdlib.h>
 #include <string.h>
-#include <xassert.h>
 
-#include "debug_print.h"
-#include "lib_dispatch/api/dispatch_queue.h"
+#include "dispatch.h"
 
 dispatch_group_t *dispatch_group_create(size_t length) {
   dispatch_group_t *group;
@@ -25,15 +23,15 @@ dispatch_group_t *dispatch_group_create(size_t length) {
 }
 
 void dispatch_group_init(dispatch_group_t *ctx) {
-  assert(ctx);
+  xassert(ctx);
 
   ctx->count = 0;
   ctx->queue = NULL;
 }
 
 void dispatch_group_task_add(dispatch_group_t *ctx, dispatch_task_t *task) {
-  assert(ctx);
-  assert(ctx->count < ctx->length);
+  xassert(ctx);
+  xassert(ctx->count < ctx->length);
 
   memcpy(&ctx->tasks[ctx->count], task, sizeof(dispatch_task_t));
   ctx->count++;
@@ -41,8 +39,8 @@ void dispatch_group_task_add(dispatch_group_t *ctx, dispatch_task_t *task) {
 
 void dispatch_group_function_add(dispatch_group_t *ctx, dispatch_function_t fn,
                                  void *arg) {
-  assert(ctx);
-  assert(ctx->count < ctx->length);
+  xassert(ctx);
+  xassert(ctx->count < ctx->length);
 
   dispatch_task_t task;
   dispatch_task_init(&task, fn, arg);
@@ -50,7 +48,7 @@ void dispatch_group_function_add(dispatch_group_t *ctx, dispatch_function_t fn,
 }
 
 void dispatch_group_perform(dispatch_group_t *ctx) {
-  assert(ctx);
+  xassert(ctx);
 
   debug_printf("dispatch_group_perform: %u\n", (long)ctx);
 
@@ -62,7 +60,7 @@ void dispatch_group_perform(dispatch_group_t *ctx) {
 }
 
 void dispatch_group_wait(dispatch_group_t *ctx) {
-  assert(ctx);
+  xassert(ctx);
 
   debug_printf("dispatch_group_wait: %u\n", (long)ctx);
   if (ctx->queue) {
@@ -74,8 +72,8 @@ void dispatch_group_wait(dispatch_group_t *ctx) {
 }
 
 void dispatch_group_destroy(dispatch_group_t *ctx) {
-  assert(ctx);
-  assert(ctx->tasks);
+  xassert(ctx);
+  xassert(ctx->tasks);
 
   free(ctx->tasks);
   free(ctx);

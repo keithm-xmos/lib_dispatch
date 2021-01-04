@@ -132,11 +132,11 @@ elseif(FREERTOS)
     "${FREERTOS_DIR}/FreeRTOS/Source/portable/XCC/XCOREAI/port.xc"
     "${FREERTOS_DIR}/FreeRTOS/Source/portable/MemMang/heap_4.c"
     "${FREERTOS_DIR}/FreeRTOS/Source/portable/XCC/XCOREAI/portasm.S"
-    "${AIOTSDK_DIR}/modules/lib_rtos_support/src/rtos_cores.c"
-    "${AIOTSDK_DIR}/modules/lib_rtos_support/src/rtos_irq.c"
-    "${AIOTSDK_DIR}/modules/lib_rtos_support/src/rtos_locks.c"
-    "${AIOTSDK_DIR}/modules/lib_rtos_support/src/rtos_printf.c"
-    "${AIOTSDK_DIR}/modules/lib_rtos_support/src/rtos_time.c"
+    "${AIOTSDK_DIR}/modules/rtos/rtos_support/src/rtos_cores.c"
+    "${AIOTSDK_DIR}/modules/rtos/rtos_support/src/rtos_irq.c"
+    "${AIOTSDK_DIR}/modules/rtos/rtos_support/src/rtos_locks.c"
+    "${AIOTSDK_DIR}/modules/rtos/rtos_support/src/rtos_printf.c"
+    "${AIOTSDK_DIR}/modules/rtos/rtos_support/src/rtos_time.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/test_dispatch_freertos.c"
   )
 
@@ -145,8 +145,8 @@ elseif(FREERTOS)
   set(TEST_DISPATCH_INCLUDES 
     "${FREERTOS_DIR}/FreeRTOS/Source/include"
     "${FREERTOS_DIR}/FreeRTOS/Source/portable/XCC/XCOREAI"
-    "${AIOTSDK_DIR}/modules/lib_rtos_support/api"
-    "${AIOTSDK_DIR}/modules/lib_rtos_support/src"
+    "${AIOTSDK_DIR}/modules/rtos/rtos_support/api"
+    "${AIOTSDK_DIR}/modules/rtos/rtos_support/src"
   )
 else()
   set(LIB_DISPATCH_SOURCES ${LIB_DISPATCH_METAL_SOURCES})

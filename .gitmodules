@@ -1,9 +1,6 @@
 [submodule "lib_logging"]
 	path = lib_logging
 	url = git@github.com:xmos/lib_logging.git
-[submodule "lib_xassert"]
-	path = lib_xassert
-	url = git@github.com:xmos/lib_xassert.git
 [submodule "test/Unity"]
 	path = test/Unity
 	url = git@github.com:ThrowTheSwitch/Unity.git

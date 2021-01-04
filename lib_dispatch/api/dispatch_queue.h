@@ -15,21 +15,26 @@ extern "C" {
 
 /** Create a new dispatch queue
  *
- * @param[in] length        Maximum number of tasks in the queue
- * @param[in] thread_count  Number of thread workers
- * @param[in] stack_size    Size (in words) of the stack for each thread worker
- * @param[in] name          Queue name used for debugging
+ * @param[in] length             Maximum number of tasks in the queue
+ * @param[in] thread_count       Number of thread workers
+ * @param[in] thread_stack_size  Size (in words) of the stack for each thread
+ * worker
+ * @param[in] thread_priority    Priority for each thread worker.
+ * @param[in] name               Queue name used for debugging
  *
  * @return                  New dispatch queue object
  */
 dispatch_queue_t* dispatch_queue_create(size_t length, size_t thread_count,
-                                        size_t stack_size, const char* name);
+                                        size_t thread_stack_size,
+                                        size_t thread_priority,
+                                        const char* name);
 
 /** Initialize a new dispatch queue
  *
- * @param[in,out] ctx  Dispatch queue object
+ * @param[in,out] ctx          Dispatch queue object
+ * @param[in] thread_priority  Priority for each thread worker.
  */
-void dispatch_queue_init(dispatch_queue_t* ctx);
+void dispatch_queue_init(dispatch_queue_t* ctx, size_t thread_priority);
 
 /** Free memory allocated by dispatch_queue_create
  *

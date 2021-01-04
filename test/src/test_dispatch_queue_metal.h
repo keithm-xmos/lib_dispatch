@@ -7,7 +7,8 @@
 
 #define QUEUE_LENGTH (3)
 #define QUEUE_THREAD_COUNT (3)
-#define QUEUE_STACK_SIZE (1024)  // more than enough
+#define QUEUE_THREAD_STACK_SIZE (1024)  // more than enough
+#define QUEUE_THREAD_PRIORITY (0)       // ignored
 
 typedef int thread_mutex_t;
 

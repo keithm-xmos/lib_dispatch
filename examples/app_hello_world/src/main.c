@@ -4,9 +4,12 @@
 #if FREERTOS
 #include "FreeRTOS.h"
 #include "task.h"
+#define THREAD_PRIORITY (configMAX_PRIORITIES - 1)
+#else
+#define THREAD_PRIORITY (0)
 #endif
 
-#include "lib_dispatch/api/dispatch.h"
+#include "dispatch.h"
 
 #define NUM_FUNCTIONS (3)
 
@@ -28,7 +31,7 @@ static void hello_world(void* unused) {
 
   // create the dispatch queue
   queue = dispatch_queue_create(queue_length, queue_thread_count, 1024,
-                                "hello_world");
+                                THREAD_PRIORITY, "hello_world");
 
   // add NUM_FUNCTIONS functions
   for (int i = 0; i < NUM_FUNCTIONS; i++) {

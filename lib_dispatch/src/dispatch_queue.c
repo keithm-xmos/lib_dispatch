@@ -1,8 +1,5 @@
 // Copyright (c) 2020, XMOS Ltd, All rights reserved
-#include "lib_dispatch/api/dispatch_queue.h"
-
-#include "lib_dispatch/api/dispatch_group.h"
-#include "lib_dispatch/api/dispatch_task.h"
+#include "dispatch.h"
 
 size_t dispatch_queue_function_add(dispatch_queue_t *ctx,
                                    dispatch_function_t fn, void *arg) {

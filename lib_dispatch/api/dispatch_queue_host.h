@@ -11,7 +11,7 @@
 #include <thread>
 #include <vector>
 
-#include "lib_dispatch/api/dispatch_task.h"
+#include "dispatch_task.h"
 
 typedef struct dispatch_host_struct dispatch_host_queue_t;
 struct dispatch_host_struct {

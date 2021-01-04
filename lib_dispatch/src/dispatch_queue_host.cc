@@ -1,13 +1,11 @@
 // Copyright (c) 2020, XMOS Ltd, All rights reserved
-#include "lib_dispatch/api/dispatch_queue_host.h"
+#include "dispatch_queue_host.h"
 
 #include <cassert>
 #include <cstdlib>
 #include <cstring>
 
-#include "lib_dispatch/api/dispatch_group.h"
-#include "lib_dispatch/api/dispatch_queue.h"
-#include "lib_dispatch/api/dispatch_task.h"
+#include "dispatch.h"
 
 void dispatch_thread_handler(dispatch_host_queue_t *queue, int *task_id) {
   std::unique_lock<std::mutex> lock(queue->lock);
@@ -40,7 +38,9 @@ void dispatch_thread_handler(dispatch_host_queue_t *queue, int *task_id) {
 }
 
 dispatch_queue_t *dispatch_queue_create(size_t length, size_t thread_count,
-                                        size_t stack_size, const char *name) {
+                                        size_t thread_stack_size,
+                                        size_t thread_priority,
+                                        const char *name) {
   dispatch_host_queue_t *queue;
 
   std::printf("dispatch_queue_create: length=%d, thread_count=%d\n", length,
@@ -56,14 +56,14 @@ dispatch_queue_t *dispatch_queue_create(size_t length, size_t thread_count,
     queue->name.assign("null");
 
   // initialize the queue
-  dispatch_queue_init(queue);
+  dispatch_queue_init(queue, thread_priority);
 
   std::printf("dispatch_queue_create: name=%s\n", queue->name.c_str());
 
   return queue;
 }
 
-void dispatch_queue_init(dispatch_queue_t *ctx) {
+void dispatch_queue_init(dispatch_queue_t *ctx, size_t thread_priority) {
   assert(ctx);
   dispatch_host_queue_t *queue = static_cast<dispatch_host_queue_t *>(ctx);
 
