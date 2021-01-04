@@ -47,7 +47,7 @@ TEST(dispatch_queue_metal, test_static) {
 
   arg.count = 0;
   for (int i = 0; i < task_count; i++) {
-    dispatch_queue_add_function(queue, do_standard_work, &arg);
+    dispatch_queue_function_add(queue, do_standard_work, &arg);
   }
   dispatch_queue_wait(queue);
 
@@ -95,14 +95,14 @@ TEST(dispatch_queue_metal, test_parallel) {
     args[i].count = 0;
     args[i].begin = i * num_values_in_chunk;
     args[i].end = args[i].begin + num_values_in_chunk;
-    dispatch_group_add(group, do_parallel_work, &args[i]);
+    dispatch_group_function_add(group, do_parallel_work, &args[i]);
   }
 
   hwtimer = hwtimer_alloc();
   multi_thread_ticks = hwtimer_get_time(hwtimer);
 
   // add group to dispatch queue
-  dispatch_queue_add_group(queue, group);
+  dispatch_queue_group_add(queue, group);
   // wait for all tasks in the group to finish executing
   dispatch_group_wait(group);
 

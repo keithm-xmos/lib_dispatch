@@ -33,7 +33,7 @@ static void hello_world(void* unused) {
   // add NUM_FUNCTIONS functions
   for (int i = 0; i < NUM_FUNCTIONS; i++) {
     args[i].index = i;
-    dispatch_queue_add_function(queue, do_work, &args[i]);
+    dispatch_queue_function_add(queue, do_work, &args[i]);
   }
 
   // wait for all functions to finish executing

@@ -50,7 +50,7 @@ void dispatch_queue_destroy(dispatch_queue_t* ctx);
  * @return          Task ID that can be used in a call to
  * dispatch_queue_task_wait
  */
-size_t dispatch_queue_add_task(dispatch_queue_t* ctx, dispatch_task_t* task);
+size_t dispatch_queue_task_add(dispatch_queue_t* ctx, dispatch_task_t* task);
 
 /** Create a task and add to the dispatch queue
  *
@@ -62,7 +62,7 @@ size_t dispatch_queue_add_task(dispatch_queue_t* ctx, dispatch_task_t* task);
  * @return         Task ID that can be used in a call to
  * dispatch_queue_task_wait
  */
-size_t dispatch_queue_add_function(dispatch_queue_t* ctx,
+size_t dispatch_queue_function_add(dispatch_queue_t* ctx,
                                    dispatch_function_t fn, void* arg);
 
 /** Add a group to the dispatch queue
@@ -71,7 +71,7 @@ size_t dispatch_queue_add_function(dispatch_queue_t* ctx,
  * @param[in] group  Group object
  *
  */
-void dispatch_queue_add_group(dispatch_queue_t* ctx, dispatch_group_t* group);
+void dispatch_queue_group_add(dispatch_queue_t* ctx, dispatch_group_t* group);
 
 /** Wait synchronously in the caller's thread for the task with the given ID to
  * finish executing

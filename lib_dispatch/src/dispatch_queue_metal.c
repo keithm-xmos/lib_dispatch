@@ -113,7 +113,7 @@ void dispatch_queue_init(dispatch_queue_t *ctx) {
   }
 }
 
-size_t dispatch_queue_add_task(dispatch_queue_t *ctx, dispatch_task_t *task) {
+size_t dispatch_queue_task_add(dispatch_queue_t *ctx, dispatch_task_t *task) {
   assert(ctx);
   assert(task);
   dispatch_xcore_queue_t *queue = (dispatch_xcore_queue_t *)ctx;

@@ -75,7 +75,7 @@ TEST(dispatch_queue, test_wait_task) {
 
   arg.count = 0;
 
-  task_id = dispatch_queue_add_function(queue, do_standard_work, &arg);
+  task_id = dispatch_queue_function_add(queue, do_standard_work, &arg);
   dispatch_queue_task_wait(queue, task_id);
 
   TEST_ASSERT_EQUAL_INT(1, arg.count);
@@ -99,10 +99,10 @@ TEST(dispatch_queue, test_wait_group) {
 
   // add tasks to group
   for (int i = 0; i < group_length; i++) {
-    dispatch_group_add(group, do_standard_work, &arg);
+    dispatch_group_function_add(group, do_standard_work, &arg);
   }
 
-  dispatch_queue_add_group(queue, group);
+  dispatch_queue_group_add(queue, group);
   dispatch_group_wait(group);
 
   TEST_ASSERT_EQUAL_INT(group_length, arg.count);
@@ -123,7 +123,7 @@ TEST(dispatch_queue, test_add_task) {
 
   arg.count = 0;
   for (int i = 0; i < task_count; i++) {
-    dispatch_queue_add_function(queue, do_standard_work, &arg);
+    dispatch_queue_function_add(queue, do_standard_work, &arg);
   }
   dispatch_queue_wait(queue);
 
@@ -144,7 +144,7 @@ TEST(dispatch_queue, test_add_function) {
 
   arg.count = 0;
   for (int i = 0; i < function_count; i++) {
-    dispatch_queue_add_function(queue, do_standard_work, &arg);
+    dispatch_queue_function_add(queue, do_standard_work, &arg);
   }
   dispatch_queue_wait(queue);
 
@@ -170,11 +170,11 @@ TEST(dispatch_queue, test_add_group) {
 
   // add tasks to group
   for (int i = 0; i < group_length; i++) {
-    dispatch_group_add(group, do_standard_work, &arg);
+    dispatch_group_function_add(group, do_standard_work, &arg);
   }
 
   for (int i = 0; i < group_count; i++) {
-    dispatch_queue_add_group(queue, group);
+    dispatch_queue_group_add(queue, group);
     dispatch_group_wait(group);
   }
 
@@ -212,11 +212,11 @@ TEST(dispatch_queue, test_mixed_durations1) {
 
     // add extended tasks
     for (int j = 0; j < extended_task_count; j++) {
-      dispatch_queue_add_task(queue, &extended_tasks[j]);
+      dispatch_queue_task_add(queue, &extended_tasks[j]);
     }
 
     // add limited task
-    dispatch_queue_add_task(queue, &limited_task);
+    dispatch_queue_task_add(queue, &limited_task);
 
     // now wait for the limited task
     dispatch_queue_task_wait(queue, limited_task.id);
@@ -225,8 +225,8 @@ TEST(dispatch_queue, test_mixed_durations1) {
     else
       TEST_ASSERT_EQUAL_INT(QUEUE_THREAD_COUNT + 1, arg.count);
 
-    // now wait for the extended task
-    dispatch_queue_task_wait(queue, extended_tasks[i].id);
+    // now wait for the last added extended task
+    dispatch_queue_task_wait(queue, extended_tasks[extended_task_count - 1].id);
     TEST_ASSERT_EQUAL_INT(extended_task_count + 1, arg.count);
 
     free(extended_tasks);
@@ -250,23 +250,23 @@ TEST(dispatch_queue, test_mixed_durations2) {
 
   dispatch_task_init(&extended_task1, do_extended_work, &extended_arg);
   dispatch_task_init(&extended_task2, do_extended_work, &extended_arg);
-  dispatch_group_add(limited_group, do_limited_work, &limited_arg);
-  dispatch_group_add(limited_group, do_limited_work, &limited_arg);
-  dispatch_group_add(limited_group, do_limited_work, &limited_arg);
+  dispatch_group_function_add(limited_group, do_limited_work, &limited_arg);
+  dispatch_group_function_add(limited_group, do_limited_work, &limited_arg);
+  dispatch_group_function_add(limited_group, do_limited_work, &limited_arg);
 
   extended_arg.count = 0;
   limited_arg.count = 0;
 
   // add first extended task
-  dispatch_queue_add_task(queue, &extended_task1);
+  dispatch_queue_task_add(queue, &extended_task1);
 
   // now wait for the first extended task
   dispatch_queue_task_wait(queue, extended_task1.id);
   TEST_ASSERT_EQUAL_INT(1, extended_arg.count);
 
   // add limited task group, and second extended task
-  dispatch_queue_add_group(queue, limited_group);
-  dispatch_queue_add_task(queue, &extended_task2);
+  dispatch_queue_group_add(queue, limited_group);
+  dispatch_queue_task_add(queue, &extended_task2);
 
   // now wait for the limited tasks
   dispatch_group_wait(limited_group);

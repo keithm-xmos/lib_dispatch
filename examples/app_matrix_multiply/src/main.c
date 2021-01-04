@@ -101,14 +101,14 @@ static int multi_thread_mat_mul() {
     args[i].start_row = i * num_rows;
     args[i].end_row = args[i].start_row + num_rows;
 
-    dispatch_group_add(group, do_matrix_multiply, &args[i]);
+    dispatch_group_function_add(group, do_matrix_multiply, &args[i]);
   }
 
   hwtimer = hwtimer_alloc();
   ticks = hwtimer_get_time(hwtimer);
 
   // add group to dispatch queue
-  dispatch_queue_add_group(queue, group);
+  dispatch_queue_group_add(queue, group);
   // wait for all tasks in the group to finish executing
   dispatch_group_wait(group);
 

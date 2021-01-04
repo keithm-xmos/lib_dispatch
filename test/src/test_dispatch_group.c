@@ -17,12 +17,6 @@ void do_dispatch_group_work(void *p) {
   arg->count += 1;
 }
 
-DISPATCH_TASK_FUNCTION
-void undo_dispatch_group_work(void *p) {
-  test_work_arg_t *arg = (test_work_arg_t *)p;
-  arg->count -= 1;
-}
-
 TEST_GROUP(dispatch_group);
 
 TEST_SETUP(dispatch_group) {}
@@ -44,7 +38,7 @@ TEST(dispatch_group, test_static) {
   dispatch_group_init(group);
 
   for (int i = 0; i < TEST_STATIC_LENGTH; i++) {
-    dispatch_group_add(group, do_dispatch_group_work, &arg);
+    dispatch_group_function_add(group, do_dispatch_group_work, &arg);
   }
   dispatch_group_perform(group);
 
@@ -60,7 +54,7 @@ TEST(dispatch_group, test_perform) {
 
   group = dispatch_group_create(length);
   for (int i = 0; i < length; i++) {
-    dispatch_group_add(group, do_dispatch_group_work, &arg);
+    dispatch_group_function_add(group, do_dispatch_group_work, &arg);
   }
   dispatch_group_perform(group);
 
