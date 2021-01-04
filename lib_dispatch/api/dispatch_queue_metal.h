@@ -19,8 +19,8 @@ struct dispatch_xcore_struct {
   size_t next_id;
   char *thread_stack;
   size_t *thread_task_ids;
+  chanend_t thread_chanend;
   dispatch_thread_data_t *thread_data;
-  chanend_t *thread_chanends;
 };
 
 #endif  // DISPATCH_QUEUE_XCORE_H_

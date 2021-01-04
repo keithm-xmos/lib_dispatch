@@ -1,17 +1,19 @@
 # lib_dispatch Hello World Example
 
-## Building & running tests for XCORE bare-metal
+This example application demonstrates how to create a dispatch queue and add functions that print out "Hello World".
 
-Run the following commands to build the test firmware:
+## Building & running for FreeRTOS
 
-    $ cmake -B build -DBARE_METAL=ON
+Run the following commands to build and run the hello_world firmware:
+
+    $ cmake -B build -DFREERTOS=ON
     $ cmake --build build --target install
     $ xrun --xscope bin/hello_world.xe
 
-## Building & running tests for XCORE FreeRTOS
+## Building & running for bare-metal
 
-Run the following commands to build the test firmware:
+Run the following commands to build and run the hello_world firmware:
 
-    $ cmake -B build -DFREERTOS=ON
+    $ cmake -B build -DBARE_METAL=ON
     $ cmake --build build --target install
     $ xrun --xscope bin/hello_world.xe

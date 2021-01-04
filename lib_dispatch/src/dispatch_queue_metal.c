@@ -65,9 +65,6 @@ dispatch_queue_t *dispatch_queue_create(size_t length, size_t thread_count,
     strncpy(queue->name, "null", 32);
 #endif
 
-  // allocate channels
-  queue->thread_chanends = malloc(sizeof(channel_t) * thread_count);
-
   // allocate thread task ids
   queue->thread_task_ids = malloc(sizeof(size_t) * thread_count);
 
@@ -96,15 +93,14 @@ void dispatch_queue_init(dispatch_queue_t *ctx) {
 
   queue->next_id = DISPATCH_TASK_NONE + 1;
 
+  queue->thread_chanend = chanend_alloc();  // dispatch queue's chanend
+
   // create workers
   for (int i = 0; i < queue->thread_count; i++) {
     queue->thread_task_ids[i] = DISPATCH_TASK_NONE;
     queue->thread_data[i].task_id = &queue->thread_task_ids[i];
     // create and setup chanends
-    queue->thread_chanends[i] = chanend_alloc();   // queue's chanend
     queue->thread_data[i].cend = chanend_alloc();  // worker's chanend
-    chanend_set_dest(queue->thread_chanends[i], queue->thread_data[i].cend);
-    chanend_set_dest(queue->thread_data[i].cend, queue->thread_chanends[i]);
     // launch the thread worker
     run_async(dispatch_thread_handler, (void *)&queue->thread_data[i],
               stack_base((void *)&queue->thread_stack[stack_offset],
@@ -137,12 +133,17 @@ size_t dispatch_queue_task_add(dispatch_queue_t *ctx, dispatch_task_t *task) {
     task->queue = ctx;
     task->id = queue->next_id++;
 
+    // setup chanend route
+    chanend_set_dest(queue->thread_chanend,
+                     queue->thread_data[worker_index].cend);
+    chanend_set_dest(queue->thread_data[worker_index].cend,
+                     queue->thread_chanend);
     // signal worker to wake up (blocks waiting for worker)
-    chan_out_byte(queue->thread_chanends[worker_index], DISPATCH_WAKE_EVT);
+    chan_out_byte(queue->thread_chanend, DISPATCH_WAKE_EVT);
     // set thread task to the task ID it is about to execute
     queue->thread_task_ids[worker_index] = task->id;
     // send task to worker
-    chan_out_buf_byte(queue->thread_chanends[worker_index], (void *)&task[0],
+    chan_out_buf_byte(queue->thread_chanend, (void *)&task[0],
                       sizeof(dispatch_task_t));
   }
 
@@ -191,7 +192,6 @@ void dispatch_queue_destroy(dispatch_queue_t *ctx) {
   dispatch_xcore_queue_t *queue = (dispatch_xcore_queue_t *)ctx;
 
   assert(queue);
-  assert(queue->thread_chanends);
   assert(queue->thread_task_ids);
   assert(queue->thread_data);
   assert(queue->thread_stack);
@@ -200,7 +200,9 @@ void dispatch_queue_destroy(dispatch_queue_t *ctx) {
 
   // send all thread workers the EXIT event
   for (int i = 0; i < queue->thread_count; i++) {
-    chan_out_byte(queue->thread_chanends[i], DISPATCH_EXIT_EVT);
+    chanend_set_dest(queue->thread_chanend, queue->thread_data[i].cend);
+    chanend_set_dest(queue->thread_data[i].cend, queue->thread_chanend);
+    chan_out_byte(queue->thread_chanend, DISPATCH_EXIT_EVT);
   }
 
   // need to give task handlers time to exit
@@ -211,15 +213,14 @@ void dispatch_queue_destroy(dispatch_queue_t *ctx) {
   hwtimer_free(timer);
 
   // now safe to free the chanends
+  chanend_free(queue->thread_chanend);
   for (int i = 0; i < queue->thread_count; i++) {
     chanend_free(queue->thread_data[i].cend);
-    chanend_free(queue->thread_chanends[i]);
   }
 
   // free memory
   free((void *)queue->thread_stack);
   free((void *)queue->thread_data);
   free((void *)queue->thread_task_ids);
-  free((void *)queue->thread_chanends);
   free((void *)queue);
 }

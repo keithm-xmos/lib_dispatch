@@ -139,7 +139,8 @@ static void mat_mul(void* unused) {
 
 int main(int argc, const char* argv[]) {
 #if FREERTOS
-  xTaskCreate(mat_mul, "mat_mul", 16 * 1024, NULL, configMAX_PRIORITIES, NULL);
+  xTaskCreate(mat_mul, "mat_mul", 16 * 1024, NULL, configMAX_PRIORITIES - 1,
+              NULL);
   vTaskStartScheduler();
 #endif
   // for FreeRTOS build we never reach here because vTaskStartScheduler never

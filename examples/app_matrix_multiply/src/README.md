@@ -1,17 +1,22 @@
-# lib_dispatch Hello World Example
+# lib_dispatch Matrix Multiply Example
 
-## Building & running tests for XCORE bare-metal
+This example application demonstrates how to create a dispatch queue, a dispatch group, and utilize them to parallelize the multiplication of two matrices.  The resulting performance is, as one might expect, four times faster using a dispatch queue with four worker threads.
 
-Run the following commands to build the test firmware:
+Note, the function used in this example to multiply two matrices is for illustrative use only.  It is not the most efficient way to perform a matrix multiplication.  XMOS has optimized libraries specifically for this purpose.
 
-    $ cmake -B build -DBARE_METAL=ON
-    $ cmake --build build --target install
-    $ xrun --xscope bin/hello_world.xe
+## Building & running tests for FreeRTOS
 
-## Building & running tests for XCORE FreeRTOS
-
-Run the following commands to build the test firmware:
+Run the following commands to build the mat_mul firmware:
 
     $ cmake -B build -DFREERTOS=ON
     $ cmake --build build --target install
-    $ xrun --xscope bin/hello_world.xe
+    $ xrun --xscope bin/mat_mul.xe
+
+## Building & running tests for bare-metal
+
+Run the following commands to build the mat_mul firmware:
+
+    $ cmake -B build -DBARE_METAL=ON
+    $ cmake --build build --target install
+    $ xrun --xscope bin/mat_mul.xe
+

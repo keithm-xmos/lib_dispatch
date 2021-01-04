@@ -23,13 +23,13 @@ TEST(dispatch_queue_metal, test_static) {
   dispatch_xcore_queue_t queue_s;
   size_t thread_task_ids[TEST_STATIC_THREAD_COUNT];
   dispatch_thread_data_t thread_data[TEST_STATIC_THREAD_COUNT];
-  chanend_t chanends[TEST_STATIC_THREAD_COUNT];
+  chanend_t chanend = 0;
   __attribute__((aligned(8))) static char
       static_stack[TEST_STATIC_STACK_SIZE * TEST_STATIC_THREAD_COUNT];
 
   queue_s.length = TEST_STATIC_LENGTH;
   queue_s.thread_count = TEST_STATIC_THREAD_COUNT;
-  queue_s.thread_chanends = &chanends[0];
+  queue_s.thread_chanend = chanend;
   queue_s.thread_stack_size = TEST_STATIC_STACK_SIZE;
   queue_s.thread_stack = static_stack;
   queue_s.thread_task_ids = &thread_task_ids[0];

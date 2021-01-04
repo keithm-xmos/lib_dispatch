@@ -48,7 +48,7 @@ int main(int argc, const char* argv[]) {
   UnityBegin(argv[0]);
 
 #if FREERTOS
-  xTaskCreate(RunTests, "RunTests", 1024 * 16, NULL, configMAX_PRIORITIES,
+  xTaskCreate(RunTests, "RunTests", 1024 * 16, NULL, configMAX_PRIORITIES - 1,
               NULL);
   vTaskStartScheduler();
 #endif

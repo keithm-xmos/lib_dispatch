@@ -45,8 +45,8 @@ static void hello_world(void* unused) {
 
 int main(int argc, const char* argv[]) {
 #if FREERTOS
-  xTaskCreate(hello_world, "hello_world", 1024 * 16, NULL, configMAX_PRIORITIES,
-              NULL);
+  xTaskCreate(hello_world, "hello_world", 1024 * 16, NULL,
+              configMAX_PRIORITIES - 1, NULL);
   vTaskStartScheduler();
 #endif
   // for FreeRTOS build we never reach here because vTaskStartScheduler never
