@@ -28,8 +28,6 @@ void dispatch_group_init(dispatch_group_t *ctx) {
   assert(ctx);
 
   ctx->count = 0;
-  ctx->notify_task = NULL;
-  ctx->notify_group = NULL;
   ctx->queue = NULL;
 }
 
@@ -41,21 +39,6 @@ void dispatch_group_add(dispatch_group_t *ctx, dispatch_task_t *task) {
   ctx->count++;
 }
 
-void dispatch_group_notify_task(dispatch_group_t *ctx, dispatch_task_t *task) {
-  assert(ctx);
-  assert(task);
-
-  ctx->notify_task = task;
-}
-
-void dispatch_group_notify_group(dispatch_group_t *ctx,
-                                 dispatch_group_t *group) {
-  assert(ctx);
-  assert(group);
-
-  ctx->notify_group = group;
-}
-
 void dispatch_group_perform(dispatch_group_t *ctx) {
   assert(ctx);
 
@@ -65,14 +48,6 @@ void dispatch_group_perform(dispatch_group_t *ctx) {
   for (int i = 0; i < ctx->count; i++) {
     dispatch_task_t *task = &ctx->tasks[i];
     dispatch_task_perform(task);
-  }
-
-  if (ctx->notify_task) {
-    dispatch_task_perform(ctx->notify_task);
-  }
-
-  if (ctx->notify_group) {
-    dispatch_group_perform(ctx->notify_group);
   }
 }
 

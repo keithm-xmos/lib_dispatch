@@ -34,7 +34,6 @@ TEST(dispatch_task, test_create) {
 
   dispatch_task_init(&task, do_dispatch_task_work, arg);
 
-  TEST_ASSERT_NULL(task.notify);
   TEST_ASSERT_EQUAL(do_dispatch_task_work, task.fn);
   TEST_ASSERT_EQUAL(arg, task.arg);
 }
@@ -50,28 +49,7 @@ TEST(dispatch_task, test_perform) {
   TEST_ASSERT_EQUAL_INT(1, arg.one);
 }
 
-TEST(dispatch_task, test_notify) {
-  dispatch_task_t do_task;
-  dispatch_task_t undo_task;
-  test_work_arg_t arg;
-
-  // create two tasks
-  dispatch_task_init(&do_task, do_dispatch_task_work, &arg);
-  dispatch_task_init(&undo_task, undo_dispatch_task_work, &arg);
-
-  // setup task to notify when first task is complete
-  dispatch_task_notify(&do_task, &undo_task);
-
-  // wait for first task to complete
-  dispatch_task_perform(&do_task);
-
-  // assert the notified task ran
-  TEST_ASSERT_EQUAL_INT(1, arg.zero);
-  TEST_ASSERT_EQUAL_INT(0, arg.one);
-}
-
 TEST_GROUP_RUNNER(dispatch_task) {
   RUN_TEST_CASE(dispatch_task, test_create);
-  // RUN_TEST_CASE(dispatch_task, test_perform);
-  // RUN_TEST_CASE(dispatch_task, test_notify);
+  RUN_TEST_CASE(dispatch_task, test_perform);
 }

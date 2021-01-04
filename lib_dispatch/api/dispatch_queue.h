@@ -73,32 +73,6 @@ void dispatch_queue_add_group(dispatch_queue_t* ctx, dispatch_group_t* group);
 size_t dispatch_queue_add_function(dispatch_queue_t* ctx,
                                    dispatch_function_t fn, void* arg);
 
-/** Run a task asyncronously N times
- *
- * @param[in] ctx   Dispatch queue object
- * @param[in] N     Number of iterations to run the task
- * @param[in] task  Task object
- *
- * @return          Task ID that can be used in a call to
- * dispatch_queue_task_wait
- */
-size_t dispatch_queue_for_task(dispatch_queue_t* ctx, int N,
-                               dispatch_task_t* task);
-
-/** Create and run a task asyncronously N times
- *
- * @param[in] ctx   Dispatch queue object
- * @param[in] N     Number of iterations to run the task
- * @param[in] fn  Function to perform, signature must be void my_fun(void
- * *arg)
- * @param[in] arg  Function argument
- *
- * @return          Task ID that can be used in a call to
- * dispatch_queue_task_wait
- */
-size_t dispatch_queue_for_function(dispatch_queue_t* ctx, int N,
-                                   dispatch_function_t fn, void* arg);
-
 /** Wait synchronously in the caller's thread for the task with the given ID to
  * finish executing
  *

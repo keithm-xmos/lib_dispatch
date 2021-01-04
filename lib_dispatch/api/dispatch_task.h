@@ -23,7 +23,6 @@ typedef struct dispatch_task_struct dispatch_task_t;
 struct dispatch_task_struct {
   dispatch_function_t fn;               // the function to perform
   void *arg;                            // argument to pass to the function
-  struct dispatch_task_struct *notify;  // the task to notify
   struct dispatch_queue_struct *queue;  // parent queue
   size_t id;                            // unique identifier
 };
@@ -41,14 +40,6 @@ extern "C" {
  */
 void dispatch_task_init(dispatch_task_t *ctx, dispatch_function_t fn,
                         void *arg);
-
-/** Schedules the execution of the notify task after the completion of the
- * current task
- *
- * @param[in] ctx   Task object
- * @param[in] task  Task to notify
- */
-void dispatch_task_notify(dispatch_task_t *ctx, dispatch_task_t *task);
 
 /** Run the task in the caller's thread
  *

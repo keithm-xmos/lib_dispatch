@@ -158,46 +158,6 @@ TEST(dispatch_queue, test_add_function) {
   dispatch_queue_destroy(queue);
 }
 
-TEST(dispatch_queue, test_for_task) {
-  dispatch_queue_t *queue;
-  dispatch_task_t task;
-  test_work_arg_t arg;
-  int queue_length = QUEUE_LENGTH;
-  int queue_thread_count = QUEUE_THREAD_COUNT;
-  int for_count = 5;
-
-  queue = dispatch_queue_create(queue_length, queue_thread_count,
-                                QUEUE_STACK_SIZE, "test_for_task");
-  dispatch_task_init(&task, do_standard_work, &arg);
-
-  arg.count = 0;
-  dispatch_queue_for_task(queue, for_count, &task);
-  dispatch_queue_wait(queue);
-
-  TEST_ASSERT_EQUAL_INT(for_count, arg.count);
-
-  dispatch_queue_destroy(queue);
-}
-
-TEST(dispatch_queue, test_for_function) {
-  dispatch_queue_t *queue;
-  test_work_arg_t arg;
-  int queue_length = QUEUE_LENGTH;
-  int queue_thread_count = QUEUE_THREAD_COUNT;
-  int for_count = 5;
-
-  queue = dispatch_queue_create(queue_length, queue_thread_count,
-                                QUEUE_STACK_SIZE, "test_for_function");
-
-  arg.count = 0;
-  dispatch_queue_for_function(queue, for_count, do_standard_work, &arg);
-  dispatch_queue_wait(queue);
-
-  TEST_ASSERT_EQUAL_INT(for_count, arg.count);
-
-  dispatch_queue_destroy(queue);
-}
-
 TEST(dispatch_queue, test_add_group) {
   dispatch_queue_t *queue;
   dispatch_group_t *group;
@@ -341,6 +301,4 @@ TEST_GROUP_RUNNER(dispatch_queue) {
   RUN_TEST_CASE(dispatch_queue, test_mixed_durations1);
   RUN_TEST_CASE(dispatch_queue, test_mixed_durations2);
   RUN_TEST_CASE(dispatch_queue, test_add_group);
-  RUN_TEST_CASE(dispatch_queue, test_for_task);
-  RUN_TEST_CASE(dispatch_queue, test_for_function);
 }

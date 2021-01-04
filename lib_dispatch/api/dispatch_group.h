@@ -13,9 +13,7 @@ struct dispatch_group_struct {
   size_t length;
   size_t count;
   dispatch_task_t *tasks;
-  dispatch_task_t *notify_task;                // the task to notify
-  struct dispatch_group_struct *notify_group;  // the group to notify
-  struct dispatch_queue_struct *queue;         // parent queue
+  struct dispatch_queue_struct *queue;  // parent queue
 };
 
 #ifdef __cplusplus
@@ -48,23 +46,6 @@ void dispatch_group_destroy(dispatch_group_t *ctx);
  * @param[in] task  Task object
  */
 void dispatch_group_add(dispatch_group_t *ctx, dispatch_task_t *task);
-
-/** Schedules the execution of the notify group after the completion of the
- * current group
- *
- * @param[in] ctx   Group object
- * @param[in] group Group to notify
- */
-void dispatch_group_notify_group(dispatch_group_t *ctx,
-                                 dispatch_group_t *group);
-
-/** Schedules the execution of the notify task after the completion of the
- * current group
- *
- * @param[in] ctx   Group object
- * @param[in] task  Task to notify
- */
-void dispatch_group_notify_task(dispatch_group_t *ctx, dispatch_task_t *task);
 
 /** Run the group's tasks in the caller's thread
  *

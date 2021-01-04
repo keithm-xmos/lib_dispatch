@@ -73,63 +73,7 @@ TEST(dispatch_group, test_perform) {
   dispatch_group_destroy(group);
 }
 
-TEST(dispatch_group, test_notify_task) {
-  dispatch_group_t *group;
-  dispatch_task_t task;
-  test_work_arg_t arg;
-  int length = 3;
-
-  arg.count = 0;
-  dispatch_task_init(&task, do_dispatch_group_work, &arg);
-
-  group = dispatch_group_create(length);
-  for (int i = 0; i < length; i++) {
-    dispatch_group_add(group, &task);
-  }
-  dispatch_group_notify_task(group, &task);
-
-  dispatch_group_perform(group);
-
-  TEST_ASSERT_EQUAL_INT(length + 1, arg.count);
-
-  dispatch_group_destroy(group);
-}
-
-TEST(dispatch_group, test_notify_group) {
-  dispatch_group_t *do_group;
-  dispatch_group_t *undo_group;
-  dispatch_task_t do_task;
-  dispatch_task_t undo_task;
-  test_work_arg_t arg;
-  int length = 3;
-
-  arg.count = 0;
-  dispatch_task_init(&do_task, do_dispatch_group_work, &arg);
-  dispatch_task_init(&undo_task, undo_dispatch_group_work, &arg);
-
-  do_group = dispatch_group_create(length);
-  for (int i = 0; i < length; i++) {
-    dispatch_group_add(do_group, &do_task);
-  }
-
-  undo_group = dispatch_group_create(length);
-  for (int i = 0; i < length; i++) {
-    dispatch_group_add(undo_group, &undo_task);
-  }
-
-  dispatch_group_notify_group(do_group, undo_group);
-
-  dispatch_group_perform(do_group);
-
-  TEST_ASSERT_EQUAL_INT(0, arg.count);
-
-  dispatch_group_destroy(do_group);
-  dispatch_group_destroy(undo_group);
-}
-
 TEST_GROUP_RUNNER(dispatch_group) {
   RUN_TEST_CASE(dispatch_group, test_static);
   RUN_TEST_CASE(dispatch_group, test_perform);
-  RUN_TEST_CASE(dispatch_group, test_notify_task);
-  RUN_TEST_CASE(dispatch_group, test_notify_group);
 }
