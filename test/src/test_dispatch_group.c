@@ -23,47 +23,66 @@ TEST_SETUP(dispatch_group) {}
 
 TEST_TEAR_DOWN(dispatch_group) {}
 
-TEST(dispatch_group, test_static) {
-  dispatch_group_t group_s;
-  dispatch_task_t tasks[TEST_STATIC_LENGTH];
+TEST(dispatch_group, test_create) {
+  dispatch_group_t *group;
 
-  test_work_arg_t arg;
+  group = dispatch_group_create(3, false);
+  TEST_ASSERT_NOT_NULL(group);
 
-  arg.count = 0;
-
-  group_s.length = TEST_STATIC_LENGTH;
-  group_s.tasks = &tasks[0];
-
-  dispatch_group_t *group = &group_s;
-  dispatch_group_init(group);
-
-  for (int i = 0; i < TEST_STATIC_LENGTH; i++) {
-    dispatch_group_function_add(group, do_dispatch_group_work, &arg);
-  }
-  dispatch_group_perform(group);
-
-  TEST_ASSERT_EQUAL_INT(TEST_STATIC_LENGTH, arg.count);
+  dispatch_group_destroy(group);
 }
 
-TEST(dispatch_group, test_perform) {
-  dispatch_group_t *group;
-  test_work_arg_t arg;
+TEST(dispatch_group, test_perform_tasks) {
   int length = 3;
+  dispatch_group_t *group;
+  dispatch_task_t *tasks[length];
+  test_work_arg_t arg;
 
   arg.count = 0;
 
-  group = dispatch_group_create(length);
+  group = dispatch_group_create(length, false);
+
   for (int i = 0; i < length; i++) {
-    dispatch_group_function_add(group, do_dispatch_group_work, &arg);
+    tasks[i] = dispatch_task_create(do_dispatch_group_work, &arg, false);
+    dispatch_group_task_add(group, tasks[i]);
   }
   dispatch_group_perform(group);
 
   TEST_ASSERT_EQUAL_INT(length, arg.count);
 
+  for (int i = 0; i < length; i++) {
+    dispatch_task_destroy(tasks[i]);
+  }
+
+  dispatch_group_destroy(group);
+}
+
+TEST(dispatch_group, test_perform_functions) {
+  int length = 3;
+  dispatch_group_t *group;
+  dispatch_task_t *tasks[length];
+  test_work_arg_t arg;
+
+  arg.count = 0;
+
+  group = dispatch_group_create(length, false);
+
+  for (int i = 0; i < length; i++) {
+    tasks[i] = dispatch_group_function_add(group, do_dispatch_group_work, &arg);
+  }
+  dispatch_group_perform(group);
+
+  TEST_ASSERT_EQUAL_INT(length, arg.count);
+
+  for (int i = 0; i < length; i++) {
+    dispatch_task_destroy(tasks[i]);
+  }
+
   dispatch_group_destroy(group);
 }
 
 TEST_GROUP_RUNNER(dispatch_group) {
-  RUN_TEST_CASE(dispatch_group, test_static);
-  RUN_TEST_CASE(dispatch_group, test_perform);
+  RUN_TEST_CASE(dispatch_group, test_create);
+  RUN_TEST_CASE(dispatch_group, test_perform_tasks);
+  RUN_TEST_CASE(dispatch_group, test_perform_functions);
 }

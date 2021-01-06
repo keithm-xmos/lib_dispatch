@@ -17,17 +17,17 @@ void dispatch_thread_handler(dispatch_host_queue_t *queue, int *task_id) {
 
     // after wait, we own the lock
     if (!queue->quit && queue->deque.size()) {
-      dispatch_task_t &task = queue->deque.front();
+      dispatch_task_t *task = queue->deque.front();
 
       // set the current task
-      *task_id = task.id;
+      *task_id = task->id;
 
       queue->deque.pop_front();
 
       // unlock now that we're done messing with the queue
       lock.unlock();
 
-      dispatch_task_perform(&task);
+      dispatch_task_perform(task);
 
       // reset current task
       *task_id = DISPATCH_TASK_NONE;
@@ -58,7 +58,7 @@ dispatch_queue_t *dispatch_queue_create(size_t length, size_t thread_count,
   // initialize the queue
   dispatch_queue_init(queue, thread_priority);
 
-  std::printf("dispatch_queue_create: name=%s\n", queue->name.c_str());
+  std::printf("dispatch_queue_create: created name=%s\n", queue->name.c_str());
 
   return queue;
 }
@@ -90,7 +90,7 @@ size_t dispatch_queue_task_add(dispatch_queue_t *ctx, dispatch_task_t *task) {
   task->id = queue->next_id++;
 
   std::unique_lock<std::mutex> lock(queue->lock);
-  queue->deque.push_back(*task);
+  queue->deque.push_back(task);
   // manual unlocking is done before notifying, to avoid waking up
   // the waiting thread only to block again (see notify_one for details)
   lock.unlock();
@@ -131,9 +131,9 @@ void dispatch_queue_task_wait(dispatch_queue_t *ctx, int task_id) {
     done_waiting = true;
     std::unique_lock<std::mutex> lock(queue->lock);
     for (int i = 0; i < queue->deque.size(); i++) {
-      dispatch_task_t &queued_task = queue->deque.at(i);
+      dispatch_task_t *queued_task = queue->deque.at(i);
 
-      if (queued_task.id == task_id) {
+      if (queued_task->id == task_id) {
         done_waiting = false;
         break;
       }

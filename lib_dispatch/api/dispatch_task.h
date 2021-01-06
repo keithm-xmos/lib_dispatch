@@ -2,6 +2,7 @@
 #ifndef DISPATCH_TASK_H_
 #define DISPATCH_TASK_H_
 
+#include <stdbool.h>
 #include <stddef.h>
 
 #ifdef XCORE
@@ -10,42 +11,50 @@
 #define DISPATCH_TASK_FUNCTION
 #endif
 
-#define DISPATCH_TASK_NONE (0)
-#define VALID_TASK_ID(X) (X > DISPATCH_TASK_NONE)
-#define INVALID_TASK_ID(X) (X <= DISPATCH_TASK_NONE)
-#define MIN_TASK_ID(X, Y) (((X) < (Y)) ? (X) : (Y))
-
 typedef void (*dispatch_function_t)(void *);
 
-struct dispatch_queue_struct;
-
 typedef struct dispatch_task_struct dispatch_task_t;
-struct dispatch_task_struct {
-  dispatch_function_t fn;               // the function to perform
-  void *arg;                            // argument to pass to the function
-  struct dispatch_queue_struct *queue;  // parent queue
-  size_t id;                            // unique identifier
-};
 
 #ifdef __cplusplus
 extern "C" {
 #endif  // __cplusplus
 
-/** Initialize a new task
+/** Create a new task, non-waitable task
  *
- * @param[in,out] ctx  Task object
- * @param[in] fn       Function to perform, signature must be void my_fun(void
+ * @param[in] function  Function to perform, signature must be void my_fun(void
  * *arg)
- * @param[in] arg      Function argument
+ * @param[in] argument  Function argument
+ * @param[in] waitable  The task is waitable if TRUE, otherwise the task can not
+ * be waited on
+ *
+ * @return              Task object
  */
-void dispatch_task_init(dispatch_task_t *ctx, dispatch_function_t fn,
-                        void *arg);
+dispatch_task_t *dispatch_task_create(dispatch_function_t function,
+                                      void *aargumentrg, bool waitable);
+
+/** Initialize a task
+ *
+ * @param[in,out] task  Task object
+ * @param[in] function  Function to perform, signature must be void my_fun(void
+ * *arg)
+ * @param[in] argument  Function argument
+ * @param[in] waitable  The task is waitable if TRUE, otherwise the task can not
+ * be waited on
+ */
+void dispatch_task_init(dispatch_task_t *task, dispatch_function_t function,
+                        void *argument, bool waitable);
 
 /** Run the task in the caller's thread
  *
- * @param[in] ctx  Task object
+ * @param[in] task  Task object
  */
-void dispatch_task_perform(dispatch_task_t *ctx);
+void dispatch_task_perform(dispatch_task_t *task);
+
+/** Destroy the task
+ *
+ * @param[in] task  Task object
+ */
+void dispatch_task_destroy(dispatch_task_t *task);
 
 #ifdef __cplusplus
 }  // extern "C"

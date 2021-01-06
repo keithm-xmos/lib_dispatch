@@ -20,14 +20,12 @@ extern "C" {
  * @param[in] thread_stack_size  Size (in words) of the stack for each thread
  * worker
  * @param[in] thread_priority    Priority for each thread worker.
- * @param[in] name               Queue name used for debugging
  *
- * @return                  New dispatch queue object
+ * @return                       New dispatch queue object
  */
 dispatch_queue_t* dispatch_queue_create(size_t length, size_t thread_count,
                                         size_t thread_stack_size,
-                                        size_t thread_priority,
-                                        const char* name);
+                                        size_t thread_priority);
 
 /** Initialize a new dispatch queue
  *
@@ -42,6 +40,21 @@ void dispatch_queue_init(dispatch_queue_t* ctx, size_t thread_priority);
  */
 void dispatch_queue_destroy(dispatch_queue_t* ctx);
 
+/** Creates a task and adds it to the the queue
+ *
+ * @param[in] group     Group object
+ * @param[in] function  Function to perform, signature must be void my_fun(void
+ * *arg)
+ * @param[in] argument  Function argument
+ * @param[in] waitable  The created task is waitable if TRUE, otherwise the
+ * task can not be waited on
+ *
+ * @return              Task object
+ */
+dispatch_task_t* dispatch_queue_function_add(dispatch_group_t* group,
+                                             dispatch_function_t function,
+                                             void* argument, bool waitable);
+
 /** Add a task to the dispatch queue
  *
  * Note: The XCORE bare-metal implementation is currently limited and does not
@@ -52,23 +65,8 @@ void dispatch_queue_destroy(dispatch_queue_t* ctx);
  * @param[in] ctx   Dispatch queue object
  * @param[in] task  Task object
  *
- * @return          Task ID that can be used in a call to
- * dispatch_queue_task_wait
  */
-size_t dispatch_queue_task_add(dispatch_queue_t* ctx, dispatch_task_t* task);
-
-/** Create a task and add to the dispatch queue
- *
- * @param[in] ctx Dispatch queue object
- * @param[in] fn  Function to perform, signature must be void my_fun(void
- * *arg)
- * @param[in] arg  Function argument
- *
- * @return         Task ID that can be used in a call to
- * dispatch_queue_task_wait
- */
-size_t dispatch_queue_function_add(dispatch_queue_t* ctx,
-                                   dispatch_function_t fn, void* arg);
+void dispatch_queue_task_add(dispatch_queue_t* ctx, dispatch_task_t* task);
 
 /** Add a group to the dispatch queue
  *
@@ -78,15 +76,22 @@ size_t dispatch_queue_function_add(dispatch_queue_t* ctx,
  */
 void dispatch_queue_group_add(dispatch_queue_t* ctx, dispatch_group_t* group);
 
-/** Wait synchronously in the caller's thread for the task with the given ID to
- * finish executing
+/** Wait synchronously in the caller's thread for the task to finish executing
  *
- * @param[in] ctx      Dispatch queue object
- * @param[in] task_id  Task ID
+ * @param[in] ctx   Dispatch queue object
+ * @param[in] task  Task object, must be waitable
  */
-void dispatch_queue_task_wait(dispatch_queue_t* ctx, int task_id);
+void dispatch_queue_task_wait(dispatch_queue_t* ctx, dispatch_task_t* task);
 
-/** Wait synchronously in the caller's thread for all tasks to finish executing
+/** Wait synchronously in the caller's thread for the group to finish executing
+ *
+ * @param[in] ctx    Dispatch queue object
+ * @param[in] group  Group object, must be waitable
+ */
+void dispatch_queue_group_wait(dispatch_queue_t* ctx, dispatch_group_t* group);
+
+/** Wait synchronously in the caller's thread for all tasks to finish
+ * executing
  *
  * @param[in] ctx  Dispatch queue object
  */

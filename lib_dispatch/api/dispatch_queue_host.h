@@ -19,7 +19,7 @@ struct dispatch_host_struct {
   std::mutex lock;
   std::vector<std::thread> threads;
   std::vector<int> thread_task_ids;
-  std::deque<dispatch_task_t> deque;
+  std::deque<dispatch_task_t *> deque;
   std::condition_variable cv;
   size_t next_id;
   bool quit;

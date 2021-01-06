@@ -4,77 +4,68 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "dispatch.h"
+#include "dispatch_config.h"
+#include "dispatch_types.h"
 
-dispatch_group_t *dispatch_group_create(size_t length) {
+dispatch_group_t *dispatch_group_create(size_t length, bool waitable) {
   dispatch_group_t *group;
 
-  debug_printf("dispatch_group_create: length=%d\n", length);
+  dispatch_printf("dispatch_group_create: length=%d\n", length);
 
-  group = (dispatch_group_t *)malloc(sizeof(dispatch_group_t));
+  group = dispatch_malloc(sizeof(dispatch_group_t));
 
   group->length = length;
-  group->tasks = (dispatch_task_t *)malloc(sizeof(dispatch_task_t) * length);
+  group->tasks = dispatch_malloc(sizeof(dispatch_task_t *) * length);
 
   // initialize the queue
-  dispatch_group_init(group);
+  dispatch_group_init(group, waitable);
 
   return group;
 }
 
-void dispatch_group_init(dispatch_group_t *ctx) {
-  xassert(ctx);
+void dispatch_group_init(dispatch_group_t *group, bool waitable) {
+  dispatch_assert(group);
 
-  ctx->count = 0;
-  ctx->queue = NULL;
+  group->waitable = waitable;
+  group->count = 0;
 }
 
-void dispatch_group_task_add(dispatch_group_t *ctx, dispatch_task_t *task) {
-  xassert(ctx);
-  xassert(ctx->count < ctx->length);
+dispatch_task_t *dispatch_group_function_add(dispatch_group_t *group,
+                                             dispatch_function_t function,
+                                             void *argument) {
+  dispatch_task_t *task;
 
-  memcpy(&ctx->tasks[ctx->count], task, sizeof(dispatch_task_t));
-  ctx->count++;
+  task = dispatch_task_create(function, argument, group->waitable);
+  dispatch_group_task_add(group, task);
+
+  return task;
 }
 
-void dispatch_group_function_add(dispatch_group_t *ctx, dispatch_function_t fn,
-                                 void *arg) {
-  xassert(ctx);
-  xassert(ctx->count < ctx->length);
+void dispatch_group_task_add(dispatch_group_t *group, dispatch_task_t *task) {
+  dispatch_assert(group);
+  dispatch_assert(group->count < group->length);
 
-  dispatch_task_t task;
-  dispatch_task_init(&task, fn, arg);
-  dispatch_group_task_add(ctx, &task);
+  task->waitable = group->waitable;
+  group->tasks[group->count] = task;
+  group->count++;
 }
 
-void dispatch_group_perform(dispatch_group_t *ctx) {
-  xassert(ctx);
+void dispatch_group_perform(dispatch_group_t *group) {
+  dispatch_assert(group);
 
-  debug_printf("dispatch_group_perform: %u\n", (long)ctx);
+  dispatch_printf("dispatch_group_perform: %u\n", (long)group);
 
   // call group in current thread
-  for (int i = 0; i < ctx->count; i++) {
-    dispatch_task_t *task = &ctx->tasks[i];
+  for (int i = 0; i < group->count; i++) {
+    dispatch_task_t *task = group->tasks[i];
     dispatch_task_perform(task);
   }
 }
 
-void dispatch_group_wait(dispatch_group_t *ctx) {
-  xassert(ctx);
+void dispatch_group_destroy(dispatch_group_t *group) {
+  dispatch_assert(group);
+  dispatch_assert(group->tasks);
 
-  debug_printf("dispatch_group_wait: %u\n", (long)ctx);
-  if (ctx->queue) {
-    for (int i = 0; i < ctx->count; i++) {
-      dispatch_task_t *task = &ctx->tasks[i];
-      dispatch_queue_task_wait(ctx->queue, task->id);
-    }
-  }
-}
-
-void dispatch_group_destroy(dispatch_group_t *ctx) {
-  xassert(ctx);
-  xassert(ctx->tasks);
-
-  free(ctx->tasks);
-  free(ctx);
+  dispatch_free(group->tasks);
+  dispatch_free(group);
 }

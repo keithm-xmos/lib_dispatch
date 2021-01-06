@@ -2,14 +2,12 @@
 #include <string.h>
 #include <xcore/hwtimer.h>
 
+#include "FreeRTOSConfig.h"
 #include "dispatch.h"
-#include "dispatch_queue_freertos.h"
 #include "test_dispatch_queue.h"
 #include "unity.h"
 #include "unity_fixture.h"
 
-#define TEST_STATIC_LENGTH (3)
-#define TEST_STATIC_THREAD_COUNT (3)
 #define DISPATCHER_STACK_SIZE (1024)  // more than enough
 
 TEST_GROUP(dispatch_queue_freertos);
@@ -17,39 +15,6 @@ TEST_GROUP(dispatch_queue_freertos);
 TEST_SETUP(dispatch_queue_freertos) {}
 
 TEST_TEAR_DOWN(dispatch_queue_freertos) {}
-
-TEST(dispatch_queue_freertos, test_static) {
-  // create queue with data on the stack
-  dispatch_freertos_queue_t queue_s;
-  size_t thread_task_ids[TEST_STATIC_THREAD_COUNT];
-  dispatch_thread_data_t thread_data[TEST_STATIC_THREAD_COUNT];
-
-  queue_s.length = TEST_STATIC_LENGTH;
-  queue_s.thread_count = TEST_STATIC_THREAD_COUNT;
-  queue_s.thread_stack_size = DISPATCHER_STACK_SIZE;
-  queue_s.thread_task_ids = &thread_task_ids[0];
-  queue_s.thread_data = &thread_data[0];
-  queue_s.xQueue = xQueueCreate(TEST_STATIC_LENGTH, sizeof(dispatch_task_t));
-
-#if DEBUG_PRINT_ENABLE
-  strncpy(queue_s.name, "test_static", 32);
-#endif
-
-  dispatch_queue_t* queue = &queue_s;
-  dispatch_queue_init(queue, (configMAX_PRIORITIES - 1));
-
-  // now use the static queue
-  test_work_arg_t arg;
-  int task_count = 4;
-
-  arg.count = 0;
-  for (int i = 0; i < task_count; i++) {
-    dispatch_queue_function_add(queue, do_standard_work, &arg);
-  }
-  dispatch_queue_wait(queue);
-
-  TEST_ASSERT_EQUAL_INT(task_count, arg.count);
-}
 
 TEST(dispatch_queue_freertos, test_parallel) {
   int thread_count = 4;
@@ -66,6 +31,7 @@ TEST(dispatch_queue_freertos, test_parallel) {
   hwtimer = hwtimer_alloc();
   single_thread_ticks = hwtimer_get_time(hwtimer);
 
+  // do the work in this (single) thread
   do_parallel_work(&args[0]);
 
   single_thread_ticks = hwtimer_get_time(hwtimer) - single_thread_ticks;
@@ -81,11 +47,12 @@ TEST(dispatch_queue_freertos, test_parallel) {
   int multi_thread_ticks;
 
   // create the dispatch queue
-  queue = dispatch_queue_create(queue_length, thread_count, 1024,
-                                (configMAX_PRIORITIES - 1), "test_parallel");
+  queue =
+      dispatch_queue_create(queue_length, thread_count, DISPATCHER_STACK_SIZE,
+                            (configMAX_PRIORITIES - 1));
 
   // create the dispatch group
-  group = dispatch_group_create(thread_count);
+  group = dispatch_group_create(thread_count, true);
 
   // initialize thread_count tasks, add them to the group
   for (int i = 0; i < thread_count; i++) {
@@ -101,7 +68,7 @@ TEST(dispatch_queue_freertos, test_parallel) {
   // add group to dispatch queue
   dispatch_queue_group_add(queue, group);
   // wait for all tasks in the group to finish executing
-  dispatch_group_wait(group);
+  dispatch_queue_group_wait(queue, group);
 
   multi_thread_ticks = hwtimer_get_time(hwtimer) - multi_thread_ticks;
   hwtimer_free(hwtimer);
@@ -120,6 +87,5 @@ TEST(dispatch_queue_freertos, test_parallel) {
 }
 
 TEST_GROUP_RUNNER(dispatch_queue_freertos) {
-  RUN_TEST_CASE(dispatch_queue_freertos, test_static);
   RUN_TEST_CASE(dispatch_queue_freertos, test_parallel);
 }

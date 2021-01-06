@@ -18,7 +18,7 @@
 void dispatch_thread_handler(void *param) {
   dispatch_thread_data_t *thread_data = (dispatch_thread_data_t *)param;
   uint8_t evt;
-  dispatch_task_t task;
+  dispatch_task_t *task = NULL;
 
   chanend_t cend = thread_data->cend;
   volatile size_t *task_id = thread_data->task_id;
@@ -30,9 +30,9 @@ void dispatch_thread_handler(void *param) {
     if (evt == DISPATCH_WAKE_EVT) {
       debug_printf("dispatch_thread_handler wake event: cend=%u\n", (int)cend);
       // read the task
-      chan_in_buf_byte(cend, (void *)&task, sizeof(dispatch_task_t));
+      task = (dispatch_task_t *)chan_in_word(cend);
       // run the task
-      dispatch_task_perform(&task);
+      dispatch_task_perform(task);
       // clear task id
       *task_id = DISPATCH_TASK_NONE;
     } else if (evt == DISPATCH_EXIT_EVT) {
@@ -77,7 +77,7 @@ dispatch_queue_t *dispatch_queue_create(size_t length, size_t thread_count,
   // initialize the queue
   dispatch_queue_init(queue, thread_priority);
 
-  debug_printf("dispatch_queue_create: name=%s\n", queue->name);
+  debug_printf("dispatch_queue_create: created name=%s\n", queue->name);
 
   return queue;
 }
@@ -143,8 +143,7 @@ size_t dispatch_queue_task_add(dispatch_queue_t *ctx, dispatch_task_t *task) {
     // set thread task to the task ID it is about to execute
     queue->thread_task_ids[worker_index] = task->id;
     // send task to worker
-    chan_out_buf_byte(queue->thread_chanend, (void *)&task[0],
-                      sizeof(dispatch_task_t));
+    chan_out_word(queue->thread_chanend, (int)task);
   }
 
   return task->id;

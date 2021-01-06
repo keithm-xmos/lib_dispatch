@@ -29,26 +29,25 @@ TEST_SETUP(dispatch_task) {}
 TEST_TEAR_DOWN(dispatch_task) {}
 
 TEST(dispatch_task, test_create) {
-  dispatch_task_t task;
-  void *arg = NULL;
+  dispatch_task_t *task;
 
-  dispatch_task_init(&task, do_dispatch_task_work, arg);
+  task = dispatch_task_create(do_dispatch_task_work, NULL, false);
+  TEST_ASSERT_NOT_NULL(task);
 
-  TEST_ASSERT_EQUAL(do_dispatch_task_work, task.fn);
-  TEST_ASSERT_EQUAL(arg, task.arg);
-  TEST_ASSERT_EQUAL_INT(DISPATCH_TASK_NONE, task.id);
-  TEST_ASSERT_NULL(task.queue);
+  dispatch_task_destroy(task);
 }
 
 TEST(dispatch_task, test_perform) {
-  dispatch_task_t task;
+  dispatch_task_t *task;
   test_work_arg_t arg;
 
-  dispatch_task_init(&task, do_dispatch_task_work, &arg);
-  dispatch_task_perform(&task);
+  task = dispatch_task_create(do_dispatch_task_work, &arg, false);
 
+  dispatch_task_perform(task);
   TEST_ASSERT_EQUAL_INT(0, arg.zero);
   TEST_ASSERT_EQUAL_INT(1, arg.one);
+
+  dispatch_task_destroy(task);
 }
 
 TEST_GROUP_RUNNER(dispatch_task) {
