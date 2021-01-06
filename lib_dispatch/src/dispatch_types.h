@@ -11,7 +11,7 @@ struct dispatch_task_struct {
   dispatch_function_t function;  // the function to perform
   void *argument;                // argument to pass to the function
   bool waitable;                 // task can be waited on
-  void *private;                 // private data used by queue implementations
+  void *private_data;            // private data used by queue implementations
 };
 
 struct dispatch_group_struct {

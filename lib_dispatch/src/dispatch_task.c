@@ -26,7 +26,7 @@ void dispatch_task_init(dispatch_task_t *task, dispatch_function_t function,
   task->function = function;
   task->argument = argument;
   task->waitable = waitable;
-  task->private = NULL;
+  task->private_data = NULL;
 }
 
 void dispatch_task_perform(dispatch_task_t *task) {

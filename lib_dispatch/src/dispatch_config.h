@@ -4,6 +4,7 @@
 
 #if BARE_METAL
 
+#include <stdlib.h>
 #include <xcore/assert.h>
 
 #include "debug_print.h"
@@ -33,6 +34,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define dispatch_assert(A) assert(A)
 
