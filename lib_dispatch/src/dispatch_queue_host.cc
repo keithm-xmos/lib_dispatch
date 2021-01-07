@@ -55,7 +55,6 @@ void dispatch_thread_handler(dispatch_host_queue_t *queue,
   std::unique_lock<std::mutex> lock(queue->lock);
 
   dispatch_printf("dispatch_thread_handler started: queue=%u\n", (size_t)queue);
-  // ready_semaphore->Give();
 
   do {
     // give the ready signal
@@ -67,20 +66,21 @@ void dispatch_thread_handler(dispatch_host_queue_t *queue,
 
     // after wait, we own the lock
     if (!queue->quit && queue->deque.size()) {
-      // signal that not ready
+      // clear the ready signal
       ready_semaphore->Clear();
 
+      // pop the task off the deque
       dispatch_task_t *task = queue->deque.front();
-
       queue->deque.pop_front();
 
       // unlock now that we're done messing with the queue
       lock.unlock();
 
+      // perform the task
       dispatch_task_perform(task);
 
       if (task->waitable) {
-        // clear semaphore
+        // clear semaphore to signal the task is complete
         BinarySemaphore *task_semaphore =
             static_cast<BinarySemaphore *>(task->private_data);
         task_semaphore->Give();
@@ -200,15 +200,13 @@ void dispatch_queue_destroy(dispatch_queue_t *ctx) {
   // Wait for threads to finish before we exit
   for (size_t i = 0; i < queue->threads.size(); i++) {
     if (queue->threads[i].joinable()) {
-      // printf("Destructor: Joining thread %zu until completion\n", i);
       queue->threads[i].join();
     }
   }
 
+  // free memory
   for (size_t i = 0; i < queue->thread_ready_semaphores.size(); i++) {
     delete queue->thread_ready_semaphores[i];
   }
-
-  // free memory
   delete queue;
 }

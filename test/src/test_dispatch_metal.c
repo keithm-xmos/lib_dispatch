@@ -3,7 +3,6 @@
 #include <xcore/hwtimer.h>
 
 #include "dispatch.h"
-#include "dispatch_queue_metal.h"
 #include "test_dispatch_queue.h"
 #include "unity.h"
 #include "unity_fixture.h"
@@ -47,10 +46,10 @@ TEST(dispatch_queue_metal, test_parallel) {
 
   // create the dispatch queue
   queue = dispatch_queue_create(queue_length, thread_count,
-                                DISPATCHER_STACK_SIZE, 0, "test_parallel");
+                                DISPATCHER_STACK_SIZE, 0);
 
   // create the dispatch group
-  group = dispatch_group_create(thread_count);
+  group = dispatch_group_create(thread_count, true);
 
   // initialize thread_count tasks, add them to the group
   for (int i = 0; i < thread_count; i++) {
@@ -66,7 +65,7 @@ TEST(dispatch_queue_metal, test_parallel) {
   // add group to dispatch queue
   dispatch_queue_group_add(queue, group);
   // wait for all tasks in the group to finish executing
-  dispatch_group_wait(group);
+  dispatch_queue_group_wait(queue, group);
 
   multi_thread_ticks = hwtimer_get_time(hwtimer) - multi_thread_ticks;
   hwtimer_free(hwtimer);

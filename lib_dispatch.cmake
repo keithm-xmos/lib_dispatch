@@ -28,6 +28,5 @@ set(LIB_DISPATCH_FREERTOS_SOURCES
 
 set(LIB_DISPATCH_INCLUDES
   "${LIB_DISPATCH_DIR}/lib_dispatch/api"
-  "${LIB_DISPATCH_DIR}/lib_logging/lib_logging/src"
   "${LIB_DISPATCH_DIR}/lib_logging/lib_logging/api"
 )

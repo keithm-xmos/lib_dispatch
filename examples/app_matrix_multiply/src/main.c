@@ -92,10 +92,10 @@ static int multi_thread_mat_mul() {
 
   // create the dispatch queue
   queue = dispatch_queue_create(queue_length, queue_thread_count, 1024,
-                                THREAD_PRIORITY, "mat_mul");
+                                THREAD_PRIORITY);
 
   // create the dispatch group
-  group = dispatch_group_create(queue_thread_count);
+  group = dispatch_group_create(queue_thread_count, true);
 
   // initialize NUM_THREADS tasks, add them to the group
   int num_rows = ROWS / NUM_THREADS;
@@ -112,7 +112,7 @@ static int multi_thread_mat_mul() {
   // add group to dispatch queue
   dispatch_queue_group_add(queue, group);
   // wait for all tasks in the group to finish executing
-  dispatch_group_wait(group);
+  dispatch_queue_group_wait(queue, group);
 
   ticks = hwtimer_get_time(hwtimer) - ticks;
   hwtimer_free(hwtimer);

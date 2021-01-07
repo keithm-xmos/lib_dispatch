@@ -22,9 +22,9 @@ void do_limited_work(void *p) {
 
   look_busy(100);
 
-  mutex_lock(&lock);
+  mutex_lock(lock);
   arg->count++;
-  mutex_unlock(&lock);
+  mutex_unlock(lock);
 }
 
 DISPATCH_TASK_FUNCTION
@@ -33,9 +33,9 @@ void do_standard_work(void *p) {
 
   look_busy(500);
 
-  mutex_lock(&lock);
+  mutex_lock(lock);
   arg->count++;
-  mutex_unlock(&lock);
+  mutex_unlock(lock);
 }
 
 DISPATCH_TASK_FUNCTION
@@ -44,9 +44,9 @@ void do_extended_work(void *p) {
 
   look_busy(1000);
 
-  mutex_lock(&lock);
+  mutex_lock(lock);
   arg->count++;
-  mutex_unlock(&lock);
+  mutex_unlock(lock);
 }
 
 DISPATCH_TASK_FUNCTION
@@ -59,9 +59,9 @@ void do_parallel_work(void *p) {
 
 TEST_GROUP(dispatch_queue);
 
-TEST_SETUP(dispatch_queue) { mutex_init(&lock); }
+TEST_SETUP(dispatch_queue) { lock = mutex_init(); }
 
-TEST_TEAR_DOWN(dispatch_queue) { mutex_destroy(&lock); }
+TEST_TEAR_DOWN(dispatch_queue) { mutex_destroy(lock); }
 
 TEST(dispatch_queue, test_wait_queue) {
   dispatch_queue_t *queue;

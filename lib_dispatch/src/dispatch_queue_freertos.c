@@ -56,7 +56,7 @@ void dispatch_thread_handler(void *param) {
       dispatch_task_perform(task);
       if (task->waitable) {
         // clear semaphore
-        xSemaphoreGive((SemaphoreHandle_t)task->private_data;);
+        xSemaphoreGive((SemaphoreHandle_t)task->private_data);
       } else {
         // the contract is that the worker must destroy non-waitable tasks
         dispatch_task_destroy(task);
@@ -149,7 +149,7 @@ void dispatch_queue_wait(dispatch_queue_t *ctx) {
 
   int waiting_count;
 
-  // wait for deque to empty
+  // busywait for xQueue to empty
   for (;;) {
     waiting_count = uxQueueMessagesWaiting(queue->xQueue);
     if (waiting_count == 0) break;

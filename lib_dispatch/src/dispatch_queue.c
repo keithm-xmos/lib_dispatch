@@ -18,7 +18,7 @@ dispatch_task_t *dispatch_queue_function_add(dispatch_group_t *group,
 }
 
 void dispatch_queue_group_add(dispatch_queue_t *ctx, dispatch_group_t *group) {
-  for (int i = 0; i < group->length; i++) {
+  for (int i = 0; i < group->count; i++) {
     dispatch_queue_task_add(ctx, group->tasks[i]);
   }
 }
@@ -27,7 +27,7 @@ void dispatch_queue_group_wait(dispatch_queue_t *ctx, dispatch_group_t *group) {
   dispatch_assert(group->waitable);
 
   if (group->waitable) {
-    for (int i = 0; i < group->length; i++) {
+    for (int i = 0; i < group->count; i++) {
       dispatch_queue_task_wait(ctx, group->tasks[i]);
     }
   }

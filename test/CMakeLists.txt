@@ -166,6 +166,7 @@ target_sources(lib_dispatch_tests
 target_include_directories(lib_dispatch_tests
   PRIVATE ${UNITY_INCLUDES}
   PRIVATE ${LIB_DISPATCH_INCLUDES}
+  PRIVATE "${LIB_DISPATCH_DIR}/lib_dispatch/src"
   PRIVATE ${TEST_DISPATCH_INCLUDES}
   PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src"
 )
