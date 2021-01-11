@@ -3,6 +3,7 @@
 #include "test_dispatch_queue.h"
 
 #include "dispatch.h"
+#include "dispatch_config.h"
 #include "unity.h"
 #include "unity_fixture.h"
 
@@ -14,7 +15,7 @@
 #include "test_dispatch_queue_host.h"
 #endif
 
-static thread_mutex_t lock;
+static dispatch_lock_t lock;
 
 DISPATCH_TASK_FUNCTION
 void do_limited_work(void *p) {
@@ -22,9 +23,9 @@ void do_limited_work(void *p) {
 
   look_busy(100);
 
-  mutex_lock(lock);
+  dispatch_lock_acquire(lock);
   arg->count++;
-  mutex_unlock(lock);
+  dispatch_lock_release(lock);
 }
 
 DISPATCH_TASK_FUNCTION
@@ -33,9 +34,9 @@ void do_standard_work(void *p) {
 
   look_busy(500);
 
-  mutex_lock(lock);
+  dispatch_lock_acquire(lock);
   arg->count++;
-  mutex_unlock(lock);
+  dispatch_lock_release(lock);
 }
 
 DISPATCH_TASK_FUNCTION
@@ -44,9 +45,9 @@ void do_extended_work(void *p) {
 
   look_busy(1000);
 
-  mutex_lock(lock);
+  dispatch_lock_acquire(lock);
   arg->count++;
-  mutex_unlock(lock);
+  dispatch_lock_release(lock);
 }
 
 DISPATCH_TASK_FUNCTION
@@ -59,9 +60,9 @@ void do_parallel_work(void *p) {
 
 TEST_GROUP(dispatch_queue);
 
-TEST_SETUP(dispatch_queue) { lock = mutex_init(); }
+TEST_SETUP(dispatch_queue) { lock = dispatch_lock_alloc(); }
 
-TEST_TEAR_DOWN(dispatch_queue) { mutex_destroy(lock); }
+TEST_TEAR_DOWN(dispatch_queue) { dispatch_lock_free(lock); }
 
 TEST(dispatch_queue, test_wait_queue) {
   dispatch_queue_t *queue;
@@ -205,8 +206,6 @@ TEST(dispatch_queue, test_mixed_durations2) {
                                 QUEUE_THREAD_STACK_SIZE, QUEUE_THREAD_PRIORITY);
   limited_group = dispatch_group_create(3, true);
 
-  extended_task1 = dispatch_task_create(do_extended_work, &extended_arg, true);
-  extended_task2 = dispatch_task_create(do_extended_work, &extended_arg, true);
   dispatch_group_function_add(limited_group, do_limited_work, &limited_arg);
   dispatch_group_function_add(limited_group, do_limited_work, &limited_arg);
   dispatch_group_function_add(limited_group, do_limited_work, &limited_arg);
@@ -215,15 +214,15 @@ TEST(dispatch_queue, test_mixed_durations2) {
   limited_arg.count = 0;
 
   // add first extended task
-  dispatch_queue_task_add(queue, extended_task1);
-
-  // now wait for the first extended task
+  extended_task1 =
+      dispatch_queue_function_add(queue, do_extended_work, &extended_arg, true);
   dispatch_queue_task_wait(queue, extended_task1);
   TEST_ASSERT_EQUAL_INT(1, extended_arg.count);
 
   // add limited task group, and second extended task
   dispatch_queue_group_add(queue, limited_group);
-  dispatch_queue_task_add(queue, extended_task2);
+  extended_task2 =
+      dispatch_queue_function_add(queue, do_extended_work, &extended_arg, true);
 
   // now wait for the limited tasks
   dispatch_queue_group_wait(queue, limited_group);
@@ -238,7 +237,7 @@ TEST(dispatch_queue, test_mixed_durations2) {
 }
 
 TEST_GROUP_RUNNER(dispatch_queue) {
-  RUN_TEST_CASE(dispatch_queue, test_wait_queue);
+  RUN_TEST_CASE(dispatch_queue, test_wait_queue)
   RUN_TEST_CASE(dispatch_queue, test_wait_task);
   RUN_TEST_CASE(dispatch_queue, test_wait_group);
   RUN_TEST_CASE(dispatch_queue, test_mixed_durations1);

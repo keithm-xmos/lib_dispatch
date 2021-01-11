@@ -12,32 +12,37 @@
 #include "dispatch_task.h"
 #include "dispatch_types.h"
 
-class BinarySemaphore {
+class EventCounter {
  public:
-  BinarySemaphore() : flag(false) {}
+  EventCounter(size_t count) : count(count) {}
 
-  void Take() const {
+  void Wait() const {
     std::unique_lock<std::mutex> lock(mutex);
-    condition.wait(lock, [&]() -> bool { return flag; });
+    condition.wait(lock, [&]() -> bool { return (count == 0); });
   }
 
-  void Clear() {
+  void Signal() {
     mutex.lock();
-    flag = false;
+    if (count > 0) --count;
+    mutex.unlock();
+    if (count == 0) condition.notify_all();
+  }
+
+  void Reset() {
+    mutex.lock();
+    count = 1;
     mutex.unlock();
   }
 
-  void Give() {
-    mutex.lock();
-    flag = true;
-    mutex.unlock();
-    condition.notify_all();
-  }
-
- private:
-  bool flag;
+ protected:
+  size_t count;
   mutable std::mutex mutex;
   mutable std::condition_variable condition;
+};
+
+class BinarySemaphore : public EventCounter {
+ public:
+  BinarySemaphore() : EventCounter(1) {}
 };
 
 typedef struct dispatch_host_struct dispatch_host_queue_t;
@@ -58,7 +63,7 @@ void dispatch_thread_handler(dispatch_host_queue_t *queue,
 
   do {
     // give the ready signal
-    ready_semaphore->Give();
+    ready_semaphore->Signal();
 
     // wait until we have data or a quit signal
     queue->cv.wait(lock,
@@ -67,7 +72,7 @@ void dispatch_thread_handler(dispatch_host_queue_t *queue,
     // after wait, we own the lock
     if (!queue->quit && queue->deque.size()) {
       // clear the ready signal
-      ready_semaphore->Clear();
+      ready_semaphore->Reset();
 
       // pop the task off the deque
       dispatch_task_t *task = queue->deque.front();
@@ -81,9 +86,8 @@ void dispatch_thread_handler(dispatch_host_queue_t *queue,
 
       if (task->waitable) {
         // clear semaphore to signal the task is complete
-        BinarySemaphore *task_semaphore =
-            static_cast<BinarySemaphore *>(task->private_data);
-        task_semaphore->Give();
+        EventCounter *counter = static_cast<EventCounter *>(task->private_data);
+        counter->Signal();
       } else {
         // the contract is that the worker must destroy non-waitable tasks
         dispatch_task_destroy(task);
@@ -92,6 +96,21 @@ void dispatch_thread_handler(dispatch_host_queue_t *queue,
       lock.lock();
     }
   } while (!queue->quit);
+}
+
+static void task_add(dispatch_host_queue_t *queue, dispatch_task_t *task,
+                     EventCounter *counter) {
+  if (counter) {
+    task->private_data = counter;
+  }
+
+  std::unique_lock<std::mutex> lock(queue->lock);
+  queue->deque.push_back(task);
+  // manual unlocking is done before notifying, to avoid waking up
+  // the waiting thread only to block again (see notify_one for details)
+  lock.unlock();
+
+  queue->cv.notify_one();
 }
 
 dispatch_queue_t *dispatch_queue_create(size_t length, size_t thread_count,
@@ -135,17 +154,64 @@ void dispatch_queue_task_add(dispatch_queue_t *ctx, dispatch_task_t *task) {
 
   dispatch_printf("dispatch_queue_add_task: queue=%u\n", (size_t)queue);
 
+  EventCounter *counter = nullptr;
+
   if (task->waitable) {
-    task->private_data = new BinarySemaphore;
+    counter = new EventCounter(1);
+  }
+  task_add(queue, task, counter);
+}
+
+void dispatch_queue_group_add(dispatch_queue_t *ctx, dispatch_group_t *group) {
+  dispatch_host_queue_t *queue = static_cast<dispatch_host_queue_t *>(ctx);
+  dispatch_assert(queue);
+  dispatch_assert(group);
+
+  dispatch_printf("dispatch_queue_group_add: queue=%u   group=%u\n",
+                  (size_t)queue, (size_t)group);
+
+  EventCounter *counter = nullptr;
+
+  if (group->waitable) {
+    // create event counter
+    counter = new EventCounter(group->count);
   }
 
-  std::unique_lock<std::mutex> lock(queue->lock);
-  queue->deque.push_back(task);
-  // manual unlocking is done before notifying, to avoid waking up
-  // the waiting thread only to block again (see notify_one for details)
-  lock.unlock();
+  for (int i = 0; i < group->count; i++) {
+    task_add(queue, group->tasks[i], counter);
+  }
+}
 
-  queue->cv.notify_one();
+void dispatch_queue_task_wait(dispatch_queue_t *ctx, dispatch_task_t *task) {
+  dispatch_assert(task);
+  dispatch_assert(task->waitable);
+
+  dispatch_printf("dispatch_queue_task_wait: queue=%u   task=%u\n", (size_t)ctx,
+                  (size_t)task);
+
+  if (task->waitable) {
+    EventCounter *counter = static_cast<EventCounter *>(task->private_data);
+    // wait on the task's semaphore which signals that it is complete
+    counter->Wait();
+    // the contract is that the dispatch queue must destroy waitable tasks
+    delete counter;
+    dispatch_task_destroy(task);
+  }
+}
+
+void dispatch_queue_group_wait(dispatch_queue_t *ctx, dispatch_group_t *group) {
+  dispatch_assert(group);
+  dispatch_assert(group->waitable);
+
+  dispatch_printf("dispatch_queue_group_wait: queue=%u   group=%u\n",
+                  (size_t)ctx, (size_t)group);
+
+  if (group->waitable) {
+    EventCounter *counter =
+        static_cast<EventCounter *>(group->tasks[0]->private_data);
+    counter->Wait();
+    delete counter;
+  }
 }
 
 void dispatch_queue_wait(dispatch_queue_t *ctx) {
@@ -165,23 +231,8 @@ void dispatch_queue_wait(dispatch_queue_t *ctx) {
   }
   // wait for all workers to be ready
   for (size_t i = 0; i < queue->thread_ready_semaphores.size(); i++) {
-    queue->thread_ready_semaphores[i]->Take();
-  }
-}
-
-void dispatch_queue_task_wait(dispatch_queue_t *ctx, dispatch_task_t *task) {
-  dispatch_host_queue_t *queue = (dispatch_host_queue_t *)ctx;
-  dispatch_assert(queue);
-  dispatch_assert(task);
-
-  if (task->waitable) {
-    BinarySemaphore *semaphore =
-        static_cast<BinarySemaphore *>(task->private_data);
-    // wait on the task's semaphore which signals that it is complete
-    semaphore->Take();
-    // the contract is that the dispatch queue must destroy waitable tasks
-    delete semaphore;
-    dispatch_task_destroy(task);
+    // queue->thread_ready_semaphores[i]->Take();
+    queue->thread_ready_semaphores[i]->Wait();
   }
 }
 

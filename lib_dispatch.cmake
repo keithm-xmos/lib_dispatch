@@ -6,7 +6,7 @@ endif()
 set(LIB_DISPATCH_SOURCES
   "${LIB_DISPATCH_DIR}/lib_dispatch/src/dispatch_task.c"
   "${LIB_DISPATCH_DIR}/lib_dispatch/src/dispatch_group.c"
-  "${LIB_DISPATCH_DIR}/lib_dispatch/src/dispatch_queue.c"
+  "${LIB_DISPATCH_DIR}/lib_dispatch/src/dispatch_event_counter.c"
 )
 
 set(LIB_DISPATCH_HOST_SOURCES

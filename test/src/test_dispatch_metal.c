@@ -3,6 +3,7 @@
 #include <xcore/hwtimer.h>
 
 #include "dispatch.h"
+#include "dispatch_config.h"
 #include "test_dispatch_queue.h"
 #include "unity.h"
 #include "unity_fixture.h"

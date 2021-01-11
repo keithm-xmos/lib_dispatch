@@ -7,13 +7,13 @@
 
 #include "FreeRTOS.h"
 #include "dispatch_config.h"
+#include "dispatch_event_counter.h"
 #include "dispatch_group.h"
 #include "dispatch_queue.h"
 #include "dispatch_task.h"
 #include "dispatch_types.h"
 #include "event_groups.h"
 #include "queue.h"
-#include "semphr.h"
 #include "task.h"
 
 typedef struct dispatch_thread_data_struct dispatch_thread_data_t;
@@ -55,8 +55,10 @@ void dispatch_thread_handler(void *param) {
       // run task
       dispatch_task_perform(task);
       if (task->waitable) {
+        // signal the event counter
+        dispatch_event_counter_signal(
+            (dispatch_event_counter_t *)task->private_data);
         // clear semaphore
-        xSemaphoreGive((SemaphoreHandle_t)task->private_data);
       } else {
         // the contract is that the worker must destroy non-waitable tasks
         dispatch_task_destroy(task);
@@ -130,15 +132,72 @@ void dispatch_queue_task_add(dispatch_queue_t *ctx, dispatch_task_t *task) {
   dispatch_assert(queue);
   dispatch_assert(task);
 
-  if (task->waitable) {
-    task->private_data = xSemaphoreCreateBinary();
-  }
-
   dispatch_printf("dispatch_queue_add_task: queue=%u   task=%u\n",
                   (size_t)queue, (size_t)task);
 
+  if (task->waitable) {
+    task->private_data = dispatch_event_counter_create(1, NULL);
+  }
+
   // send to queue
   xQueueSend(queue->xQueue, (void *)&task, portMAX_DELAY);
+}
+
+void dispatch_queue_group_add(dispatch_queue_t *ctx, dispatch_group_t *group) {
+  dispatch_freertos_queue_t *queue = (dispatch_freertos_queue_t *)ctx;
+  dispatch_assert(queue);
+  dispatch_assert(group);
+
+  dispatch_printf("dispatch_queue_group_add: queue=%u   group=%u\n",
+                  (size_t)queue, (size_t)group);
+
+  dispatch_event_counter_t *counter = NULL;
+
+  if (group->waitable) {
+    // create event counter
+    counter = dispatch_event_counter_create(group->count, NULL);
+  }
+
+  // send to queue
+  for (int i = 0; i < group->count; i++) {
+    group->tasks[i]->private_data = counter;
+    xQueueSend(queue->xQueue, (void *)&group->tasks[i], portMAX_DELAY);
+  }
+}
+
+void dispatch_queue_task_wait(dispatch_queue_t *ctx, dispatch_task_t *task) {
+  dispatch_assert(task);
+  dispatch_assert(task->waitable);
+
+  dispatch_printf("dispatch_queue_task_wait: queue=%u   task=%u\n", (size_t)ctx,
+                  (size_t)task);
+
+  if (task->waitable) {
+    dispatch_event_counter_t *counter =
+        (dispatch_event_counter_t *)task->private_data;
+    dispatch_event_counter_wait(counter);
+    // the contract is that the dispatch queue must destroy waitable tasks
+    dispatch_event_counter_destroy(counter);
+    dispatch_task_destroy(task);
+  }
+}
+
+void dispatch_queue_group_wait(dispatch_queue_t *ctx, dispatch_group_t *group) {
+  dispatch_assert(group);
+  dispatch_assert(group->waitable);
+
+  dispatch_printf("dispatch_queue_group_wait: queue=%u   group=%u\n",
+                  (size_t)ctx, (size_t)group);
+
+  if (group->waitable) {
+    dispatch_event_counter_t *counter =
+        (dispatch_event_counter_t *)group->tasks[0]->private_data;
+    dispatch_event_counter_wait(counter);
+    dispatch_event_counter_destroy(counter);
+    for (int i = 0; i < group->count; i++) {
+      dispatch_task_destroy(group->tasks[i]);
+    }
+  }
 }
 
 void dispatch_queue_wait(dispatch_queue_t *ctx) {
@@ -157,20 +216,6 @@ void dispatch_queue_wait(dispatch_queue_t *ctx) {
   // wait for all ready bts to be set
   xEventGroupWaitBits(queue->xEventGroup, queue->xReadyBits, pdFALSE, pdTRUE,
                       portMAX_DELAY);
-}
-
-void dispatch_queue_task_wait(dispatch_queue_t *ctx, dispatch_task_t *task) {
-  dispatch_assert(task);
-  dispatch_assert(task->waitable);
-
-  if (task->waitable) {
-    SemaphoreHandle_t semaphore = (SemaphoreHandle_t)task->private_data;
-    // wait on the task's semaphore which signals that it is complete
-    xSemaphoreTake(semaphore, portMAX_DELAY);
-    // the contract is that the dispatch queue must destroy waitable tasks
-    vSemaphoreDelete(semaphore);
-    dispatch_task_destroy(task);
-  }
 }
 
 void dispatch_queue_destroy(dispatch_queue_t *ctx) {

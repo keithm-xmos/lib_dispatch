@@ -6,9 +6,11 @@
 #include <xcore/chanend.h>
 #include <xcore/channel.h>
 #include <xcore/hwtimer.h>
+#include <xcore/lock.h>
 #include <xcore/thread.h>
 
 #include "dispatch_config.h"
+#include "dispatch_event_counter.h"
 #include "dispatch_group.h"
 #include "dispatch_queue.h"
 #include "dispatch_task.h"
@@ -27,21 +29,15 @@ struct dispatch_thread_data_struct {
   chanend_t cend;
 };
 
-typedef struct dispatch_task_semaphore_struct dispatch_task_semaphore_t;
-struct dispatch_task_semaphore_t {
-  streaming_channel_t channel;
-  size_t length;
-  volatile size_t *flag;
-};
-
 typedef struct dispatch_xcore_struct dispatch_xcore_queue_t;
 struct dispatch_xcore_struct {
   size_t length;
   size_t thread_count;
   size_t thread_stack_size;
+  chanend_t thread_chanend;
+  lock_t lock;
   char *thread_stack;
   size_t *thread_flags;
-  chanend_t thread_chanend;
   dispatch_thread_data_t *thread_data;
 };
 
@@ -69,10 +65,9 @@ void dispatch_thread_handler(void *param) {
       dispatch_task_perform(task);
 
       if (task->waitable) {
-        // clear semaphore
-        streaming_channel_t *semaphore_chan =
-            (streaming_channel_t *)task->private_data;
-        s_chan_out_byte(semaphore_chan->end_b, DISPATCH_READY_FLAG);
+        // signal the event counter
+        dispatch_event_counter_signal(
+            (dispatch_event_counter_t *)task->private_data);
       } else {
         // the contract is that the worker must destroy non-waitable tasks
         dispatch_task_destroy(task);
@@ -87,6 +82,37 @@ void dispatch_thread_handler(void *param) {
       break;
     }
   }
+}
+
+static void task_add(dispatch_xcore_queue_t *queue, dispatch_task_t *task,
+                     dispatch_event_counter_t *counter) {
+  // find ready worker
+  int worker_index = -1;
+  for (;;) {
+    for (int i = 0; i < queue->thread_count; i++) {
+      if (queue->thread_flags[i] == DISPATCH_READY_FLAG) {
+        worker_index = i;
+        break;
+      }
+    }
+    if (worker_index >= 0) break;
+  }
+
+  // set private data
+  if (counter) {
+    // create event counter
+    task->private_data = counter;
+  }
+
+  // wire up route
+  chanend_set_dest(queue->thread_chanend,
+                   queue->thread_data[worker_index].cend);
+  chanend_set_dest(queue->thread_data[worker_index].cend,
+                   queue->thread_chanend);
+  // signal worker to wake up (blocks waiting for worker)
+  chan_out_byte(queue->thread_chanend, DISPATCH_WAKE_EVT);
+  // send task to worker
+  chan_out_word(queue->thread_chanend, (int)task);
 }
 
 dispatch_queue_t *dispatch_queue_create(size_t length, size_t thread_count,
@@ -130,6 +156,7 @@ void dispatch_queue_init(dispatch_queue_t *ctx, size_t thread_priority) {
   int stack_offset = 0;
 
   queue->thread_chanend = chanend_alloc();  // dispatch queue's chanend
+  queue->lock = lock_alloc();               // lock used for all synchronization
 
   // create workers
   for (int i = 0; i < queue->thread_count; i++) {
@@ -152,35 +179,72 @@ void dispatch_queue_task_add(dispatch_queue_t *ctx, dispatch_task_t *task) {
   dispatch_assert(queue);
   dispatch_assert(task);
 
-  dispatch_printf("dispatch_queue_add_task: queue=%u\n", (size_t)queue);
+  dispatch_printf("dispatch_queue_task_add: queue=%u\n", (size_t)queue);
 
-  // lookup READY worker
-  int worker_index = -1;
-  for (;;) {
-    for (int i = 0; i < queue->thread_count; i++) {
-      if (queue->thread_flags[i] == DISPATCH_READY_FLAG) {
-        worker_index = i;
-        break;
-      }
-    }
-    if (worker_index >= 0) break;
+  dispatch_event_counter_t *counter = NULL;
+
+  if (task->waitable) {
+    // create event counter
+    //   re-use the queue's lock given hardware lock are so scarce
+    counter = dispatch_event_counter_create(1, queue->lock);
+  }
+  task_add(queue, task, counter);
+}
+
+void dispatch_queue_group_add(dispatch_queue_t *ctx, dispatch_group_t *group) {
+  dispatch_xcore_queue_t *queue = (dispatch_xcore_queue_t *)ctx;
+  dispatch_assert(queue);
+  dispatch_assert(group);
+
+  dispatch_printf("dispatch_queue_group_add: queue=%u   group=%u\n",
+                  (size_t)queue, (size_t)group);
+
+  dispatch_event_counter_t *counter = NULL;
+
+  if (group->waitable) {
+    // create event counter
+    counter = dispatch_event_counter_create(group->count, queue->lock);
   }
 
-  if (worker_index >= 0) {
-    if (task->waitable) {
-      streaming_channel_t semaphore_chan = s_chan_alloc();
-      task->private_data = dispatch_malloc(sizeof(streaming_channel_t));
-      memcpy(task->private_data, &semaphore_chan, sizeof(streaming_channel_t));
+  for (int i = 0; i < group->count; i++) {
+    task_add(queue, group->tasks[i], counter);
+  }
+}
+
+void dispatch_queue_task_wait(dispatch_queue_t *ctx, dispatch_task_t *task) {
+  dispatch_assert(task);
+  dispatch_assert(task->waitable);
+
+  dispatch_printf("dispatch_queue_task_wait: queue=%u   task=%u\n", (size_t)ctx,
+                  (size_t)task);
+
+  if (task->waitable) {
+    // wait on the task's event counter to signal that it is complete
+    dispatch_event_counter_t *counter =
+        (dispatch_event_counter_t *)task->private_data;
+    dispatch_event_counter_wait(counter);
+    // the contract is that the dispatch queue must destroy waitable tasks
+    dispatch_event_counter_destroy(counter);
+    dispatch_task_destroy(task);
+  }
+}
+
+void dispatch_queue_group_wait(dispatch_queue_t *ctx, dispatch_group_t *group) {
+  dispatch_assert(group);
+  dispatch_assert(group->waitable);
+
+  dispatch_printf("dispatch_queue_group_wait: queue=%u   group=%u\n",
+                  (size_t)ctx, (size_t)group);
+
+  if (group->waitable) {
+    dispatch_event_counter_t *counter =
+        (dispatch_event_counter_t *)group->tasks[0]->private_data;
+    dispatch_event_counter_wait(counter);
+    // the contract is that the dispatch queue must destroy waitable tasks
+    dispatch_event_counter_destroy(counter);
+    for (int i = 0; i < group->count; i++) {
+      dispatch_task_destroy(group->tasks[i]);
     }
-    // wire up route
-    chanend_set_dest(queue->thread_chanend,
-                     queue->thread_data[worker_index].cend);
-    chanend_set_dest(queue->thread_data[worker_index].cend,
-                     queue->thread_chanend);
-    // signal worker to wake up (blocks waiting for worker)
-    chan_out_byte(queue->thread_chanend, DISPATCH_WAKE_EVT);
-    // send task to worker
-    chan_out_word(queue->thread_chanend, (int)task);
   }
 }
 
@@ -198,23 +262,6 @@ void dispatch_queue_wait(dispatch_queue_t *ctx) {
       if (queue->thread_flags[i] == DISPATCH_BUSY_FLAG) busy_count++;
     }
     if (busy_count == 0) return;
-  }
-}
-
-void dispatch_queue_task_wait(dispatch_queue_t *ctx, dispatch_task_t *task) {
-  // dispatch_xcore_queue_t *queue = (dispatch_xcore_queue_t *)ctx;
-  // dispatch_assert(queue);
-  dispatch_assert(task);
-  dispatch_assert(task->waitable);
-
-  if (task->waitable) {
-    streaming_channel_t semaphore_chan =
-        *((streaming_channel_t *)task->private_data);
-    // wait on the task's semaphore which signals that it is complete
-    s_chan_in_byte(semaphore_chan.end_a);
-    // the contract is that the dispatch queue must destroy waitable tasks
-    s_chan_free(semaphore_chan);
-    dispatch_task_destroy(task);
   }
 }
 
@@ -248,6 +295,8 @@ void dispatch_queue_destroy(dispatch_queue_t *ctx) {
   for (int i = 0; i < queue->thread_count; i++) {
     chanend_free(queue->thread_data[i].cend);
   }
+
+  lock_free(queue->lock);
 
   // free memory
   free((void *)queue->thread_stack);

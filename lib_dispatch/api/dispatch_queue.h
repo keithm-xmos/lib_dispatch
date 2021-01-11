@@ -40,21 +40,6 @@ void dispatch_queue_init(dispatch_queue_t* ctx, size_t thread_priority);
  */
 void dispatch_queue_destroy(dispatch_queue_t* ctx);
 
-/** Creates a task and adds it to the the queue
- *
- * @param[in] group     Group object
- * @param[in] function  Function to perform, signature must be void my_fun(void
- * *arg)
- * @param[in] argument  Function argument
- * @param[in] waitable  The created task is waitable if TRUE, otherwise the
- * task can not be waited on
- *
- * @return              Task object
- */
-dispatch_task_t* dispatch_queue_function_add(dispatch_group_t* group,
-                                             dispatch_function_t function,
-                                             void* argument, bool waitable);
-
 /** Add a task to the dispatch queue
  *
  * Note: The XCORE bare-metal implementation is currently limited and does not
@@ -75,6 +60,28 @@ void dispatch_queue_task_add(dispatch_queue_t* ctx, dispatch_task_t* task);
  *
  */
 void dispatch_queue_group_add(dispatch_queue_t* ctx, dispatch_group_t* group);
+
+/** Creates a task and adds it to the the queue
+ *
+ * @param[in] queue     Queue object
+ * @param[in] function  Function to perform, signature must be void my_fun(void
+ * *arg)
+ * @param[in] argument  Function argument
+ * @param[in] waitable  The created task is waitable if TRUE, otherwise the
+ * task can not be waited on
+ *
+ * @return              Task object
+ */
+static inline dispatch_task_t* dispatch_queue_function_add(
+    dispatch_queue_t* ctx, dispatch_function_t function, void* argument,
+    bool waitable) {
+  dispatch_task_t* task;
+
+  task = dispatch_task_create(function, argument, waitable);
+  dispatch_queue_task_add(ctx, task);
+
+  return task;
+}
 
 /** Wait synchronously in the caller's thread for the task to finish executing
  *
