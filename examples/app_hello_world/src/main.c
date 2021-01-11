@@ -11,32 +11,18 @@
 
 #include "dispatch.h"
 
-#define NUM_FUNCTIONS (3)
-
-typedef struct worker_arg {
-  int index;
-} worker_arg_t;
-
 DISPATCH_TASK_FUNCTION
-void do_work(void* p) {
-  worker_arg_t* arg = (worker_arg_t*)p;
-  printf("Hello World from thread %d\n", arg->index);
-}
+void do_work(void* arg) { printf("Hello World from task %d\n", *(int*)arg); }
 
 static void hello_world(void* unused) {
   dispatch_queue_t* queue;
-  worker_arg_t args[NUM_FUNCTIONS];
-  int queue_length = NUM_FUNCTIONS;
-  int queue_thread_count = 2;
 
   // create the dispatch queue
-  queue = dispatch_queue_create(queue_length, queue_thread_count, 1024,
-                                THREAD_PRIORITY);
+  queue = dispatch_queue_create(5, 5, 1024, THREAD_PRIORITY);
 
   // add NUM_FUNCTIONS functions
-  for (int i = 0; i < NUM_FUNCTIONS; i++) {
-    args[i].index = i;
-    dispatch_queue_function_add(queue, do_work, &args[i], false);
+  for (int i = 0; i < 5; i++) {
+    dispatch_queue_function_add(queue, do_work, &i, false);
   }
 
   // wait for all functions to finish executing

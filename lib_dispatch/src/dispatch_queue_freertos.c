@@ -110,20 +110,18 @@ void dispatch_queue_init(dispatch_queue_t *ctx, size_t thread_priority) {
   dispatch_printf("dispatch_queue_init: queue=%u\n", (size_t)queue);
 
   // create workers
-  EventBits_t xReadyBit;
   for (int i = 0; i < queue->thread_count; i++) {
-    xReadyBit = 1 << i;
     queue->thread_data[i].parent = (size_t)queue;
     queue->thread_data[i].xQueue = queue->xQueue;
     queue->thread_data[i].xEventGroup = queue->xEventGroup;
-    queue->thread_data[i].xReadyBit = xReadyBit;
-    queue->xReadyBits |= xReadyBit;
+    queue->thread_data[i].xReadyBit = 1 << i;
     // create task
     xTaskCreate(dispatch_thread_handler, "", queue->thread_stack_size,
                 (void *)&queue->thread_data[i], thread_priority,
                 &queue->threads[i]);
   }
   // set the ready bits
+  queue->xReadyBits = 0xFFFFFFFF >> (32 - queue->thread_count);
   xEventGroupSetBits(queue->xEventGroup, queue->xReadyBits);
 }
 
