@@ -85,15 +85,15 @@ The x86 implementation is intended for testing development only. If writing appl
 More Advanced Examples
 ----------------------
 
-The "Hello World" example presented above is located in the `app_hello_world <examples\app_hello_world>`_ example folder. See the `README.md <examples\app_hello_world\README.md>`__ for instructions on building and running the example.
+The "Hello World" example presented above is located in the `app_hello_world <examples/app_hello_world>`_ example folder. See the `README.md <examples/app_hello_world/README.md>`__ for instructions on building and running the example.
 
-A more advanced example is located in the `app_matrix_multiply <examples\app_matrix_multiply>`__ example folder. Matrix multiplication is a data parallel operation. This means the input matrices can be partitioned and the multiplication operation run on the individual partitions in parallel. A dispatch queue is well suited for data parallel problems. 
+A more advanced example is located in the `app_matrix_multiply <examples/app_matrix_multiply>`__ example folder. Matrix multiplication is a data parallel operation. This means the input matrices can be partitioned and the multiplication operation run on the individual partitions in parallel. A dispatch queue is well suited for data parallel problems. 
 
 .. note::
 
     The function used in this example to multiply two matrices is for illustrative use only. It is not the most efficient way to perform a matrix multiplication. XMOS has optimized libraries specifically for this purpose.
 
-See the `README.md <examples\app_matrix_multiply\README.md>`__ for instructions on building and running the example.
+See the `README.md <examples/app_matrix_multiply/README.md>`__ for instructions on building and running the example.
 
 Resource Usage
 --------------
