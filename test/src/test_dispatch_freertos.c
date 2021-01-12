@@ -17,9 +17,9 @@ TEST_SETUP(dispatch_queue_freertos) {}
 TEST_TEAR_DOWN(dispatch_queue_freertos) {}
 
 TEST(dispatch_queue_freertos, test_parallel) {
-  int thread_count = 4;
-  int num_values = thread_count * 1000000;
-  test_parallel_work_arg args[thread_count];
+  const int kThreadCount = 4;
+  int num_values = kThreadCount * 1000000;
+  test_parallel_work_arg args[kThreadCount];
   hwtimer_t hwtimer;
   int single_thread_ticks;
 
@@ -40,22 +40,22 @@ TEST(dispatch_queue_freertos, test_parallel) {
   TEST_ASSERT_EQUAL_INT(num_values, args[0].count);
 
   // do multi thread timing
-  int queue_length = 4;
+  const int kQueueLength = 4;
   dispatch_queue_t* queue;
   dispatch_group_t* group;
-  int num_values_in_chunk = num_values / thread_count;
+  int num_values_in_chunk = num_values / kThreadCount;
   int multi_thread_ticks;
 
   // create the dispatch queue
   queue =
-      dispatch_queue_create(queue_length, thread_count, DISPATCHER_STACK_SIZE,
+      dispatch_queue_create(kQueueLength, kThreadCount, DISPATCHER_STACK_SIZE,
                             (configMAX_PRIORITIES - 1));
 
   // create the dispatch group
-  group = dispatch_group_create(thread_count, true);
+  group = dispatch_group_create(kThreadCount, true);
 
-  // initialize thread_count tasks, add them to the group
-  for (int i = 0; i < thread_count; i++) {
+  // initialize kThreadCount tasks, add them to the group
+  for (int i = 0; i < kThreadCount; i++) {
     args[i].count = 0;
     args[i].begin = i * num_values_in_chunk;
     args[i].end = args[i].begin + num_values_in_chunk;
@@ -73,7 +73,7 @@ TEST(dispatch_queue_freertos, test_parallel) {
   multi_thread_ticks = hwtimer_get_time(hwtimer) - multi_thread_ticks;
   hwtimer_free(hwtimer);
 
-  for (int i = 0; i < thread_count; i++) {
+  for (int i = 0; i < kThreadCount; i++) {
     TEST_ASSERT_EQUAL_INT(num_values_in_chunk, args[i].count);
   }
 
@@ -81,9 +81,9 @@ TEST(dispatch_queue_freertos, test_parallel) {
   dispatch_group_destroy(group);
   dispatch_queue_destroy(queue);
 
-  // now test that the multi thread was ~thread_count times faster
+  // now test that the multi thread was ~kThreadCount times faster
   float speedup = (float)single_thread_ticks / (float)multi_thread_ticks;
-  TEST_ASSERT_FLOAT_WITHIN(0.1, (float)thread_count, speedup);
+  TEST_ASSERT_FLOAT_WITHIN(0.1, (float)kThreadCount, speedup);
 }
 
 TEST_GROUP_RUNNER(dispatch_queue_freertos) {

@@ -16,37 +16,32 @@
 #include "queue.h"
 #include "task.h"
 
-typedef struct dispatch_thread_data_struct dispatch_thread_data_t;
-struct dispatch_thread_data_struct {
+//***********************
+//***********************
+//***********************
+// Worker
+//***********************
+//***********************
+//***********************
+typedef struct dispatch_worker_data_struct dispatch_worker_data_t;
+struct dispatch_worker_data_struct {
   size_t parent;
   QueueHandle_t xQueue;
   EventGroupHandle_t xEventGroup;
   EventBits_t xReadyBit;
 };
 
-typedef struct dispatch_freertos_struct dispatch_freertos_queue_t;
-struct dispatch_freertos_struct {
-  size_t length;
-  size_t thread_count;
-  size_t thread_stack_size;
-  QueueHandle_t xQueue;
-  EventGroupHandle_t xEventGroup;
-  EventBits_t xReadyBits;
-  dispatch_thread_data_t *thread_data;
-  TaskHandle_t *threads;
-};
+void dispatch_queue_worker(void *param) {
+  dispatch_worker_data_t *worker_data = (dispatch_worker_data_t *)param;
 
-void dispatch_thread_handler(void *param) {
-  dispatch_thread_data_t *thread_data = (dispatch_thread_data_t *)param;
-
-  QueueHandle_t xQueue = thread_data->xQueue;
-  EventGroupHandle_t xEventGroup = thread_data->xEventGroup;
-  EventBits_t xReadyBit = thread_data->xReadyBit;
+  QueueHandle_t xQueue = worker_data->xQueue;
+  EventGroupHandle_t xEventGroup = worker_data->xEventGroup;
+  EventBits_t xReadyBit = worker_data->xReadyBit;
 
   dispatch_task_t *task = NULL;
 
-  dispatch_printf("dispatch_thread_handler started: queue=%u\n",
-                  thread_data->parent);
+  dispatch_printf("dispatch_queue_worker started: queue=%u\n",
+                  worker_data->parent);
 
   for (;;) {
     if (xQueueReceive(xQueue, &task, portMAX_DELAY)) {
@@ -69,6 +64,34 @@ void dispatch_thread_handler(void *param) {
   }
 }
 
+//***********************
+//***********************
+//***********************
+// Queue struct
+//***********************
+//***********************
+//***********************
+
+typedef struct dispatch_freertos_struct dispatch_freertos_queue_t;
+struct dispatch_freertos_struct {
+  size_t length;
+  size_t thread_count;
+  size_t thread_stack_size;
+  QueueHandle_t xQueue;
+  EventGroupHandle_t xEventGroup;
+  EventBits_t xReadyBits;
+  dispatch_worker_data_t *worker_data;
+  TaskHandle_t *threads;
+};
+
+//***********************
+//***********************
+//***********************
+// Queue implementation
+//***********************
+//***********************
+//***********************
+
 dispatch_queue_t *dispatch_queue_create(size_t length, size_t thread_count,
                                         size_t thread_stack_size,
                                         size_t thread_priority) {
@@ -90,8 +113,8 @@ dispatch_queue_t *dispatch_queue_create(size_t length, size_t thread_count,
   queue->threads = pvPortMalloc(sizeof(TaskHandle_t) * thread_count);
 
   // allocate thread data
-  queue->thread_data =
-      pvPortMalloc(sizeof(dispatch_thread_data_t) * thread_count);
+  queue->worker_data =
+      pvPortMalloc(sizeof(dispatch_worker_data_t) * thread_count);
 
   queue->xEventGroup = xEventGroupCreate();
 
@@ -111,13 +134,13 @@ void dispatch_queue_init(dispatch_queue_t *ctx, size_t thread_priority) {
 
   // create workers
   for (int i = 0; i < queue->thread_count; i++) {
-    queue->thread_data[i].parent = (size_t)queue;
-    queue->thread_data[i].xQueue = queue->xQueue;
-    queue->thread_data[i].xEventGroup = queue->xEventGroup;
-    queue->thread_data[i].xReadyBit = 1 << i;
+    queue->worker_data[i].parent = (size_t)queue;
+    queue->worker_data[i].xQueue = queue->xQueue;
+    queue->worker_data[i].xEventGroup = queue->xEventGroup;
+    queue->worker_data[i].xReadyBit = 1 << i;
     // create task
-    xTaskCreate(dispatch_thread_handler, "", queue->thread_stack_size,
-                (void *)&queue->thread_data[i], thread_priority,
+    xTaskCreate(dispatch_queue_worker, "", queue->thread_stack_size,
+                (void *)&queue->worker_data[i], thread_priority,
                 &queue->threads[i]);
   }
   // set the ready bits
@@ -228,7 +251,7 @@ void dispatch_queue_destroy(dispatch_queue_t *ctx) {
   }
 
   // free memory
-  vPortFree((void *)queue->thread_data);
+  vPortFree((void *)queue->worker_data);
   vPortFree((void *)queue->threads);
   vEventGroupDelete(queue->xEventGroup);
   vQueueDelete(queue->xQueue);

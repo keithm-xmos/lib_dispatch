@@ -15,35 +15,35 @@ extern "C" {
 
 /** Create a new task group
  *
- * @param[in] length    Maximum number of tasks in the group
- * @param[in] waitable  The task is waitable if TRUE, otherwise the task can not
+ * \param length    Maximum number of tasks in the group
+ * \param waitable  The task is waitable if TRUE, otherwise the task can not
  *
- * @return            Group object
+ * \return          Group object
  */
 dispatch_group_t *dispatch_group_create(size_t length, bool waitable);
 
 /** Initialize a new task group
  *
- * @param[in,out] group  Group object
- * @param[in] waitable   The group is waitable if TRUE, otherwise the group can
+ * \param group     Group object
+ * \param waitable  The group is waitable if TRUE, otherwise the group can
  * not be waited on
  */
 void dispatch_group_init(dispatch_group_t *group, bool waitable);
 
 /** Free memory allocated by dispatch_group_create
  *
- * @param[in] group  Group object
+ * \param group  Group object
  */
 void dispatch_group_destroy(dispatch_group_t *group);
 
 /** Creates a task and adds it to the the group
  *
- * @param[in] group     Group object
- * @param[in] function  Function to perform, signature must be void my_fun(void
+ * \param group     Group object
+ * \param function  Function to perform, signature must be void my_fun(void
  * *arg)
- * @param[in] argument  Function argument
+ * \param argument  Function argument
  *
- * @return              Task object
+ * \return          Task object
  */
 dispatch_task_t *dispatch_group_function_add(dispatch_group_t *group,
                                              dispatch_function_t function,
@@ -51,14 +51,14 @@ dispatch_task_t *dispatch_group_function_add(dispatch_group_t *group,
 
 /** Add a task to the group
  *
- * @param[in] group  Group object
- * @param[in] task   Task to add
+ * \param group  Group object
+ * \param task   Task to add
  */
 void dispatch_group_task_add(dispatch_group_t *group, dispatch_task_t *task);
 
 /** Run the group's tasks in the caller's thread
  *
- * @param[in] group  Group object
+ * \param group  Group object
  */
 void dispatch_group_perform(dispatch_group_t *group);
 

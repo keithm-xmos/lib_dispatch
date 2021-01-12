@@ -69,10 +69,10 @@ TEST(dispatch_queue, test_wait_queue) {
   dispatch_task_t *task1;
   dispatch_task_t *task2;
   test_work_arg_t arg;
-  int queue_length = QUEUE_LENGTH;
-  int queue_thread_count = QUEUE_THREAD_COUNT;
+  const int kQueueLength = QUEUE_LENGTH;
+  const int kQueueThreadCount = QUEUE_THREAD_COUNT;
 
-  queue = dispatch_queue_create(queue_length, queue_thread_count,
+  queue = dispatch_queue_create(kQueueLength, kQueueThreadCount,
                                 QUEUE_THREAD_STACK_SIZE, QUEUE_THREAD_PRIORITY);
 
   arg.count = 0;
@@ -92,10 +92,10 @@ TEST(dispatch_queue, test_wait_task) {
   dispatch_queue_t *queue;
   dispatch_task_t *task;
   test_work_arg_t arg;
-  int queue_length = QUEUE_LENGTH;
-  int queue_thread_count = QUEUE_THREAD_COUNT;
+  const int kQueueLength = QUEUE_LENGTH;
+  const int kQueueThreadCount = QUEUE_THREAD_COUNT;
 
-  queue = dispatch_queue_create(queue_length, queue_thread_count,
+  queue = dispatch_queue_create(kQueueLength, kQueueThreadCount,
                                 QUEUE_THREAD_STACK_SIZE, QUEUE_THREAD_PRIORITY);
 
   arg.count = 0;
@@ -113,25 +113,25 @@ TEST(dispatch_queue, test_wait_group) {
   dispatch_queue_t *queue;
   dispatch_group_t *group;
   test_work_arg_t arg;
-  int queue_length = QUEUE_LENGTH;
-  int queue_thread_count = QUEUE_THREAD_COUNT;
-  int group_length = 3;
+  const int kQueueLength = QUEUE_LENGTH;
+  const int kQueueThreadCount = QUEUE_THREAD_COUNT;
+  const int kGroupLength = 3;
 
-  queue = dispatch_queue_create(queue_length, queue_thread_count,
+  queue = dispatch_queue_create(kQueueLength, kQueueThreadCount,
                                 QUEUE_THREAD_STACK_SIZE, QUEUE_THREAD_PRIORITY);
-  group = dispatch_group_create(group_length, true);
+  group = dispatch_group_create(kGroupLength, true);
 
   arg.count = 0;
 
   // add tasks to group
-  for (int i = 0; i < group_length; i++) {
+  for (int i = 0; i < kGroupLength; i++) {
     dispatch_group_function_add(group, do_standard_work, &arg);
   }
 
   dispatch_queue_group_add(queue, group);
   dispatch_queue_group_wait(queue, group);
 
-  TEST_ASSERT_EQUAL_INT(group_length, arg.count);
+  TEST_ASSERT_EQUAL_INT(kGroupLength, arg.count);
 
   dispatch_group_destroy(group);
   dispatch_queue_destroy(queue);
@@ -142,14 +142,14 @@ TEST(dispatch_queue, test_mixed_durations1) {
   dispatch_task_t *standard_task;
   dispatch_task_t **extended_tasks;
   test_work_arg_t arg;
-  int queue_length = QUEUE_LENGTH;
-  int queue_thread_count = QUEUE_THREAD_COUNT;
-  int max_extended_task_count = QUEUE_THREAD_COUNT + 1;
+  const int kQueueLength = QUEUE_LENGTH;
+  const int kQueueThreadCount = QUEUE_THREAD_COUNT;
+  const int kMaxExtendedTaskCount = QUEUE_THREAD_COUNT + 1;
   int extended_task_count;
 
-  for (int i = 0; i < max_extended_task_count; i++) {
+  for (int i = 0; i < kMaxExtendedTaskCount; i++) {
     queue =
-        dispatch_queue_create(queue_length, queue_thread_count,
+        dispatch_queue_create(kQueueLength, kQueueThreadCount,
                               QUEUE_THREAD_STACK_SIZE, QUEUE_THREAD_PRIORITY);
 
     extended_task_count = i + 1;
@@ -199,10 +199,10 @@ TEST(dispatch_queue, test_mixed_durations2) {
   dispatch_group_t *limited_group;
   test_work_arg_t extended_arg;
   test_work_arg_t limited_arg;
-  int queue_length = QUEUE_LENGTH;
-  int queue_thread_count = QUEUE_THREAD_COUNT;
+  const int kQueueLength = QUEUE_LENGTH;
+  const int kQueueThreadCount = QUEUE_THREAD_COUNT;
 
-  queue = dispatch_queue_create(queue_length, queue_thread_count,
+  queue = dispatch_queue_create(kQueueLength, kQueueThreadCount,
                                 QUEUE_THREAD_STACK_SIZE, QUEUE_THREAD_PRIORITY);
   limited_group = dispatch_group_create(3, true);
 

@@ -21,24 +21,24 @@ extern "C" {
 
 /** Create a new task, non-waitable task
  *
- * @param[in] function  Function to perform, signature must be void my_fun(void
+ * \param function  Function to perform, signature must be void my_fun(void
  * *arg)
- * @param[in] argument  Function argument
- * @param[in] waitable  The task is waitable if TRUE, otherwise the task can not
+ * \param argument  Function argument
+ * \param waitable  The task is waitable if TRUE, otherwise the task can not
  * be waited on
  *
- * @return              Task object
+ * \return              Task object
  */
 dispatch_task_t *dispatch_task_create(dispatch_function_t function,
                                       void *aargumentrg, bool waitable);
 
 /** Initialize a task
  *
- * @param[in,out] task  Task object
- * @param[in] function  Function to perform, signature must be void my_fun(void
+ * \param task      Task object
+ * \param function  Function to perform, signature must be void my_fun(void
  * *arg)
- * @param[in] argument  Function argument
- * @param[in] waitable  The task is waitable if TRUE, otherwise the task can not
+ * \param argument  Function argument
+ * \param waitable  The task is waitable if TRUE, otherwise the task can not
  * be waited on
  */
 void dispatch_task_init(dispatch_task_t *task, dispatch_function_t function,
@@ -46,13 +46,13 @@ void dispatch_task_init(dispatch_task_t *task, dispatch_function_t function,
 
 /** Run the task in the caller's thread
  *
- * @param[in] task  Task object
+ * \param task  Task object
  */
 void dispatch_task_perform(dispatch_task_t *task);
 
 /** Destroy the task
  *
- * @param[in] task  Task object
+ * \param task  Task object
  */
 void dispatch_task_destroy(dispatch_task_t *task);
 
