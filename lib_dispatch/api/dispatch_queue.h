@@ -15,13 +15,13 @@ extern "C" {
 
 /** Create a new dispatch queue
  *
- * @param[in] length             Maximum number of tasks in the queue
- * @param[in] thread_count       Number of thread workers
- * @param[in] thread_stack_size  Size (in words) of the stack for each thread
+ * \param length             Maximum number of tasks in the queue
+ * \param thread_count       Number of thread workers
+ * \param thread_stack_size  Size (in words) of the stack for each thread
  * worker
- * @param[in] thread_priority    Priority for each thread worker.
+ * \param thread_priority    Priority for each thread worker.
  *
- * @return                       New dispatch queue object
+ * @return                   New dispatch queue object
  */
 dispatch_queue_t* dispatch_queue_create(size_t length, size_t thread_count,
                                         size_t thread_stack_size,
@@ -29,48 +29,49 @@ dispatch_queue_t* dispatch_queue_create(size_t length, size_t thread_count,
 
 /** Initialize a new dispatch queue
  *
- * @param[in,out] ctx          Dispatch queue object
- * @param[in] thread_priority  Priority for each thread worker.
+ * \param ctx              Dispatch queue object
+ * \param thread_priority  Priority for each thread worker.
  */
 void dispatch_queue_init(dispatch_queue_t* ctx, size_t thread_priority);
 
 /** Free memory allocated by dispatch_queue_create
  *
- * @param[in] ctx  Dispatch queue object
+ * \param ctx  Dispatch queue object
  */
 void dispatch_queue_destroy(dispatch_queue_t* ctx);
 
-/** Add a task to the dispatch queue
+/** Add a task to the dispatch queue.  If the dispatch queue is full,
+ * this function will block in the callers thread until it can be added to the
+ * queue.
  *
- * Note: The XCORE bare-metal implementation is currently limited and does not
- * store queued tasks in a container.  Instead, this function blocks the callers
- * thread until a worker thread is available.  This limitation may be eliminated
- * in a future release.
- *
- * @param[in] ctx   Dispatch queue object
- * @param[in] task  Task object
+ * \param ctx   Dispatch queue object
+ * \param task  Task object
  *
  */
 void dispatch_queue_task_add(dispatch_queue_t* ctx, dispatch_task_t* task);
 
-/** Add a group to the dispatch queue
+/** Add a group to the dispatch queue.  If the dispatch queue is full,
+ * this function will block in the callers thread until all the tasks in the
+ * group can be added to the queue.
  *
- * @param[in] ctx    Dispatch queue object
- * @param[in] group  Group object
+ * \param ctx    Dispatch queue object
+ * \param group  Group object
  *
  */
 void dispatch_queue_group_add(dispatch_queue_t* ctx, dispatch_group_t* group);
 
-/** Creates a task and adds it to the the queue
+/** Creates a task and adds it to the the queue.  If the dispatch queue is full,
+ * this function will block in the callers thread until it can be added to the
+ * queue.
  *
- * @param[in] queue     Queue object
- * @param[in] function  Function to perform, signature must be void my_fun(void
+ * \param queue     Queue object
+ * \param function  Function to perform, signature must be void my_fun(void
  * *arg)
- * @param[in] argument  Function argument
- * @param[in] waitable  The created task is waitable if TRUE, otherwise the
+ * \param argument  Function argument
+ * \param waitable  The created task is waitable if TRUE, otherwise the
  * task can not be waited on
  *
- * @return              Task object
+ * \return          Task object
  */
 static inline dispatch_task_t* dispatch_queue_function_add(
     dispatch_queue_t* ctx, dispatch_function_t function, void* argument,
@@ -85,22 +86,22 @@ static inline dispatch_task_t* dispatch_queue_function_add(
 
 /** Wait synchronously in the caller's thread for the task to finish executing
  *
- * @param[in] ctx   Dispatch queue object
- * @param[in] task  Task object, must be waitable
+ * \param ctx   Dispatch queue object
+ * \param task  Task object, must be waitable
  */
 void dispatch_queue_task_wait(dispatch_queue_t* ctx, dispatch_task_t* task);
 
 /** Wait synchronously in the caller's thread for the group to finish executing
  *
- * @param[in] ctx    Dispatch queue object
- * @param[in] group  Group object, must be waitable
+ * \param ctx    Dispatch queue object
+ * \param group  Group object, must be waitable
  */
 void dispatch_queue_group_wait(dispatch_queue_t* ctx, dispatch_group_t* group);
 
 /** Wait synchronously in the caller's thread for all tasks to finish
  * executing
  *
- * @param[in] ctx  Dispatch queue object
+ * \param ctx  Dispatch queue object
  */
 void dispatch_queue_wait(dispatch_queue_t* ctx);
 

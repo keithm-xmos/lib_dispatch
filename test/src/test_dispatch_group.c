@@ -33,24 +33,24 @@ TEST(dispatch_group, test_create) {
 }
 
 TEST(dispatch_group, test_perform_tasks) {
-  int length = 3;
+  const int kLength = 3;
   dispatch_group_t *group;
-  dispatch_task_t *tasks[length];
+  dispatch_task_t *tasks[kLength];
   test_work_arg_t arg;
 
   arg.count = 0;
 
-  group = dispatch_group_create(length, false);
+  group = dispatch_group_create(kLength, false);
 
-  for (int i = 0; i < length; i++) {
+  for (int i = 0; i < kLength; i++) {
     tasks[i] = dispatch_task_create(do_dispatch_group_work, &arg, false);
     dispatch_group_task_add(group, tasks[i]);
   }
   dispatch_group_perform(group);
 
-  TEST_ASSERT_EQUAL_INT(length, arg.count);
+  TEST_ASSERT_EQUAL_INT(kLength, arg.count);
 
-  for (int i = 0; i < length; i++) {
+  for (int i = 0; i < kLength; i++) {
     dispatch_task_destroy(tasks[i]);
   }
 
@@ -58,23 +58,23 @@ TEST(dispatch_group, test_perform_tasks) {
 }
 
 TEST(dispatch_group, test_perform_functions) {
-  int length = 3;
+  const int kLength = 3;
   dispatch_group_t *group;
-  dispatch_task_t *tasks[length];
+  dispatch_task_t *tasks[kLength];
   test_work_arg_t arg;
 
   arg.count = 0;
 
-  group = dispatch_group_create(length, false);
+  group = dispatch_group_create(kLength, false);
 
-  for (int i = 0; i < length; i++) {
+  for (int i = 0; i < kLength; i++) {
     tasks[i] = dispatch_group_function_add(group, do_dispatch_group_work, &arg);
   }
   dispatch_group_perform(group);
 
-  TEST_ASSERT_EQUAL_INT(length, arg.count);
+  TEST_ASSERT_EQUAL_INT(kLength, arg.count);
 
-  for (int i = 0; i < length; i++) {
+  for (int i = 0; i < kLength; i++) {
     dispatch_task_destroy(tasks[i]);
   }
 

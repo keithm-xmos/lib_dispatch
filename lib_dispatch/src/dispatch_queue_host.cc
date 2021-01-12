@@ -12,6 +12,13 @@
 #include "dispatch_task.h"
 #include "dispatch_types.h"
 
+//***********************
+//***********************
+//***********************
+// EventCounter class
+//***********************
+//***********************
+//***********************
 class EventCounter {
  public:
   EventCounter(size_t count) : count(count) {}
@@ -28,12 +35,6 @@ class EventCounter {
     if (count == 0) condition.notify_all();
   }
 
-  void Reset() {
-    mutex.lock();
-    count = 1;
-    mutex.unlock();
-  }
-
  protected:
   size_t count;
   mutable std::mutex mutex;
@@ -43,8 +44,21 @@ class EventCounter {
 class BinarySemaphore : public EventCounter {
  public:
   BinarySemaphore() : EventCounter(1) {}
+
+  void Reset() {
+    mutex.lock();
+    count = 1;
+    mutex.unlock();
+  }
 };
 
+//***********************
+//***********************
+//***********************
+// Queue struct
+//***********************
+//***********************
+//***********************
 typedef struct dispatch_host_struct dispatch_host_queue_t;
 struct dispatch_host_struct {
   std::mutex lock;
@@ -55,11 +69,18 @@ struct dispatch_host_struct {
   bool quit;
 };
 
-void dispatch_thread_handler(dispatch_host_queue_t *queue,
-                             BinarySemaphore *ready_semaphore) {
+//***********************
+//***********************
+//***********************
+// Worker
+//***********************
+//***********************
+//***********************
+void dispatch_queue_worker(dispatch_host_queue_t *queue,
+                           BinarySemaphore *ready_semaphore) {
   std::unique_lock<std::mutex> lock(queue->lock);
 
-  dispatch_printf("dispatch_thread_handler started: queue=%u\n", (size_t)queue);
+  dispatch_printf("dispatch_queue_worker started: queue=%u\n", (size_t)queue);
 
   do {
     // give the ready signal
@@ -98,6 +119,13 @@ void dispatch_thread_handler(dispatch_host_queue_t *queue,
   } while (!queue->quit);
 }
 
+//***********************
+//***********************
+//***********************
+// Queue implementation
+//***********************
+//***********************
+//***********************
 static void task_add(dispatch_host_queue_t *queue, dispatch_task_t *task,
                      EventCounter *counter) {
   if (counter) {
@@ -142,7 +170,7 @@ void dispatch_queue_init(dispatch_queue_t *ctx, size_t thread_priority) {
   queue->quit = false;
   for (size_t i = 0; i < queue->threads.size(); i++) {
     queue->thread_ready_semaphores[i] = new BinarySemaphore();
-    queue->threads[i] = std::thread(&dispatch_thread_handler, queue,
+    queue->threads[i] = std::thread(&dispatch_queue_worker, queue,
                                     queue->thread_ready_semaphores[i]);
   }
 }
