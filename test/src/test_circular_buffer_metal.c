@@ -19,6 +19,12 @@ typedef struct test_source_params {
   circular_buffer_t *cbuf;
 } test_source_params;
 
+typedef struct test_sink_params {
+  bool shutdown_flag;
+  int count;
+  circular_buffer_t *cbuf;
+} test_sink_params;
+
 static dispatch_lock_t lock;
 static char thread_stack[THREAD_STACK_SIZE];
 
@@ -57,6 +63,26 @@ void do_random_source(void *p) {
   dispatch_free(pushed);
 }
 
+DISPATCH_TASK_FUNCTION
+void do_counting_sink(void *p) {
+  // NOTE: the "volatile" is needed here or the compiler may optimize this away
+  test_sink_params volatile *params = (test_sink_params volatile *)p;
+
+  void *item = NULL;
+  for (;;) {
+    if (circular_buffer_pop(params->cbuf, &item)) {
+      dispatch_lock_acquire(lock);
+      params->count++;
+      dispatch_lock_release(lock);
+    } else {
+      dispatch_lock_acquire(lock);
+      params->shutdown_flag = true;
+      dispatch_lock_release(lock);
+      break;
+    }
+  }
+}
+
 TEST_GROUP(circular_buffer_metal);
 
 TEST_SETUP(circular_buffer_metal) {
@@ -77,9 +103,10 @@ TEST(circular_buffer_metal, test_full_capacity) {
     circular_buffer_push(cbuf, &pushed[i]);
   }
 
+  int *popped;
   for (int i = 0; i < n_items; i++) {
-    int popped = *((int *)circular_buffer_pop(cbuf));
-    TEST_ASSERT_EQUAL_INT(pushed[i], popped);
+    circular_buffer_pop(cbuf, (void *)&popped);
+    TEST_ASSERT_EQUAL_INT(pushed[i], *popped);
   }
 
   circular_buffer_destroy(cbuf);
@@ -96,9 +123,10 @@ TEST(circular_buffer_metal, test_under_capacity) {
     circular_buffer_push(cbuf, &pushed[i]);
   }
 
+  int *popped;
   for (int i = 0; i < n_items; i++) {
-    int popped = *((int *)circular_buffer_pop(cbuf));
-    TEST_ASSERT_EQUAL_INT(pushed[i], popped);
+    circular_buffer_pop(cbuf, (void *)&popped);
+    TEST_ASSERT_EQUAL_INT(pushed[i], *popped);
   }
 
   circular_buffer_destroy(cbuf);
@@ -126,9 +154,10 @@ TEST(circular_buffer_metal, test_fill_drain) {
       if (circular_buffer_full(cbuf)) break;
 
     // drain the buffer sink in this thread
+    int *popped;
     for (int i = 0; i < kItems; i++) {
-      int popped = *((int *)circular_buffer_pop(cbuf));
-      TEST_ASSERT_EQUAL_INT(i, popped);
+      circular_buffer_pop(cbuf, (void *)&popped);
+      TEST_ASSERT_EQUAL_INT(i, *popped);
     }
   }
 
@@ -153,10 +182,11 @@ TEST(circular_buffer_metal, test_random_arrival) {
   int delay;
 
   // implement the buffer sink in this thread
+  int *popped;
   for (int i = 0; i < kItems; i++) {
     if (i % 100 == 0) dispatch_printf("test_random_capacity iter=%d\n", i);
-    int popped = *((int *)circular_buffer_pop(cbuf));
-    TEST_ASSERT_EQUAL_INT(i, popped);
+    circular_buffer_pop(cbuf, (void *)&popped);
+    TEST_ASSERT_EQUAL_INT(i, *popped);
     delay = rand() % kMaxDelay;
     hwtimer_delay(timer, delay * 1000 * PLATFORM_REFERENCE_MHZ);
   }
@@ -165,7 +195,54 @@ TEST(circular_buffer_metal, test_random_arrival) {
   circular_buffer_destroy(cbuf);
 }
 
+TEST(circular_buffer_metal, test_shutdown) {
+  const size_t kLength = 10;
+  const size_t kItems = 3;
+  int items[kItems];
+  circular_buffer_t *cbuf = circular_buffer_create(kLength, lock);
+  hwtimer_t timer = hwtimer_alloc();
+  const unsigned kMagicDuration = 10000000;
+
+  // launch the buffer sink thread
+  test_sink_params thread_data;
+  thread_data.count = 0;
+  thread_data.shutdown_flag = false;
+  thread_data.cbuf = cbuf;
+
+  run_async(do_counting_sink, (void *)&thread_data,
+            stack_base((void *)&thread_stack[0], THREAD_STACK_SIZE));
+
+  // add items to the queue
+  for (int i = 0; i < kItems; i++) {
+    items[i] = i;
+    circular_buffer_push(cbuf, &items[i]);
+  }
+
+  // for (;;) {
+  //   dispatch_printf("%d\n", thread_data.count);
+  //   if (thread_data.count == kItems) break;
+  // }
+
+  // need to give sink time to pop all items
+  hwtimer_delay(timer, kMagicDuration);
+
+  TEST_ASSERT_EQUAL_INT(kItems, thread_data.count);
+  TEST_ASSERT_FALSE(thread_data.shutdown_flag);
+
+  // shutdown the circular buffer and make sure the counting sink thread exited
+  circular_buffer_destroy(cbuf);
+
+  // need to give sink time to exit
+  hwtimer_delay(timer, kMagicDuration);
+
+  // TODO: ensure it never arrived
+  TEST_ASSERT_TRUE(thread_data.shutdown_flag);
+
+  hwtimer_free(timer);
+}
+
 TEST_GROUP_RUNNER(circular_buffer_metal) {
+  RUN_TEST_CASE(circular_buffer_metal, test_shutdown);
   RUN_TEST_CASE(circular_buffer_metal, test_full_capacity);
   RUN_TEST_CASE(circular_buffer_metal, test_under_capacity);
   RUN_TEST_CASE(circular_buffer_metal, test_fill_drain);

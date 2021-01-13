@@ -9,6 +9,7 @@
 #include <xcore/lock.h>
 #include <xcore/thread.h>
 
+#include "circular_buffer_metal.h"
 #include "dispatch_config.h"
 #include "dispatch_event_counter.h"
 #include "dispatch_group.h"
@@ -34,7 +35,8 @@ typedef struct dispatch_worker_data_struct dispatch_worker_data_t;
 struct dispatch_worker_data_struct {
   volatile size_t *flag;
   size_t parent;
-  chanend_t cend;
+  circular_buffer_t *cbuf;
+  chanend_t cend;  // FIXME
 };
 
 void dispatch_queue_worker(void *param) {
@@ -91,7 +93,7 @@ struct dispatch_xcore_struct {
   size_t length;
   size_t thread_count;
   size_t thread_stack_size;
-  chanend_t thread_chanend;
+  chanend_t thread_chanend;  // FIXME
   lock_t lock;
   char *thread_stack;
   size_t *thread_flags;
