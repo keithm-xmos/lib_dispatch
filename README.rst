@@ -109,4 +109,10 @@ The bare-metal implementation uses the following hardware resources:
 Using the library
 #################
 
-**This section intentionally left blank.**
+Some dependent components are included as git submodules. These can be obtained by cloning this repository with the following command:
+
+.. code:: console
+
+    git clone --recurse-submodules git@github.com:xmos/lib_dispatch.git
+
+**This remainder of this section intentionally left blank.**
