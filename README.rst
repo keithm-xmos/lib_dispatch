@@ -80,6 +80,10 @@ The bare-metal implementation uses bare-metal threads for workers and hardware r
 
 The FreeRTOS implementation uses FreeRTOS threads for workers and uses only a subset of the hardware resources allocated to the RTOS. All resources used to manage the workers and waitable tasks are FreeRTOS concepts. When a worker is executing a task, the FreeRTOS scheduler will allocate it to a physical core. However, that physical core can be utilized to run other FreeRTOS threads if the dispatch queue worker threads are waiting for new tasks.
 
+.. note::
+
+For both the bare-metal and FreeRTOS implementations, all thread workers MUST be placed on the same tile.
+
 The x86 implementation is intended for testing development only. If writing applications or libraries that can compile for the host PC, the x86 implementation provides a way for you to test your application logic without running on hardware. It is not intended to be used as a dispatch queue in applications that will not eventually run on hardware.
 
 More Advanced Examples
