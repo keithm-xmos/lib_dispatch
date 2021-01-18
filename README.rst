@@ -57,7 +57,7 @@ Concepts
 
 .. code:: console
 
-    my_function(void *arg)
+    void(void *)
 
 Task can be created using the dispatch task API defined in `dispatch_task.h <lib_dispatch/api/dispatch_task.h>`__. Additionaly, task can be created by the dispatch queue when you call the `dispatch_queue_function_add` API function. Tasks can be created with a **waitable** property and the dispatch queue has methods to wait for the completion of a task. Waiting on a task blocks in the callers thread until the dispatch queue is finished executing the specified task. 
 
