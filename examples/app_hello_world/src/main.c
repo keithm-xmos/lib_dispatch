@@ -20,9 +20,10 @@ static void hello_world(void* unused) {
   // create the dispatch queue
   queue = dispatch_queue_create(5, 5, 1024, THREAD_PRIORITY);
 
-  // add NUM_FUNCTIONS functions
+  // add functions
+  const int task_data[5] = {0, 1, 2, 3, 4};
   for (int i = 0; i < 5; i++) {
-    dispatch_queue_function_add(queue, do_work, &i, false);
+    dispatch_queue_function_add(queue, do_work, (void*)&task_data[i], false);
   }
 
   // wait for all functions to finish executing
