@@ -30,8 +30,9 @@ Code to create the dispatch queue and add a function:
     queue = dispatch_queue_create(5, 5, 1024, 0);
 
     // add 5 functions to the dispatch queue
+    const int task_data[5] = {0, 1, 2, 3, 4};
     for (int i = 0; i < 5; i++) {
-        dispatch_queue_function_add(queue, do_work, &i, false);
+        dispatch_queue_function_add(queue, do_work, (void*)&task_data[i], false);
     }
 
     // wait for all functions to finish executing
