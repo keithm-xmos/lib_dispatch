@@ -142,7 +142,6 @@ static void task_add(dispatch_xcore_queue_t *queue, dispatch_task_t *task,
 dispatch_queue_t *dispatch_queue_create(size_t length, size_t thread_count,
                                         size_t thread_stack_size,
                                         size_t thread_priority) {
-  dispatch_assert(length <= (thread_count + 1));  // NOTE: this is true for now
   dispatch_xcore_queue_t *queue;
 
   dispatch_printf("dispatch_queue_create: length=%d, thread_count=%d\n", length,
