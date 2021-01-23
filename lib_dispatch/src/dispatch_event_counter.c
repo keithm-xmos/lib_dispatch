@@ -43,26 +43,35 @@ dispatch_event_counter_t *dispatch_event_counter_create(size_t count,
 void dispatch_event_counter_signal(dispatch_event_counter_t *counter) {
   dispatch_assert(counter);
 
+  int signal = 0;
+
 #if BARE_METAL
   dispatch_lock_acquire(counter->lock);
-#elif FREERTOS
-  taskENTER_CRITICAL();
-#endif
+  if (counter->count > 0) {
+    if (--counter->count == 0) {
+      signal = 1;
+    }
+  }
+  dispatch_lock_release(counter->lock);
 
-  if (counter->count > 0) --counter->count;
-
-  if (counter->count == 0) {
-#if BARE_METAL
+  if (signal) {
     chanend_out_end_token(counter->channel.end_b);
-#elif FREERTOS
-    xSemaphoreGive(counter->semaphore);
-#endif
   }
 
-#if BARE_METAL
-  dispatch_lock_release(counter->lock);
 #elif FREERTOS
+
+  taskENTER_CRITICAL();
+  if (counter->count > 0) {
+    if (--counter->count == 0) {
+      signal = 1;
+    }
+  }
   taskEXIT_CRITICAL();
+
+  if (signal) {
+    xSemaphoreGive(counter->semaphore);
+  }
+
 #endif
 }
 

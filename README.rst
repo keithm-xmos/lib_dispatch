@@ -30,8 +30,9 @@ Code to create the dispatch queue and add a function:
     queue = dispatch_queue_create(5, 5, 1024, 0);
 
     // add 5 functions to the dispatch queue
+    const int task_data[5] = {0, 1, 2, 3, 4};
     for (int i = 0; i < 5; i++) {
-        dispatch_queue_function_add(queue, do_work, &i, false);
+        dispatch_queue_function_add(queue, do_work, (void*)&task_data[i], false);
     }
 
     // wait for all functions to finish executing
@@ -57,7 +58,7 @@ Concepts
 
 .. code:: console
 
-    my_function(void *arg)
+    void(void *)
 
 Task can be created using the dispatch task API defined in `dispatch_task.h <lib_dispatch/api/dispatch_task.h>`__. Additionaly, task can be created by the dispatch queue when you call the `dispatch_queue_function_add` API function. Tasks can be created with a **waitable** property and the dispatch queue has methods to wait for the completion of a task. Waiting on a task blocks in the callers thread until the dispatch queue is finished executing the specified task. 
 
