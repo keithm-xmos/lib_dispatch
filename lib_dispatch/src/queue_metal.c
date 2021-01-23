@@ -1,5 +1,5 @@
 // Copyright (c) 2020, XMOS Ltd, All rights reserved
-#include "circular_buffer_metal.h"
+#include "queue_metal.h"
 
 #include "dispatch_config.h"
 
@@ -8,10 +8,10 @@
 #define POP_READY_EVT (0x3)
 #define POP_EXIT_EVT (0x4)
 
-circular_buffer_t *circular_buffer_create(size_t length, lock_t lock) {
+queue_t *queue_create(size_t length, lock_t lock) {
   dispatch_assert(length > 0);
 
-  circular_buffer_t *cbuf = dispatch_malloc(sizeof(circular_buffer_t));
+  queue_t *cbuf = dispatch_malloc(sizeof(queue_t));
   cbuf->buffer = dispatch_malloc(sizeof(void *) * length);
   cbuf->length = length;
   cbuf->lock = lock;
@@ -25,13 +25,13 @@ circular_buffer_t *circular_buffer_create(size_t length, lock_t lock) {
   return cbuf;
 }
 
-bool circular_buffer_full(circular_buffer_t *cbuf) { return cbuf->full; }
+bool queue_full(queue_t *cbuf) { return cbuf->full; }
 
-bool circular_buffer_empty(circular_buffer_t *cbuf) {
+bool queue_empty(queue_t *cbuf) {
   return (!cbuf->full && (cbuf->head == cbuf->tail));
 }
 
-bool circular_buffer_push(circular_buffer_t *cbuf, void *item) {
+bool queue_send(queue_t *cbuf, void *item) {
   dispatch_assert(cbuf);
   dispatch_assert(item);
   dispatch_assert(cbuf->buffer);
@@ -41,16 +41,20 @@ bool circular_buffer_push(circular_buffer_t *cbuf, void *item) {
 
   dispatch_lock_acquire(cbuf->lock);
 
-  if (circular_buffer_full(cbuf)) {
+  if (queue_full(cbuf)) {
     cbuf->push_waiting =
         true;  // tells pop function to send us the PUSH_READY_EVT signal
     // release the lock while we wait
     dispatch_lock_release(cbuf->lock);
+    // TODO: create chanend
+    //       add it to push_waiting list
+    //       then...
     // wait for signal that a slot is available
     evt = chan_in_byte(cbuf->chan.end_a);
     if (evt == POP_EXIT_EVT) do_push = false;
     // re-acquire lock
     dispatch_lock_acquire(cbuf->lock);
+    // TODO: remove from push_waiting list
     cbuf->push_waiting = false;  // no longer need the PUSH_READY_EVT signal
   }
 
@@ -67,13 +71,16 @@ bool circular_buffer_push(circular_buffer_t *cbuf, void *item) {
     cbuf->full = (cbuf->head == cbuf->tail);
 
     // notify waiting pop function
+    // TODO: pick chanend on pop_waiting list
+    //       connect chanends
+    //       send signal
     if (cbuf->pop_waiting) chan_out_byte(cbuf->chan.end_a, POP_READY_EVT);
   }
   dispatch_lock_release(cbuf->lock);
   return do_push;
 }
 
-bool circular_buffer_pop(circular_buffer_t *cbuf, void **item) {
+bool queue_receive(queue_t *cbuf, void **item) {
   dispatch_assert(cbuf);
   dispatch_assert(cbuf->buffer);
 
@@ -82,16 +89,21 @@ bool circular_buffer_pop(circular_buffer_t *cbuf, void **item) {
   bool do_pop = true;
   int evt;
 
-  if (circular_buffer_empty(cbuf)) {
+  if (queue_empty(cbuf)) {
     cbuf->pop_waiting =
         true;  // tells push function to send us the POP_READY_EVT signal
     // release the lock while we wait
     dispatch_lock_release(cbuf->lock);
+    // TODO: create chanend
+    //       add it to pop_waiting list
+    //       then...
     // wait for signal that a item is available
     evt = chan_in_byte(cbuf->chan.end_b);
     if (evt == POP_EXIT_EVT) do_pop = false;
+    // TODO: free chanend
     // re-acquire lock
     dispatch_lock_acquire(cbuf->lock);
+    // TODO: remove from pop_waiting list
     cbuf->pop_waiting = false;  // no longer need the POP_READY_EVT signal
   }
 
@@ -103,6 +115,9 @@ bool circular_buffer_pop(circular_buffer_t *cbuf, void **item) {
     cbuf->tail = (cbuf->tail + 1) % cbuf->length;
 
     // notify any waiting push function
+    // TODO: pick chanend on push_waiting list
+    //       connect chanends
+    //       send signal
     if (cbuf->push_waiting) chan_out_byte(cbuf->chan.end_b, PUSH_READY_EVT);
   }
 
@@ -110,13 +125,14 @@ bool circular_buffer_pop(circular_buffer_t *cbuf, void **item) {
   return do_pop;
 }
 
-void circular_buffer_destroy(circular_buffer_t *cbuf) {
+void queue_destroy(queue_t *cbuf) {
   dispatch_assert(cbuf);
   dispatch_assert(cbuf->buffer);
 
   // notify any waiting functions that they can exit
-  if (cbuf->push_waiting) chan_out_byte(cbuf->chan.end_b, PUSH_EXIT_EVT);
-  if (cbuf->pop_waiting) chan_out_byte(cbuf->chan.end_a, POP_EXIT_EVT);
+  // TODO: implement me
+  // if (cbuf->push_waiting) chan_out_byte(cbuf->chan.end_b, PUSH_EXIT_EVT);
+  // if (cbuf->pop_waiting) chan_out_byte(cbuf->chan.end_a, POP_EXIT_EVT);
 
   chan_free(cbuf->chan);
   dispatch_free(cbuf->buffer);

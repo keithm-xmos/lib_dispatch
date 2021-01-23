@@ -153,7 +153,7 @@ elseif(FREERTOS)
 else()
   set(LIB_DISPATCH_SOURCES ${LIB_DISPATCH_METAL_SOURCES})
   set(TEST_DISPATCH_SOURCES 
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/test_circular_buffer_metal.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/test_queue_metal.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/test_dispatch_metal.c"
   )
 endif()

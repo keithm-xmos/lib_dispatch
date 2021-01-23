@@ -29,7 +29,7 @@ static void RunTests(void* unused) {
   RUN_TEST_GROUP(dispatch_task);
   RUN_TEST_GROUP(dispatch_group);
   RUN_TEST_GROUP(dispatch_queue);
-  RUN_TEST_GROUP(circular_buffer_metal);
+  RUN_TEST_GROUP(queue_metal);
   RUN_TEST_GROUP(dispatch_queue_metal);
   UnityEnd();
 }
