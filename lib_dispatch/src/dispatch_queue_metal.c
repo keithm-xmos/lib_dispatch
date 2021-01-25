@@ -5,7 +5,6 @@
 #include <xcore/assert.h>
 #include <xcore/chanend.h>
 #include <xcore/channel.h>
-#include <xcore/hwtimer.h>
 #include <xcore/lock.h>
 #include <xcore/thread.h>
 
