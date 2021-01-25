@@ -78,8 +78,9 @@ set_target_properties(mat_mul PROPERTIES OUTPUT_NAME mat_mul.xe)
 # External paths
 #**********************
 
-set(FREERTOS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../extern/FreeRTOS")
-set(AIOTSDK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../extern/aiot_sdk")
+set(FREERTOS_DIR $ENV{XMOS_AIOT_SDK_PATH}/modules/rtos/FreeRTOS/FreeRTOS-Plus/FreeRTOS-SMP/FreeRTOS)
+set(RTOS_SUPPORT_DIR $ENV{XMOS_AIOT_SDK_PATH}/modules/lib_rtos_support)
+set(XASSERT_DIR $ENV{XMOS_AIOT_SDK_PATH}/modules/lib_xassert/lib_xassert/lib_xassert)
 
 #**********************
 # targets
@@ -88,32 +89,33 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/../../lib_dispatch.cmake")
 
 if(FREERTOS)
   set(LIB_DISPATCH_SOURCES ${LIB_DISPATCH_FREERTOS_SOURCES})
-  set(HELLO_WORLD_SOURCES 
-    "${FREERTOS_DIR}/FreeRTOS/Source/croutine.c"
-    "${FREERTOS_DIR}/FreeRTOS/Source/event_groups.c"
-    "${FREERTOS_DIR}/FreeRTOS/Source/list.c"
-    "${FREERTOS_DIR}/FreeRTOS/Source/queue.c"
-    "${FREERTOS_DIR}/FreeRTOS/Source/stream_buffer.c"
-    "${FREERTOS_DIR}/FreeRTOS/Source/tasks.c"
-    "${FREERTOS_DIR}/FreeRTOS/Source/timers.c"
-    "${FREERTOS_DIR}/FreeRTOS/Source/portable/XCC/XCOREAI/port.c"
-    "${FREERTOS_DIR}/FreeRTOS/Source/portable/XCC/XCOREAI/port.xc"
-    "${FREERTOS_DIR}/FreeRTOS/Source/portable/MemMang/heap_4.c"
-    "${FREERTOS_DIR}/FreeRTOS/Source/portable/XCC/XCOREAI/portasm.S"
-    "${AIOTSDK_DIR}/modules/rtos/rtos_support/src/rtos_cores.c"
-    "${AIOTSDK_DIR}/modules/rtos/rtos_support/src/rtos_irq.c"
-    "${AIOTSDK_DIR}/modules/rtos/rtos_support/src/rtos_locks.c"
-    "${AIOTSDK_DIR}/modules/rtos/rtos_support/src/rtos_printf.c"
-    "${AIOTSDK_DIR}/modules/rtos/rtos_support/src/rtos_time.c"
+  set(MATRIX_MULTIPLY_SOURCES 
+    "${FREERTOS_DIR}/Source/croutine.c"
+    "${FREERTOS_DIR}/Source/event_groups.c"
+    "${FREERTOS_DIR}/Source/list.c"
+    "${FREERTOS_DIR}/Source/queue.c"
+    "${FREERTOS_DIR}/Source/stream_buffer.c"
+    "${FREERTOS_DIR}/Source/tasks.c"
+    "${FREERTOS_DIR}/Source/timers.c"
+    "${FREERTOS_DIR}/Source/portable/XCC/XCOREAI/port.c"
+    "${FREERTOS_DIR}/Source/portable/XCC/XCOREAI/port.xc"
+    "${FREERTOS_DIR}/Source/portable/MemMang/heap_4.c"
+    "${FREERTOS_DIR}/Source/portable/XCC/XCOREAI/portasm.S"
+    "${RTOS_SUPPORT_DIR}/src/rtos_cores.c"
+    "${RTOS_SUPPORT_DIR}/src/rtos_irq.c"
+    "${RTOS_SUPPORT_DIR}/src/rtos_locks.c"
+    "${RTOS_SUPPORT_DIR}/src/rtos_printf.c"
+    "${RTOS_SUPPORT_DIR}/src/rtos_time.c"
   )
 
-  set_source_files_properties("${FREERTOS_DIR}/FreeRTOS/Source/portable/XCC/XCOREAI/port.xc" PROPERTIES LANGUAGE C)
+  set_source_files_properties("${FREERTOS_DIR}/Source/portable/XCC/XCOREAI/port.xc" PROPERTIES LANGUAGE C)
 
-  set(HELLO_WORLD_INCLUDES 
-    "${FREERTOS_DIR}/FreeRTOS/Source/include"
-    "${FREERTOS_DIR}/FreeRTOS/Source/portable/XCC/XCOREAI"
-    "${AIOTSDK_DIR}/modules/rtos/rtos_support/api"
-    "${AIOTSDK_DIR}/modules/rtos/rtos_support/src"
+  set(MATRIX_MULTIPLY_INCLUDES 
+    "${XASSERT_DIR}/api"
+    "${FREERTOS_DIR}/Source/include"
+    "${FREERTOS_DIR}/Source/portable/XCC/XCOREAI"
+    "${RTOS_SUPPORT_DIR}/api"
+    "${RTOS_SUPPORT_DIR}/src"
   )
 else()
   set(LIB_DISPATCH_SOURCES ${LIB_DISPATCH_METAL_SOURCES})
@@ -122,12 +124,12 @@ endif()
 target_sources(mat_mul
   PRIVATE ${LIB_DISPATCH_SOURCES}
   PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/main.c"
-  PRIVATE ${HELLO_WORLD_SOURCES}
+  PRIVATE ${MATRIX_MULTIPLY_SOURCES}
 )
 
 target_include_directories(mat_mul
   PRIVATE ${LIB_DISPATCH_INCLUDES}
-  PRIVATE ${HELLO_WORLD_INCLUDES}
+  PRIVATE ${MATRIX_MULTIPLY_INCLUDES}
   PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src"
 )
 

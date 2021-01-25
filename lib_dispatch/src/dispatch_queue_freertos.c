@@ -74,7 +74,6 @@ void dispatch_queue_worker(void *param) {
 
 typedef struct dispatch_freertos_struct dispatch_freertos_queue_t;
 struct dispatch_freertos_struct {
-  size_t length;
   size_t thread_count;
   size_t thread_stack_size;
   QueueHandle_t xQueue;
@@ -102,7 +101,6 @@ dispatch_queue_t *dispatch_queue_create(size_t length, size_t thread_count,
 
   queue = pvPortMalloc(sizeof(dispatch_freertos_queue_t));
 
-  queue->length = length;
   queue->thread_count = thread_count;
   queue->thread_stack_size = thread_stack_size;
 

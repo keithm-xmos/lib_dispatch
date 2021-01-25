@@ -16,8 +16,8 @@
 #endif
 
 struct dispatch_event_counter_struct {
-  dispatch_lock_t lock;
 #if BARE_METAL
+  dispatch_lock_t lock;
   streaming_channel_t channel;
 #elif FREERTOS
   SemaphoreHandle_t semaphore;
@@ -35,7 +35,6 @@ dispatch_event_counter_t *dispatch_event_counter_create(size_t count,
   counter->lock = lock;
   counter->channel = s_chan_alloc();
 #elif FREERTOS
-  counter->lock = dispatch_lock_alloc();
   counter->semaphore = xSemaphoreCreateBinary();
 #endif
   return counter;
@@ -44,24 +43,43 @@ dispatch_event_counter_t *dispatch_event_counter_create(size_t count,
 void dispatch_event_counter_signal(dispatch_event_counter_t *counter) {
   dispatch_assert(counter);
 
+  int signal = 0;
+
+#if BARE_METAL
   dispatch_lock_acquire(counter->lock);
-  if (counter->count > 0) --counter->count;
+  if (counter->count > 0) {
+    if (--counter->count == 0) {
+      signal = 1;
+    }
+  }
   dispatch_lock_release(counter->lock);
 
-  if (counter->count == 0) {
-#if BARE_METAL
-    s_chan_out_byte(counter->channel.end_b, 0x1);
-#elif FREERTOS
-    xSemaphoreGive(counter->semaphore);
-#endif
+  if (signal) {
+    chanend_out_end_token(counter->channel.end_b);
   }
+
+#elif FREERTOS
+
+  taskENTER_CRITICAL();
+  if (counter->count > 0) {
+    if (--counter->count == 0) {
+      signal = 1;
+    }
+  }
+  taskEXIT_CRITICAL();
+
+  if (signal) {
+    xSemaphoreGive(counter->semaphore);
+  }
+
+#endif
 }
 
 void dispatch_event_counter_wait(dispatch_event_counter_t *counter) {
   dispatch_assert(counter);
 
 #if BARE_METAL
-  s_chan_in_byte(counter->channel.end_a);
+  chanend_check_end_token(counter->channel.end_a);
 #elif FREERTOS
   xSemaphoreTake(counter->semaphore, portMAX_DELAY);
 #endif
@@ -73,7 +91,6 @@ void dispatch_event_counter_destroy(dispatch_event_counter_t *counter) {
 #if BARE_METAL
   s_chan_free(counter->channel);
 #elif FREERTOS
-  dispatch_lock_free(counter->lock);
   vSemaphoreDelete(counter->semaphore);
 #endif
   dispatch_free(counter);
