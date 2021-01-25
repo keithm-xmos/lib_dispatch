@@ -21,8 +21,7 @@ extern "C" {
 
 /** Create a new task, non-waitable task
  *
- * \param function  Function to perform, signature must be void my_fun(void
- * *arg)
+ * \param function  Function to perform, signature must be <tt>void(void*)</tt>
  * \param argument  Function argument
  * \param waitable  The task is waitable if TRUE, otherwise the task can not
  * be waited on
@@ -35,8 +34,7 @@ dispatch_task_t *dispatch_task_create(dispatch_function_t function,
 /** Initialize a task
  *
  * \param task      Task object
- * \param function  Function to perform, signature must be void my_fun(void
- * *arg)
+ * \param function  Function to perform, signature must be <tt>void(void*)</tt>
  * \param argument  Function argument
  * \param waitable  The task is waitable if TRUE, otherwise the task can not
  * be waited on

@@ -76,28 +76,30 @@ struct dispatch_host_struct {
 //***********************
 //***********************
 //***********************
-void dispatch_queue_worker(dispatch_host_queue_t *queue,
+void dispatch_queue_worker(dispatch_host_queue_t *dispatch_queue,
                            BinarySemaphore *ready_semaphore) {
-  std::unique_lock<std::mutex> lock(queue->lock);
+  std::unique_lock<std::mutex> lock(dispatch_queue->lock);
 
-  dispatch_printf("dispatch_queue_worker started: queue=%u\n", (size_t)queue);
+  dispatch_printf("dispatch_queue_worker started: parent=%u\n",
+                  (size_t)dispatch_queue);
 
   do {
     // give the ready signal
     ready_semaphore->Signal();
 
     // wait until we have data or a quit signal
-    queue->cv.wait(lock,
-                   [queue] { return (queue->deque.size() || queue->quit); });
+    dispatch_queue->cv.wait(lock, [dispatch_queue] {
+      return (dispatch_queue->deque.size() || dispatch_queue->quit);
+    });
 
     // after wait, we own the lock
-    if (!queue->quit && queue->deque.size()) {
+    if (!dispatch_queue->quit && dispatch_queue->deque.size()) {
       // clear the ready signal
       ready_semaphore->Reset();
 
       // pop the task off the deque
-      dispatch_task_t *task = queue->deque.front();
-      queue->deque.pop_front();
+      dispatch_task_t *task = dispatch_queue->deque.front();
+      dispatch_queue->deque.pop_front();
 
       // unlock now that we're done messing with the queue
       lock.unlock();
@@ -116,7 +118,7 @@ void dispatch_queue_worker(dispatch_host_queue_t *queue,
 
       lock.lock();
     }
-  } while (!queue->quit);
+  } while (!dispatch_queue->quit);
 }
 
 //***********************
@@ -126,77 +128,81 @@ void dispatch_queue_worker(dispatch_host_queue_t *queue,
 //***********************
 //***********************
 //***********************
-static void task_add(dispatch_host_queue_t *queue, dispatch_task_t *task,
-                     EventCounter *counter) {
+static void task_add(dispatch_host_queue_t *dispatch_queue,
+                     dispatch_task_t *task, EventCounter *counter) {
   if (counter) {
     task->private_data = counter;
   }
 
-  std::unique_lock<std::mutex> lock(queue->lock);
-  queue->deque.push_back(task);
+  std::unique_lock<std::mutex> lock(dispatch_queue->lock);
+  dispatch_queue->deque.push_back(task);
   // manual unlocking is done before notifying, to avoid waking up
   // the waiting thread only to block again (see notify_one for details)
   lock.unlock();
 
-  queue->cv.notify_one();
+  dispatch_queue->cv.notify_one();
 }
 
 dispatch_queue_t *dispatch_queue_create(size_t length, size_t thread_count,
                                         size_t thread_stack_size,
                                         size_t thread_priority) {
-  dispatch_host_queue_t *queue;
+  dispatch_host_queue_t *dispatch_queue;
 
   dispatch_printf("dispatch_queue_create: length=%d, thread_count=%d\n", length,
                   thread_count);
 
-  queue = new dispatch_host_queue_t;
-  queue->threads.resize(thread_count);
-  queue->thread_ready_semaphores.resize(thread_count);
+  dispatch_queue = new dispatch_host_queue_t;
+  dispatch_queue->threads.resize(thread_count);
+  dispatch_queue->thread_ready_semaphores.resize(thread_count);
 
   // initialize the queue
-  dispatch_queue_init(queue, thread_priority);
+  dispatch_queue_init(dispatch_queue, thread_priority);
 
-  dispatch_printf("dispatch_queue_create: created queue=%u\n", (size_t)queue);
+  dispatch_printf("dispatch_queue_create: %u\n", (size_t)dispatch_queue);
 
-  return queue;
+  return dispatch_queue;
 }
 
 void dispatch_queue_init(dispatch_queue_t *ctx, size_t thread_priority) {
-  dispatch_host_queue_t *queue = static_cast<dispatch_host_queue_t *>(ctx);
-  dispatch_assert(queue);
+  dispatch_host_queue_t *dispatch_queue =
+      static_cast<dispatch_host_queue_t *>(ctx);
+  dispatch_assert(dispatch_queue);
 
-  dispatch_printf("dispatch_queue_init: queue=%u\n", (size_t)queue);
+  dispatch_printf("dispatch_queue_init: %u\n", (size_t)dispatch_queue);
 
-  queue->quit = false;
-  for (size_t i = 0; i < queue->threads.size(); i++) {
-    queue->thread_ready_semaphores[i] = new BinarySemaphore();
-    queue->threads[i] = std::thread(&dispatch_queue_worker, queue,
-                                    queue->thread_ready_semaphores[i]);
+  dispatch_queue->quit = false;
+  for (size_t i = 0; i < dispatch_queue->threads.size(); i++) {
+    dispatch_queue->thread_ready_semaphores[i] = new BinarySemaphore();
+    dispatch_queue->threads[i] =
+        std::thread(&dispatch_queue_worker, dispatch_queue,
+                    dispatch_queue->thread_ready_semaphores[i]);
   }
 }
 
 void dispatch_queue_task_add(dispatch_queue_t *ctx, dispatch_task_t *task) {
-  dispatch_host_queue_t *queue = static_cast<dispatch_host_queue_t *>(ctx);
-  dispatch_assert(queue);
+  dispatch_host_queue_t *dispatch_queue =
+      static_cast<dispatch_host_queue_t *>(ctx);
+  dispatch_assert(dispatch_queue);
   dispatch_assert(task);
 
-  dispatch_printf("dispatch_queue_add_task: queue=%u\n", (size_t)queue);
+  dispatch_printf("dispatch_queue_add_task: %u\n", (size_t)dispatch_queue);
 
   EventCounter *counter = nullptr;
 
   if (task->waitable) {
     counter = new EventCounter(1);
   }
-  task_add(queue, task, counter);
+  task_add(dispatch_queue, task, counter);
 }
 
 void dispatch_queue_group_add(dispatch_queue_t *ctx, dispatch_group_t *group) {
-  dispatch_host_queue_t *queue = static_cast<dispatch_host_queue_t *>(ctx);
-  dispatch_assert(queue);
+  dispatch_host_queue_t *dispatch_queue =
+      static_cast<dispatch_host_queue_t *>(ctx);
+  dispatch_assert(dispatch_queue);
   dispatch_assert(group);
 
-  dispatch_printf("dispatch_queue_group_add: queue=%u   group=%u\n",
-                  (size_t)queue, (size_t)group);
+  dispatch_printf("dispatch_queue_group_add: %u   group=%u\n",
+                  (size_t)dispatch_queue, (size_t)group);
 
   EventCounter *counter = nullptr;
 
@@ -206,7 +212,7 @@ void dispatch_queue_group_add(dispatch_queue_t *ctx, dispatch_group_t *group) {
   }
 
   for (int i = 0; i < group->count; i++) {
-    task_add(queue, group->tasks[i], counter);
+    task_add(dispatch_queue, group->tasks[i], counter);
   }
 }
 
@@ -214,7 +220,7 @@ void dispatch_queue_task_wait(dispatch_queue_t *ctx, dispatch_task_t *task) {
   dispatch_assert(task);
   dispatch_assert(task->waitable);
 
-  dispatch_printf("dispatch_queue_task_wait: queue=%u   task=%u\n", (size_t)ctx,
+  dispatch_printf("dispatch_queue_task_wait: %u   task=%u\n", (size_t)ctx,
                   (size_t)task);
 
   if (task->waitable) {
@@ -231,8 +237,8 @@ void dispatch_queue_group_wait(dispatch_queue_t *ctx, dispatch_group_t *group) {
   dispatch_assert(group);
   dispatch_assert(group->waitable);
 
-  dispatch_printf("dispatch_queue_group_wait: queue=%u   group=%u\n",
-                  (size_t)ctx, (size_t)group);
+  dispatch_printf("dispatch_queue_group_wait: %u   group=%u\n", (size_t)ctx,
+                  (size_t)group);
 
   if (group->waitable) {
     EventCounter *counter =
@@ -243,49 +249,50 @@ void dispatch_queue_group_wait(dispatch_queue_t *ctx, dispatch_group_t *group) {
 }
 
 void dispatch_queue_wait(dispatch_queue_t *ctx) {
-  dispatch_host_queue_t *queue = static_cast<dispatch_host_queue_t *>(ctx);
-  dispatch_assert(queue);
+  dispatch_host_queue_t *dispatch_queue =
+      static_cast<dispatch_host_queue_t *>(ctx);
+  dispatch_assert(dispatch_queue);
 
-  dispatch_printf("dispatch_queue_wait: queue=%u\n", (size_t)queue);
+  dispatch_printf("dispatch_queue_wait: %u\n", (size_t)dispatch_queue);
 
   int waiting_count;
 
   // wait for deque to empty
   for (;;) {
-    std::unique_lock<std::mutex> lock(queue->lock);
-    waiting_count = queue->deque.size();
+    std::unique_lock<std::mutex> lock(dispatch_queue->lock);
+    waiting_count = dispatch_queue->deque.size();
     lock.unlock();
     if (waiting_count == 0) break;
   }
   // wait for all workers to be ready
-  for (size_t i = 0; i < queue->thread_ready_semaphores.size(); i++) {
-    // queue->thread_ready_semaphores[i]->Take();
-    queue->thread_ready_semaphores[i]->Wait();
+  for (size_t i = 0; i < dispatch_queue->thread_ready_semaphores.size(); i++) {
+    dispatch_queue->thread_ready_semaphores[i]->Wait();
   }
 }
 
 void dispatch_queue_destroy(dispatch_queue_t *ctx) {
   dispatch_assert(ctx);
-  dispatch_host_queue_t *queue = static_cast<dispatch_host_queue_t *>(ctx);
+  dispatch_host_queue_t *dispatch_queue =
+      static_cast<dispatch_host_queue_t *>(ctx);
 
-  dispatch_printf("dispatch_queue_destroy: queue=%u\n", (size_t)queue);
+  dispatch_printf("dispatch_queue_destroy: %u\n", (size_t)dispatch_queue);
 
   // signal to all thread workers that it is time to quit
-  std::unique_lock<std::mutex> lock(queue->lock);
-  queue->quit = true;
+  std::unique_lock<std::mutex> lock(dispatch_queue->lock);
+  dispatch_queue->quit = true;
   lock.unlock();
-  queue->cv.notify_all();
+  dispatch_queue->cv.notify_all();
 
   // Wait for threads to finish before we exit
-  for (size_t i = 0; i < queue->threads.size(); i++) {
-    if (queue->threads[i].joinable()) {
-      queue->threads[i].join();
+  for (size_t i = 0; i < dispatch_queue->threads.size(); i++) {
+    if (dispatch_queue->threads[i].joinable()) {
+      dispatch_queue->threads[i].join();
     }
   }
 
   // free memory
-  for (size_t i = 0; i < queue->thread_ready_semaphores.size(); i++) {
-    delete queue->thread_ready_semaphores[i];
+  for (size_t i = 0; i < dispatch_queue->thread_ready_semaphores.size(); i++) {
+    delete dispatch_queue->thread_ready_semaphores[i];
   }
-  delete queue;
+  delete dispatch_queue;
 }

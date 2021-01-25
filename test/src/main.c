@@ -4,8 +4,6 @@
 #if FREERTOS
 #include "FreeRTOS.h"
 #include "task.h"
-//#define UNITY_MALLOC(size) pvPortMalloc(size)
-//#define UNITY_FREE(ptr) vPortFree(ptr)
 void vApplicationMallocFailedHook(void) {
   debug_printf("Malloc failed!\n");
   exit(1);
@@ -31,6 +29,7 @@ static void RunTests(void* unused) {
   RUN_TEST_GROUP(dispatch_task);
   RUN_TEST_GROUP(dispatch_group);
   RUN_TEST_GROUP(dispatch_queue);
+  RUN_TEST_GROUP(queue_metal);
   RUN_TEST_GROUP(dispatch_queue_metal);
   UnityEnd();
 }

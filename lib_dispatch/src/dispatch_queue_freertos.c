@@ -40,7 +40,7 @@ void dispatch_queue_worker(void *param) {
 
   dispatch_task_t *task = NULL;
 
-  dispatch_printf("dispatch_queue_worker started: queue=%u\n",
+  dispatch_printf("dispatch_queue_worker started: parent=%u\n",
                   worker_data->parent);
 
   for (;;) {
@@ -94,81 +94,82 @@ struct dispatch_freertos_struct {
 dispatch_queue_t *dispatch_queue_create(size_t length, size_t thread_count,
                                         size_t thread_stack_size,
                                         size_t thread_priority) {
-  dispatch_freertos_queue_t *queue;
+  dispatch_freertos_queue_t *dispatch_queue;
 
   dispatch_printf("dispatch_queue_create: length=%d, thread_count=%d\n", length,
                   thread_count);
 
-  queue = pvPortMalloc(sizeof(dispatch_freertos_queue_t));
+  dispatch_queue = pvPortMalloc(sizeof(dispatch_freertos_queue_t));
 
-  queue->thread_count = thread_count;
-  queue->thread_stack_size = thread_stack_size;
+  dispatch_queue->thread_count = thread_count;
+  dispatch_queue->thread_stack_size = thread_stack_size;
 
   // allocate FreeRTOS queue
-  queue->xQueue = xQueueCreate(length, sizeof(dispatch_task_t *));
+  dispatch_queue->xQueue = xQueueCreate(length, sizeof(dispatch_task_t *));
 
   // allocate threads
-  queue->threads = pvPortMalloc(sizeof(TaskHandle_t) * thread_count);
+  dispatch_queue->threads = pvPortMalloc(sizeof(TaskHandle_t) * thread_count);
 
   // allocate thread data
-  queue->worker_data =
+  dispatch_queue->worker_data =
       pvPortMalloc(sizeof(dispatch_worker_data_t) * thread_count);
 
-  queue->xEventGroup = xEventGroupCreate();
+  dispatch_queue->xEventGroup = xEventGroupCreate();
 
   // initialize the queue
-  dispatch_queue_init(queue, thread_priority);
+  dispatch_queue_init(dispatch_queue, thread_priority);
 
-  dispatch_printf("dispatch_queue_create: created queue=%u\n", (size_t)queue);
+  dispatch_printf("dispatch_queue_create: %u\n", (size_t)dispatch_queue);
 
-  return queue;
+  return dispatch_queue;
 }
 
 void dispatch_queue_init(dispatch_queue_t *ctx, size_t thread_priority) {
-  dispatch_freertos_queue_t *queue = (dispatch_freertos_queue_t *)ctx;
-  dispatch_assert(queue);
+  dispatch_freertos_queue_t *dispatch_queue = (dispatch_freertos_queue_t *)ctx;
+  dispatch_assert(dispatch_queue);
 
-  dispatch_printf("dispatch_queue_init: queue=%u\n", (size_t)queue);
+  dispatch_printf("dispatch_queue_init: %u\n", (size_t)dispatch_queue);
 
   // create workers
-  for (int i = 0; i < queue->thread_count; i++) {
-    queue->worker_data[i].parent = (size_t)queue;
-    queue->worker_data[i].xQueue = queue->xQueue;
-    queue->worker_data[i].xEventGroup = queue->xEventGroup;
-    queue->worker_data[i].xReadyBit = 1 << i;
+  for (int i = 0; i < dispatch_queue->thread_count; i++) {
+    dispatch_queue->worker_data[i].parent = (size_t)dispatch_queue;
+    dispatch_queue->worker_data[i].xQueue = dispatch_queue->xQueue;
+    dispatch_queue->worker_data[i].xEventGroup = dispatch_queue->xEventGroup;
+    dispatch_queue->worker_data[i].xReadyBit = 1 << i;
     // create task
-    xTaskCreate(dispatch_queue_worker, "", queue->thread_stack_size,
-                (void *)&queue->worker_data[i], thread_priority,
-                &queue->threads[i]);
+    xTaskCreate(dispatch_queue_worker, "", dispatch_queue->thread_stack_size,
+                (void *)&dispatch_queue->worker_data[i], thread_priority,
+                &dispatch_queue->threads[i]);
   }
   // set the ready bits
-  queue->xReadyBits = 0xFFFFFFFF >> (32 - queue->thread_count);
-  xEventGroupSetBits(queue->xEventGroup, queue->xReadyBits);
+  dispatch_queue->xReadyBits =
+      0xFFFFFFFF >> (32 - dispatch_queue->thread_count);
+  xEventGroupSetBits(dispatch_queue->xEventGroup, dispatch_queue->xReadyBits);
 }
 
 void dispatch_queue_task_add(dispatch_queue_t *ctx, dispatch_task_t *task) {
-  dispatch_freertos_queue_t *queue = (dispatch_freertos_queue_t *)ctx;
-  dispatch_assert(queue);
+  dispatch_freertos_queue_t *dispatch_queue = (dispatch_freertos_queue_t *)ctx;
+  dispatch_assert(dispatch_queue);
   dispatch_assert(task);
 
-  dispatch_printf("dispatch_queue_add_task: queue=%u   task=%u\n",
-                  (size_t)queue, (size_t)task);
+  dispatch_printf("dispatch_queue_add_task: %u   task=%u\n",
+                  (size_t)dispatch_queue, (size_t)task);
 
   if (task->waitable) {
     task->private_data = dispatch_event_counter_create(1, NULL);
   }
 
   // send to queue
-  xQueueSend(queue->xQueue, (void *)&task, portMAX_DELAY);
+  xQueueSend(dispatch_queue->xQueue, (void *)&task, portMAX_DELAY);
 }
 
 void dispatch_queue_group_add(dispatch_queue_t *ctx, dispatch_group_t *group) {
-  dispatch_freertos_queue_t *queue = (dispatch_freertos_queue_t *)ctx;
-  dispatch_assert(queue);
+  dispatch_freertos_queue_t *dispatch_queue = (dispatch_freertos_queue_t *)ctx;
+  dispatch_assert(dispatch_queue);
   dispatch_assert(group);
 
-  dispatch_printf("dispatch_queue_group_add: queue=%u   group=%u\n",
-                  (size_t)queue, (size_t)group);
+  dispatch_printf("dispatch_queue_group_add: %u   group=%u\n",
+                  (size_t)dispatch_queue, (size_t)group);
 
   dispatch_event_counter_t *counter = NULL;
 
@@ -180,7 +181,7 @@ void dispatch_queue_group_add(dispatch_queue_t *ctx, dispatch_group_t *group) {
   // send to queue
   for (int i = 0; i < group->count; i++) {
     group->tasks[i]->private_data = counter;
-    xQueueSend(queue->xQueue, (void *)&group->tasks[i], portMAX_DELAY);
+    xQueueSend(dispatch_queue->xQueue, (void *)&group->tasks[i], portMAX_DELAY);
   }
 }
 
@@ -188,7 +189,7 @@ void dispatch_queue_task_wait(dispatch_queue_t *ctx, dispatch_task_t *task) {
   dispatch_assert(task);
   dispatch_assert(task->waitable);
 
-  dispatch_printf("dispatch_queue_task_wait: queue=%u   task=%u\n", (size_t)ctx,
+  dispatch_printf("dispatch_queue_task_wait: %u   task=%u\n", (size_t)ctx,
                   (size_t)task);
 
   if (task->waitable) {
@@ -205,8 +206,8 @@ void dispatch_queue_group_wait(dispatch_queue_t *ctx, dispatch_group_t *group) {
   dispatch_assert(group);
   dispatch_assert(group->waitable);
 
-  dispatch_printf("dispatch_queue_group_wait: queue=%u   group=%u\n",
-                  (size_t)ctx, (size_t)group);
+  dispatch_printf("dispatch_queue_group_wait: %u   group=%u\n", (size_t)ctx,
+                  (size_t)group);
 
   if (group->waitable) {
     dispatch_event_counter_t *counter =
@@ -220,37 +221,37 @@ void dispatch_queue_group_wait(dispatch_queue_t *ctx, dispatch_group_t *group) {
 }
 
 void dispatch_queue_wait(dispatch_queue_t *ctx) {
-  dispatch_freertos_queue_t *queue = (dispatch_freertos_queue_t *)ctx;
-  dispatch_assert(queue);
+  dispatch_freertos_queue_t *dispatch_queue = (dispatch_freertos_queue_t *)ctx;
+  dispatch_assert(dispatch_queue);
 
-  dispatch_printf("dispatch_queue_wait: queue=%u\n", (size_t)queue);
+  dispatch_printf("dispatch_queue_wait: %u\n", (size_t)dispatch_queue);
 
   int waiting_count;
 
   // busywait for xQueue to empty
   for (;;) {
-    waiting_count = uxQueueMessagesWaiting(queue->xQueue);
+    waiting_count = uxQueueMessagesWaiting(dispatch_queue->xQueue);
     if (waiting_count == 0) break;
   }
-  // wait for all ready bts to be set
-  xEventGroupWaitBits(queue->xEventGroup, queue->xReadyBits, pdFALSE, pdTRUE,
-                      portMAX_DELAY);
+  // wait for all ready bits to be set
+  xEventGroupWaitBits(dispatch_queue->xEventGroup, dispatch_queue->xReadyBits,
+                      pdFALSE, pdTRUE, portMAX_DELAY);
 }
 
 void dispatch_queue_destroy(dispatch_queue_t *ctx) {
-  dispatch_freertos_queue_t *queue = (dispatch_freertos_queue_t *)ctx;
-  dispatch_assert(queue);
+  dispatch_freertos_queue_t *dispatch_queue = (dispatch_freertos_queue_t *)ctx;
+  dispatch_assert(dispatch_queue);
 
-  dispatch_printf("dispatch_queue_destroy: queue=%u\n", (size_t)queue);
+  dispatch_printf("dispatch_queue_destroy: %u\n", (size_t)dispatch_queue);
 
   // delete all threads
-  for (int i = 0; i < queue->thread_count; i++) {
-    vTaskDelete(queue->threads[i]);
+  for (int i = 0; i < dispatch_queue->thread_count; i++) {
+    vTaskDelete(dispatch_queue->threads[i]);
   }
 
   // free memory
-  vPortFree((void *)queue->worker_data);
-  vPortFree((void *)queue->threads);
-  vEventGroupDelete(queue->xEventGroup);
-  vQueueDelete(queue->xQueue);
+  vPortFree((void *)dispatch_queue->worker_data);
+  vPortFree((void *)dispatch_queue->threads);
+  vEventGroupDelete(dispatch_queue->xEventGroup);
+  vQueueDelete(dispatch_queue->xQueue);
 }

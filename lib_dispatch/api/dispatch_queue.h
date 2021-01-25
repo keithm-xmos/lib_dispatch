@@ -65,8 +65,7 @@ void dispatch_queue_group_add(dispatch_queue_t* ctx, dispatch_group_t* group);
  * queue.
  *
  * \param queue     Queue object
- * \param function  Function to perform, signature must be void my_fun(void
- * *arg)
+ * \param function  Function to perform, signature must be <tt>void(void*)</tt>
  * \param argument  Function argument
  * \param waitable  The created task is waitable if TRUE, otherwise the
  * task can not be waited on

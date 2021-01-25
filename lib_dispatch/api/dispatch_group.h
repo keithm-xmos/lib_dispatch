@@ -39,8 +39,7 @@ void dispatch_group_destroy(dispatch_group_t *group);
 /** Creates a task and adds it to the the group
  *
  * \param group     Group object
- * \param function  Function to perform, signature must be void my_fun(void
- * *arg)
+ * \param function  Function to perform, signature must be <tt>void(void*)</tt>
  * \param argument  Function argument
  *
  * \return          Task object
