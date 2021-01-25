@@ -233,7 +233,7 @@ void dispatch_queue_wait(dispatch_queue_t *ctx) {
     waiting_count = uxQueueMessagesWaiting(dispatch_queue->xQueue);
     if (waiting_count == 0) break;
   }
-  // wait for all ready bts to be set
+  // wait for all ready bits to be set
   xEventGroupWaitBits(dispatch_queue->xEventGroup, dispatch_queue->xReadyBits,
                       pdFALSE, pdTRUE, portMAX_DELAY);
 }

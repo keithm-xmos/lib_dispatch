@@ -3,138 +3,123 @@
 
 #include "dispatch_config.h"
 
-#define PUSH_READY_EVT (0x1)
-#define PUSH_EXIT_EVT (0x2)
-#define POP_READY_EVT (0x3)
-#define POP_EXIT_EVT (0x4)
-
 queue_t *queue_create(size_t length, lock_t lock) {
   dispatch_assert(length > 0);
 
-  queue_t *cbuf = dispatch_malloc(sizeof(queue_t));
-  cbuf->buffer = dispatch_malloc(sizeof(void *) * length);
-  cbuf->length = length;
-  cbuf->lock = lock;
-  cbuf->chan = chan_alloc();
-  cbuf->head = 0;
-  cbuf->tail = 0;
-  cbuf->full = false;
-  cbuf->push_waiting = false;
-  cbuf->pop_waiting = false;
+  queue_t *queue = dispatch_malloc(sizeof(queue_t));
+  queue->ring_buffer = dispatch_malloc(sizeof(void *) * length);
+  queue->cv = condition_variable_create();
+  queue->length = length;
+  queue->lock = lock;
+  queue->head = 0;
+  queue->tail = 0;
+  queue->full = false;
 
-  return cbuf;
+  return queue;
 }
 
-bool queue_full(queue_t *cbuf) { return cbuf->full; }
-
-bool queue_empty(queue_t *cbuf) {
-  return (!cbuf->full && (cbuf->head == cbuf->tail));
+bool queue_full(queue_t *queue) {
+  dispatch_assert(queue);
+  return queue->full;
 }
 
-bool queue_send(queue_t *cbuf, void *item) {
-  dispatch_assert(cbuf);
-  dispatch_assert(item);
-  dispatch_assert(cbuf->buffer);
+bool queue_empty(queue_t *queue) {
+  dispatch_assert(queue);
+  return (!queue->full && (queue->head == queue->tail));
+}
 
-  int evt;
-  bool do_push = true;
+size_t queue_size(queue_t *queue) {
+  dispatch_assert(queue);
 
-  dispatch_lock_acquire(cbuf->lock);
+  dispatch_lock_acquire(queue->lock);
 
-  if (queue_full(cbuf)) {
-    cbuf->push_waiting =
-        true;  // tells pop function to send us the PUSH_READY_EVT signal
-    // release the lock while we wait
-    dispatch_lock_release(cbuf->lock);
-    // TODO: create chanend
-    //       add it to push_waiting list
-    //       then...
-    // wait for signal that a slot is available
-    evt = chan_in_byte(cbuf->chan.end_a);
-    if (evt == POP_EXIT_EVT) do_push = false;
-    // re-acquire lock
-    dispatch_lock_acquire(cbuf->lock);
-    // TODO: remove from push_waiting list
-    cbuf->push_waiting = false;  // no longer need the PUSH_READY_EVT signal
-  }
+  size_t size = queue->length;
 
-  if (do_push) {
-    // set the item
-    cbuf->buffer[cbuf->head] = item;
-
-    // advance pointer
-    if (cbuf->full) {
-      cbuf->tail = (cbuf->tail + 1) % cbuf->length;
+  if (!queue->full) {
+    if (queue->head >= queue->tail) {
+      size = (queue->head - queue->tail);
+    } else {
+      size = (queue->length + queue->head - queue->tail);
     }
-
-    cbuf->head = (cbuf->head + 1) % cbuf->length;
-    cbuf->full = (cbuf->head == cbuf->tail);
-
-    // notify waiting pop function
-    // TODO: pick chanend on pop_waiting list
-    //       connect chanends
-    //       send signal
-    if (cbuf->pop_waiting) chan_out_byte(cbuf->chan.end_a, POP_READY_EVT);
   }
-  dispatch_lock_release(cbuf->lock);
-  return do_push;
+
+  dispatch_lock_release(queue->lock);
+
+  return size;
 }
 
-bool queue_receive(queue_t *cbuf, void **item) {
-  dispatch_assert(cbuf);
-  dispatch_assert(cbuf->buffer);
+bool queue_send(queue_t *queue, void *item, chanend_t cend) {
+  dispatch_assert(queue);
+  dispatch_assert(item);
+  dispatch_assert(queue->ring_buffer);
 
-  dispatch_lock_acquire(cbuf->lock);
+  // acquire lock for initial predicate check
+  dispatch_lock_acquire(queue->lock);
 
-  bool do_pop = true;
-  int evt;
-
-  if (queue_empty(cbuf)) {
-    cbuf->pop_waiting =
-        true;  // tells push function to send us the POP_READY_EVT signal
-    // release the lock while we wait
-    dispatch_lock_release(cbuf->lock);
-    // TODO: create chanend
-    //       add it to pop_waiting list
-    //       then...
-    // wait for signal that a item is available
-    evt = chan_in_byte(cbuf->chan.end_b);
-    if (evt == POP_EXIT_EVT) do_pop = false;
-    // TODO: free chanend
-    // re-acquire lock
-    dispatch_lock_acquire(cbuf->lock);
-    // TODO: remove from pop_waiting list
-    cbuf->pop_waiting = false;  // no longer need the POP_READY_EVT signal
+  while (queue_full(queue)) {
+    // queue is full, wait on condition variable
+    if (!condition_variable_wait(queue->cv, queue->lock, cend)) return false;
   }
 
-  if (do_pop) {
-    // set the item
-    *item = cbuf->buffer[cbuf->tail];
-    // backup the pointer
-    cbuf->full = false;
-    cbuf->tail = (cbuf->tail + 1) % cbuf->length;
+  // NOTE: we are holding the lock now
 
-    // notify any waiting push function
-    // TODO: pick chanend on push_waiting list
-    //       connect chanends
-    //       send signal
-    if (cbuf->push_waiting) chan_out_byte(cbuf->chan.end_b, PUSH_READY_EVT);
+  // set the item
+  queue->ring_buffer[queue->head] = item;
+
+  // advance ring buffer pointer
+  if (queue->full) {
+    queue->tail = (queue->tail + 1) % queue->length;
   }
+  queue->head = (queue->head + 1) % queue->length;
+  queue->full = (queue->head == queue->tail);
 
-  dispatch_lock_release(cbuf->lock);
-  return do_pop;
+  // the queue is guaranteed to be non-empty, so
+  // notify any threads waiting on the condition variable
+  condition_variable_broadcast(queue->cv, cend);
+
+  // we are done with queue
+  dispatch_lock_release(queue->lock);
+  return true;
 }
 
-void queue_destroy(queue_t *cbuf) {
-  dispatch_assert(cbuf);
-  dispatch_assert(cbuf->buffer);
+bool queue_receive(queue_t *queue, void **item, chanend_t cend) {
+  dispatch_assert(queue);
+  dispatch_assert(queue->ring_buffer);
 
-  // notify any waiting functions that they can exit
-  // TODO: implement me
-  // if (cbuf->push_waiting) chan_out_byte(cbuf->chan.end_b, PUSH_EXIT_EVT);
-  // if (cbuf->pop_waiting) chan_out_byte(cbuf->chan.end_a, POP_EXIT_EVT);
+  // acquire lock for initial predicate check
+  dispatch_lock_acquire(queue->lock);
 
-  chan_free(cbuf->chan);
-  dispatch_free(cbuf->buffer);
-  dispatch_free(cbuf);
+  while (queue_empty(queue)) {
+    // queue is empty, wait on condition variable
+    if (!condition_variable_wait(queue->cv, queue->lock, cend)) return false;
+  }
+
+  // NOTE: we are holding the lock now
+
+  // set the item
+  *item = queue->ring_buffer[queue->tail];
+
+  // backup the ring buffer pointer
+  queue->full = false;
+  queue->tail = (queue->tail + 1) % queue->length;
+
+  // the queue is guaranteed to be non-full, so
+  // notify any threads waiting on the condition variable
+  condition_variable_broadcast(queue->cv, cend);
+
+  // we are done with queue
+  dispatch_lock_release(queue->lock);
+  return true;
+}
+
+void queue_destroy(queue_t *queue, chanend_t cend) {
+  dispatch_assert(queue);
+  dispatch_assert(queue->ring_buffer);
+
+  // notify any waiters that they can stop waiting
+  condition_variable_terminate(queue->cv, cend);
+  condition_variable_destroy(queue->cv);
+
+  dispatch_free(queue->ring_buffer);
+  dispatch_free(queue);
 }

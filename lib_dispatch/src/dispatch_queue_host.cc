@@ -266,7 +266,6 @@ void dispatch_queue_wait(dispatch_queue_t *ctx) {
   }
   // wait for all workers to be ready
   for (size_t i = 0; i < dispatch_queue->thread_ready_semaphores.size(); i++) {
-    // dispatch_queue->thread_ready_semaphores[i]->Take();
     dispatch_queue->thread_ready_semaphores[i]->Wait();
   }
 }

@@ -17,6 +17,7 @@ set(LIB_DISPATCH_HOST_SOURCES
 set(LIB_DISPATCH_METAL_SOURCES
   ${LIB_DISPATCH_SOURCES}
   "${LIB_DISPATCH_DIR}/lib_dispatch/src/dispatch_queue_metal.c"
+  "${LIB_DISPATCH_DIR}/lib_dispatch/src/condition_variable_metal.c"
   "${LIB_DISPATCH_DIR}/lib_dispatch/src/queue_metal.c"
   "${LIB_DISPATCH_DIR}/lib_logging/lib_logging/src/debug_printf.c"
 )
