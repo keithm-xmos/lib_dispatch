@@ -13,8 +13,7 @@
 #include "spinlock_metal.h"
 
 typedef lock_t dispatch_mutex_t;
-typedef spinlock_t dispatch_spinlock_t;
-typedef streaming_channel_t dispatch_semaphore_t;
+typedef spinlock_t* dispatch_spinlock_t;
 
 #define dispatch_assert(A) xassert(A)
 
@@ -35,17 +34,17 @@ static inline void dispatch_mutex_delete(dispatch_mutex_t mutex) {
   lock_free(mutex);
 }
 
-// Software spinlock functions
-static inline dispatch_spinlock_t* dispatch_spinlock_create() {
+// Spinlock functions
+static inline dispatch_spinlock_t dispatch_spinlock_create() {
   return spinlock_create();
 }
-static inline void dispatch_spinlock_get(dispatch_spinlock_t* lock) {
+static inline void dispatch_spinlock_get(dispatch_spinlock_t lock) {
   spinlock_acquire(lock);
 }
-static inline void dispatch_spinlock_put(dispatch_spinlock_t* lock) {
+static inline void dispatch_spinlock_put(dispatch_spinlock_t lock) {
   spinlock_release(lock);
 }
-static inline void dispatch_spinlock_delete(dispatch_spinlock_t* lock) {
+static inline void dispatch_spinlock_delete(dispatch_spinlock_t lock) {
   spinlock_delete(lock);
 }
 

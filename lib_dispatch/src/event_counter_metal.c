@@ -6,7 +6,7 @@
 #include "dispatch_config.h"
 
 struct event_counter_struct {
-  dispatch_spinlock_t *lock;
+  dispatch_spinlock_t lock;
   streaming_channel_t cend;
   size_t count;
 };

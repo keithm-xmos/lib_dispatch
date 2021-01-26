@@ -16,7 +16,7 @@ struct condition_node_struct {
 
 typedef struct condition_variable_struct condition_variable_t;
 struct condition_variable_struct {
-  dispatch_spinlock_t* lock;
+  dispatch_spinlock_t lock;
   condition_node_t* waiters;  // linked list
 };
 
