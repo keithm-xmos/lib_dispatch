@@ -7,6 +7,7 @@
 #include <xcore/lock.h>
 
 #include "dispatch_config.h"
+#include "spinlock_metal.h"
 
 typedef struct condition_node_struct condition_node_t;
 struct condition_node_struct {
@@ -17,6 +18,7 @@ struct condition_node_struct {
 typedef struct condition_variable_struct condition_variable_t;
 struct condition_variable_struct {
   condition_node_t* waiters;  // linked list
+  swlock_t swlock;            // spinlock
 };
 
 condition_variable_t* condition_variable_create();

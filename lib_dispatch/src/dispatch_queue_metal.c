@@ -10,11 +10,11 @@
 #include <xcore/thread.h>
 
 #include "dispatch_config.h"
-#include "dispatch_event_counter.h"
 #include "dispatch_group.h"
 #include "dispatch_queue.h"
 #include "dispatch_task.h"
 #include "dispatch_types.h"
+#include "event_counter.h"
 #include "queue_metal.h"
 
 #define DISPATCH_WORKER_BUSY_STATUS (0x0)
@@ -55,8 +55,7 @@ void dispatch_queue_worker(void *param) {
 
       if (task->waitable) {
         // signal the event counter
-        dispatch_event_counter_signal(
-            (dispatch_event_counter_t *)task->private_data);
+        event_counter_signal((event_counter_t *)task->private_data);
       } else {
         // the contract is that the worker must destroy non-waitable tasks
         dispatch_task_destroy(task);
@@ -172,7 +171,7 @@ void dispatch_queue_task_add(dispatch_queue_t *ctx, dispatch_task_t *task) {
   if (task->waitable) {
     // create event counter
     //   re-use the queue's lock given hardware lock are so scarce
-    task->private_data = dispatch_event_counter_create(1, dispatch_queue->lock);
+    task->private_data = event_counter_create(1, dispatch_queue->lock);
   }
 
   queue_send(dispatch_queue->queue, (void *)task, dispatch_queue->cend);
@@ -186,11 +185,11 @@ void dispatch_queue_group_add(dispatch_queue_t *ctx, dispatch_group_t *group) {
   dispatch_printf("dispatch_queue_group_add: %u   group=%u\n",
                   (size_t)dispatch_queue, (size_t)group);
 
-  dispatch_event_counter_t *counter = NULL;
+  event_counter_t *counter = NULL;
 
   if (group->waitable) {
     // create event counter
-    counter = dispatch_event_counter_create(group->count, dispatch_queue->lock);
+    counter = event_counter_create(group->count, dispatch_queue->lock);
   }
 
   for (int i = 0; i < group->count; i++) {
@@ -210,12 +209,11 @@ void dispatch_queue_task_wait(dispatch_queue_t *ctx, dispatch_task_t *task) {
 
   if (task->waitable) {
     // wait on the task's event counter to signal that it is complete
-    dispatch_event_counter_t *counter =
-        (dispatch_event_counter_t *)task->private_data;
+    event_counter_t *counter = (event_counter_t *)task->private_data;
 
-    dispatch_event_counter_wait(counter);
+    event_counter_wait(counter);
     // the contract is that the dispatch queue must destroy waitable tasks
-    dispatch_event_counter_destroy(counter);
+    event_counter_destroy(counter);
     dispatch_task_destroy(task);
   }
 }
@@ -228,11 +226,10 @@ void dispatch_queue_group_wait(dispatch_queue_t *ctx, dispatch_group_t *group) {
                   (size_t)group);
 
   if (group->waitable) {
-    dispatch_event_counter_t *counter =
-        (dispatch_event_counter_t *)group->tasks[0]->private_data;
-    dispatch_event_counter_wait(counter);
+    event_counter_t *counter = (event_counter_t *)group->tasks[0]->private_data;
+    event_counter_wait(counter);
     // the contract is that the dispatch queue must destroy waitable tasks
-    dispatch_event_counter_destroy(counter);
+    event_counter_destroy(counter);
     for (int i = 0; i < group->count; i++) {
       dispatch_task_destroy(group->tasks[i]);
     }

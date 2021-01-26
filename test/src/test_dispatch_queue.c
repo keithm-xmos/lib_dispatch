@@ -10,7 +10,7 @@
 #if BARE_METAL
 #include "test_dispatch_queue_metal.h"
 #elif FREERTOS
-#include "test_dispatch_queue_freertos.h"
+#include "test_dispatch_queue_rtos.h"
 #elif HOST
 #include "test_dispatch_queue_host.h"
 #endif

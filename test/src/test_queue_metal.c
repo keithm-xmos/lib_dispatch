@@ -79,13 +79,9 @@ void do_counting_consumer(void *p) {
 
   for (;;) {
     if (queue_receive(params->queue, &item, cend)) {
-      // dispatch_lock_acquire(lock);
       params->count++;
-      // dispatch_lock_release(lock);
     } else {
-      // dispatch_lock_acquire(lock);
       params->shutdown_flag = true;
-      // dispatch_lock_release(lock);
       chanend_free(cend);
       break;
     }

@@ -138,7 +138,7 @@ elseif(FREERTOS)
     "${RTOS_SUPPORT_DIR}/src/rtos_locks.c"
     "${RTOS_SUPPORT_DIR}/src/rtos_printf.c"
     "${RTOS_SUPPORT_DIR}/src/rtos_time.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/test_dispatch_freertos.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/test_dispatch_rtos.c"
   )
 
   set_source_files_properties("${FREERTOS_DIR}/Source/portable/XCC/XCOREAI/port.xc" PROPERTIES LANGUAGE C)
