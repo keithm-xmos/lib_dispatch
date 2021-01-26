@@ -3,6 +3,8 @@
 #include "event_counter.h"
 // clang-format on
 
+#include <xcore/channel.h>
+
 #include "dispatch_config.h"
 
 struct event_counter_struct {

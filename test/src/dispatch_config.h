@@ -4,13 +4,14 @@
 
 #if BARE_METAL
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <xcore/assert.h>
 #include <xcore/channel.h>
 #include <xcore/lock.h>
 
 #include "debug_print.h"
-#include "spinlock_metal.h"
+#include "spinlock.h"
 
 typedef lock_t dispatch_mutex_t;
 typedef spinlock_t* dispatch_spinlock_t;

@@ -1,7 +1,6 @@
 // Copyright (c) 2020, XMOS Ltd, All rights reserved
-#include "spinlock_metal.h"
-
 #include "dispatch_config.h"
+#include "spinlock.h"
 
 #define SPINLOCK_INITIAL_VALUE 0
 

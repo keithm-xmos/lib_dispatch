@@ -1,12 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
 
 #**********************
-# Options
-#**********************
-OPTION (BARE_METAL "If enabled, will build the bare-metal version." OFF)
-OPTION (FREERTOS "If enabled, will build the FreeRTOS version." OFF)
-
-#**********************
 # Setup XMOS toolchain
 #**********************
 set(CMAKE_C_COMPILER "xcc")
@@ -50,22 +44,11 @@ set(BUILD_FLAGS
   "-Wno-xcore-fptrgroup"
   "-Wno-unknown-pragmas"
   "-report"
-  "-DDEBUG_PRINT_ENABLE=0"
+  "-DBARE_METAL"
+  "-DNDEBUG"
   "-march=xs3a"
   "-Os"
 )
-
-if(BARE_METAL)
-  set(BUILD_FLAGS
-    ${BUILD_FLAGS} 
-    "-DBARE_METAL"
-  )
-elseif(FREERTOS)
-  set(BUILD_FLAGS
-    ${BUILD_FLAGS} 
-    "-DFREERTOS"
-  )
-endif()
 
 add_executable(hello_world)
 
@@ -74,51 +57,11 @@ target_link_options(hello_world PRIVATE ${BUILD_FLAGS})
 set_target_properties(hello_world PROPERTIES OUTPUT_NAME hello_world.xe)
 
 #**********************
-# External paths
-#**********************
-
-set(FREERTOS_DIR $ENV{XMOS_AIOT_SDK_PATH}/modules/rtos/FreeRTOS/FreeRTOS-Plus/FreeRTOS-SMP/FreeRTOS)
-set(RTOS_SUPPORT_DIR $ENV{XMOS_AIOT_SDK_PATH}/modules/lib_rtos_support)
-set(XASSERT_DIR $ENV{XMOS_AIOT_SDK_PATH}/modules/lib_xassert/lib_xassert/lib_xassert)
-
-#**********************
 # targets
 #**********************
 include("${CMAKE_CURRENT_SOURCE_DIR}/../../lib_dispatch.cmake")
 
-if(FREERTOS)
-  set(LIB_DISPATCH_SOURCES ${LIB_DISPATCH_FREERTOS_SOURCES})
-  set(HELLO_WORLD_SOURCES 
-    "${FREERTOS_DIR}/Source/croutine.c"
-    "${FREERTOS_DIR}/Source/event_groups.c"
-    "${FREERTOS_DIR}/Source/list.c"
-    "${FREERTOS_DIR}/Source/queue.c"
-    "${FREERTOS_DIR}/Source/stream_buffer.c"
-    "${FREERTOS_DIR}/Source/tasks.c"
-    "${FREERTOS_DIR}/Source/timers.c"
-    "${FREERTOS_DIR}/Source/portable/XCC/XCOREAI/port.c"
-    "${FREERTOS_DIR}/Source/portable/XCC/XCOREAI/port.xc"
-    "${FREERTOS_DIR}/Source/portable/MemMang/heap_4.c"
-    "${FREERTOS_DIR}/Source/portable/XCC/XCOREAI/portasm.S"
-    "${RTOS_SUPPORT_DIR}/src/rtos_cores.c"
-    "${RTOS_SUPPORT_DIR}/src/rtos_irq.c"
-    "${RTOS_SUPPORT_DIR}/src/rtos_locks.c"
-    "${RTOS_SUPPORT_DIR}/src/rtos_printf.c"
-    "${RTOS_SUPPORT_DIR}/src/rtos_time.c"
-  )
-
-  set_source_files_properties("${FREERTOS_DIR}/Source/portable/XCC/XCOREAI/port.xc" PROPERTIES LANGUAGE C)
-
-  set(HELLO_WORLD_INCLUDES 
-    "${XASSERT_DIR}/api"
-    "${FREERTOS_DIR}/Source/include"
-    "${FREERTOS_DIR}/Source/portable/XCC/XCOREAI"
-    "${RTOS_SUPPORT_DIR}/api"
-    "${RTOS_SUPPORT_DIR}/src"
-  )
-else()
-  set(LIB_DISPATCH_SOURCES ${LIB_DISPATCH_METAL_SOURCES})
-endif()
+set(LIB_DISPATCH_SOURCES ${LIB_DISPATCH_METAL_SOURCES})
 
 target_sources(hello_world
   PRIVATE ${LIB_DISPATCH_SOURCES}
