@@ -1,8 +1,10 @@
 // Copyright (c) 2020, XMOS Ltd, All rights reserved
+// clang-format off
+#include "event_counter.h"
+// clang-format on
 
 #include "FreeRTOS.h"
 #include "dispatch_config.h"
-#include "event_counter.h"
 #include "semphr.h"
 
 struct event_counter_struct {
@@ -10,7 +12,7 @@ struct event_counter_struct {
   size_t count;
 };
 
-event_counter_t *event_counter_create(size_t count, dispatch_lock_t lock) {
+event_counter_t *event_counter_create(size_t count) {
   event_counter_t *counter = dispatch_malloc(sizeof(event_counter_t));
 
   counter->count = count;
@@ -42,7 +44,7 @@ void event_counter_wait(event_counter_t *counter) {
   xSemaphoreTake(counter->semaphore, portMAX_DELAY);
 }
 
-void event_counter_destroy(event_counter_t *counter) {
+void event_counter_delete(event_counter_t *counter) {
   dispatch_assert(counter);
 
   vSemaphoreDelete(counter->semaphore);

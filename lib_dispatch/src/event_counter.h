@@ -12,13 +12,10 @@ typedef struct event_counter_struct event_counter_t;
 extern "C" {
 #endif  // __cplusplus
 
-event_counter_t *event_counter_create(size_t count, dispatch_lock_t lock);
-
+event_counter_t *event_counter_create(size_t count);
 void event_counter_signal(event_counter_t *counter);
-
 void event_counter_wait(event_counter_t *counter);
-
-void event_counter_destroy(event_counter_t *counter);
+void event_counter_delete(event_counter_t *counter);
 
 #ifdef __cplusplus
 }  // extern "C"

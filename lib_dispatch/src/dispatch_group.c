@@ -62,7 +62,7 @@ void dispatch_group_perform(dispatch_group_t *group) {
   }
 }
 
-void dispatch_group_destroy(dispatch_group_t *group) {
+void dispatch_group_delete(dispatch_group_t *group) {
   dispatch_assert(group);
   dispatch_assert(group->tasks);
 

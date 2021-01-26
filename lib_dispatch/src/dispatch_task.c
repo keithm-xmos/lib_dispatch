@@ -38,10 +38,10 @@ void dispatch_task_perform(dispatch_task_t *task) {
   task->function(task->argument);
 }
 
-void dispatch_task_destroy(dispatch_task_t *task) {
+void dispatch_task_delete(dispatch_task_t *task) {
   dispatch_assert(task);
 
-  dispatch_printf("dispatch_task_destroy:  task=%u\n", (long)task);
+  dispatch_printf("dispatch_task_delete:  task=%u\n", (long)task);
 
   dispatch_free(task);
 }

@@ -38,8 +38,8 @@ Code to create the dispatch queue and add a function:
     // wait for all functions to finish executing
     dispatch_queue_wait(queue);
 
-    // destroy the dispatch queue
-    dispatch_queue_destroy(queue);
+    // delete the dispatch queue
+    dispatch_queue_delete(queue);
 
 Output from the code above:
 
@@ -77,7 +77,7 @@ Implementations
 
 Three implementations of the dispatch queue API are provided; bare-metal, FreeRTOS and x86. 
 
-The bare-metal implementation uses bare-metal threads for workers and hardware resources to manage the worker threads and waitable objects. One hardware thread is allocated per worker and these hardware threads run on physical cores that can not be used for other tasks until the dispatch queue is destroyed. Details on the hardware resources used, see the Resource Usage section below.
+The bare-metal implementation uses bare-metal threads for workers and hardware resources to manage the worker threads and waitable objects. One hardware thread is allocated per worker and these hardware threads run on physical cores that can not be used for other tasks until the dispatch queue is deleted. Details on the hardware resources used, see the Resource Usage section below.
 
 The FreeRTOS implementation uses FreeRTOS threads for workers and uses only a subset of the hardware resources allocated to the RTOS. All resources used to manage the workers and waitable tasks are FreeRTOS concepts. When a worker is executing a task, the FreeRTOS scheduler will allocate it to a physical core. However, that physical core can be utilized to run other FreeRTOS threads if the dispatch queue worker threads are waiting for new tasks.
 
@@ -105,8 +105,9 @@ Resource Usage
 
 The bare-metal implementation uses the following hardware resources:
 
-- N+1 chanends, where N equals the numebr of worker threads
+- 1 hardware lock
 - 1 hardware thread per worker
+- N+1 chanends, where N equals the number of worker threads
 - 2 additional chanends for every waitable task or group. These 2 additional chanends are freed when the waitable task completes.
 
 Using the library

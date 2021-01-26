@@ -18,14 +18,15 @@ typedef struct test_producer_params {
   int max_delay;
   queue_t *queue;
 } test_producer_params;
+static test_producer_params test_producer_params_s;
 
 typedef struct test_consumer_params {
   bool shutdown_flag;
   int count;
   queue_t *queue;
 } test_consumer_params;
+static test_consumer_params test_consumer_params_s;
 
-static dispatch_lock_t lock;
 static char thread_stack[THREAD_STACK_SIZE * 16];
 
 DISPATCH_TASK_FUNCTION
@@ -90,17 +91,14 @@ void do_counting_consumer(void *p) {
 
 TEST_GROUP(queue_metal);
 
-TEST_SETUP(queue_metal) {
-  srand(0);
-  lock = dispatch_lock_alloc();
-}
+TEST_SETUP(queue_metal) { srand(0); }
 
-TEST_TEAR_DOWN(queue_metal) { dispatch_lock_free(lock); }
+TEST_TEAR_DOWN(queue_metal) {}
 
 TEST(queue_metal, test_full_capacity) {
   const size_t kLength = 5;
   size_t n_items = kLength;
-  queue_t *queue = queue_create(kLength, lock);
+  queue_t *queue = queue_create(kLength);
   chanend_t cend = chanend_alloc();
 
   int pushed[n_items];
@@ -115,14 +113,14 @@ TEST(queue_metal, test_full_capacity) {
     TEST_ASSERT_EQUAL_INT(pushed[i], *item);
   }
 
-  queue_destroy(queue, cend);
+  queue_delete(queue, cend);
   chanend_free(cend);
 }
 
 TEST(queue_metal, test_under_capacity) {
   const size_t kLength = 10;
   size_t n_items = kLength - 1;
-  queue_t *queue = queue_create(kLength, lock);
+  queue_t *queue = queue_create(kLength);
   chanend_t cend = chanend_alloc();
 
   int pushed[n_items];
@@ -137,7 +135,7 @@ TEST(queue_metal, test_under_capacity) {
     TEST_ASSERT_EQUAL_INT(pushed[i], *item);
   }
 
-  queue_destroy(queue, cend);
+  queue_delete(queue, cend);
   chanend_free(cend);
 }
 
@@ -145,18 +143,17 @@ TEST(queue_metal, test_fill_and_drain) {
   const size_t kLength = 10;
   const size_t kItems = 12;
   const size_t kIters = 3;
-  queue_t *queue = queue_create(kLength, lock);
+  queue_t *queue = queue_create(kLength);
   chanend_t cend = chanend_alloc();
 
   // launch the producer thread
-  test_producer_params thread_data;
-  thread_data.iters = kItems;
-  thread_data.queue = queue;
+  test_producer_params_s.iters = kItems;
+  test_producer_params_s.queue = queue;
 
   for (int j = 0; j < kIters; j++) {
     dispatch_printf("test_fill_and_drain iter=%d\n", j);
 
-    run_async(do_simple_producer, (void *)&thread_data,
+    run_async(do_simple_producer, (void *)&test_producer_params_s,
               stack_base((void *)&thread_stack[0], THREAD_STACK_SIZE));
 
     // (busy)wait for the queue to fill up
@@ -171,7 +168,7 @@ TEST(queue_metal, test_fill_and_drain) {
     }
   }
 
-  queue_destroy(queue, cend);
+  queue_delete(queue, cend);
   chanend_free(cend);
 }
 
@@ -179,15 +176,14 @@ TEST(queue_metal, test_random_arrival) {
   const size_t kLength = 10;
   const size_t kItems = 500;
   const size_t kMaxDelay = 50;
-  queue_t *queue = queue_create(kLength, lock);
+  queue_t *queue = queue_create(kLength);
   chanend_t cend = chanend_alloc();
 
   // launch the producer thread
-  test_producer_params thread_data;
-  thread_data.iters = kItems;
-  thread_data.max_delay = kMaxDelay;
-  thread_data.queue = queue;
-  run_async(do_random_producer, (void *)&thread_data,
+  test_producer_params_s.iters = kItems;
+  test_producer_params_s.max_delay = kMaxDelay;
+  test_producer_params_s.queue = queue;
+  run_async(do_random_producer, (void *)&test_producer_params_s,
             stack_base((void *)&thread_stack[0], THREAD_STACK_SIZE));
 
   hwtimer_t timer = hwtimer_alloc();
@@ -203,7 +199,7 @@ TEST(queue_metal, test_random_arrival) {
     hwtimer_delay(timer, delay * 1000 * PLATFORM_REFERENCE_MHZ);
   }
 
-  queue_destroy(queue, cend);
+  queue_delete(queue, cend);
 
   hwtimer_free(timer);
   chanend_free(cend);
@@ -217,30 +213,30 @@ TEST(queue_metal, test_multiple_producers_and_consumers) {
   const size_t kNumConsumers = 3;
   int stack_offset = 0;
 
-  queue_t *queue = queue_create(kLength, lock);
+  queue_t *queue = queue_create(kLength);
 
   // launch producer threads
-  test_producer_params producer_thread_data[kNumProducers];
+  static test_producer_params producer_params[kNumProducers];
 
   for (int i = 0; i < kNumProducers; i++) {
-    producer_thread_data[i].iters = kItems;
-    producer_thread_data[i].max_delay = kMaxDelay;
-    producer_thread_data[i].queue = queue;
+    producer_params[i].iters = kItems;
+    producer_params[i].max_delay = kMaxDelay;
+    producer_params[i].queue = queue;
     run_async(
-        do_random_producer, (void *)&producer_thread_data[i],
+        do_random_producer, (void *)&producer_params[i],
         stack_base((void *)&thread_stack[stack_offset], THREAD_STACK_SIZE));
     stack_offset += THREAD_STACK_SIZE * sizeof(int);
   }
 
   // launch consumer threads
-  test_consumer_params consumer_thread_data[kNumConsumers];
+  static test_consumer_params consumer_params[kNumConsumers];
 
   for (int i = 0; i < kNumConsumers; i++) {
-    consumer_thread_data[i].count = 0;
-    consumer_thread_data[i].shutdown_flag = false;
-    consumer_thread_data[i].queue = queue;
+    consumer_params[i].count = 0;
+    consumer_params[i].shutdown_flag = false;
+    consumer_params[i].queue = queue;
     run_async(
-        do_counting_consumer, (void *)&consumer_thread_data[i],
+        do_counting_consumer, (void *)&consumer_params[i],
         stack_base((void *)&thread_stack[stack_offset], THREAD_STACK_SIZE));
     stack_offset += THREAD_STACK_SIZE * sizeof(int);
   }
@@ -254,13 +250,13 @@ TEST(queue_metal, test_multiple_producers_and_consumers) {
   size_t total_produced = kNumProducers * kItems;
   size_t total_consumed = 0;
   for (int i = 0; i < kNumConsumers; i++) {
-    total_consumed += consumer_thread_data[i].count;
+    total_consumed += consumer_params[i].count;
   }
 
   TEST_ASSERT_EQUAL_INT(total_produced, total_consumed);
 
   chanend_t cend = chanend_alloc();
-  queue_destroy(queue, cend);
+  queue_delete(queue, cend);
   chanend_free(cend);
 }
 
@@ -268,18 +264,17 @@ TEST(queue_metal, test_shutdown) {
   const size_t kLength = 10;
   const size_t kItems = 3;
   int items[kItems];
-  queue_t *queue = queue_create(kLength, lock);
+  queue_t *queue = queue_create(kLength);
   chanend_t cend = chanend_alloc();
   hwtimer_t timer = hwtimer_alloc();
   const unsigned kMagicDuration = 10000000;
 
   // launch the consumer thread
-  test_consumer_params thread_data;
-  thread_data.count = 0;
-  thread_data.shutdown_flag = false;
-  thread_data.queue = queue;
+  test_consumer_params_s.count = 0;
+  test_consumer_params_s.shutdown_flag = false;
+  test_consumer_params_s.queue = queue;
 
-  run_async(do_counting_consumer, (void *)&thread_data,
+  run_async(do_counting_consumer, (void *)&test_consumer_params_s,
             stack_base((void *)&thread_stack[0], THREAD_STACK_SIZE));
 
   // NOTE: producer runs in this thread
@@ -293,16 +288,16 @@ TEST(queue_metal, test_shutdown) {
   // need to give consumer time to receive all items
   hwtimer_delay(timer, kMagicDuration);
 
-  TEST_ASSERT_EQUAL_INT(kItems, thread_data.count);
-  TEST_ASSERT_FALSE(thread_data.shutdown_flag);
+  TEST_ASSERT_EQUAL_INT(kItems, test_consumer_params_s.count);
+  TEST_ASSERT_FALSE(test_consumer_params_s.shutdown_flag);
 
   // shutdown the queue and make sure the consumer thread exited
-  queue_destroy(queue, cend);
+  queue_delete(queue, cend);
 
   // need to give consumer to exit
   hwtimer_delay(timer, kMagicDuration);
 
-  TEST_ASSERT_TRUE(thread_data.shutdown_flag);
+  TEST_ASSERT_TRUE(test_consumer_params_s.shutdown_flag);
 
   chanend_free(cend);
   hwtimer_free(timer);

@@ -1,18 +1,28 @@
 // Copyright (c) 2020, XMOS Ltd, All rights reserved
 #include "spinlock_metal.h"
 
-void swlock_init(swlock_t *_lock) {
-  volatile swlock_t *lock = _lock;
-  *lock = 0;
+#include "dispatch_config.h"
+
+#define SPINLOCK_INITIAL_VALUE 0
+
+enum { SPINLOCK_NOT_ACQUIRED = 0 };
+
+spinlock_t *spinlock_create() {
+  spinlock_t *lock = dispatch_malloc(sizeof(spinlock_t));
+  *lock = SPINLOCK_INITIAL_VALUE;
+
+  return lock;
 }
 
-extern int swlock_try_acquire(swlock_t *lock);
+extern int spinlock_try_acquire(spinlock_t *lock);
 
-void swlock_acquire(swlock_t *lock) {
+void spinlock_acquire(spinlock_t *lock) {
   int value;
   do {
-    value = swlock_try_acquire(lock);
-  } while (value == SWLOCK_NOT_ACQUIRED);
+    value = spinlock_try_acquire(lock);
+  } while (value == SPINLOCK_NOT_ACQUIRED);
 }
 
-void swlock_release(swlock_t *lock) { *lock = 0; }
+void spinlock_release(spinlock_t *lock) { *lock = SPINLOCK_INITIAL_VALUE; }
+
+void spinlock_delete(spinlock_t *lock) { dispatch_free(lock); }

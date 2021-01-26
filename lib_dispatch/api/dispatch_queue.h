@@ -38,7 +38,7 @@ void dispatch_queue_init(dispatch_queue_t* ctx, size_t thread_priority);
  *
  * \param ctx  Dispatch queue object
  */
-void dispatch_queue_destroy(dispatch_queue_t* ctx);
+void dispatch_queue_delete(dispatch_queue_t* ctx);
 
 /** Add a task to the dispatch queue.  If the dispatch queue is full,
  * this function will block in the callers thread until it can be added to the

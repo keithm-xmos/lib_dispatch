@@ -6,7 +6,6 @@
 #include <xcore/chanend.h>
 #include <xcore/channel.h>
 #include <xcore/hwtimer.h>
-#include <xcore/lock.h>
 #include <xcore/thread.h>
 
 #include "dispatch_config.h"
@@ -57,8 +56,8 @@ void dispatch_queue_worker(void *param) {
         // signal the event counter
         event_counter_signal((event_counter_t *)task->private_data);
       } else {
-        // the contract is that the worker must destroy non-waitable tasks
-        dispatch_task_destroy(task);
+        // the contract is that the worker must delete non-waitable tasks
+        dispatch_task_delete(task);
       }
       *status = DISPATCH_WORKER_READY_STATUS;
     } else {
@@ -84,7 +83,6 @@ struct dispatch_xcore_struct {
   size_t thread_count;
   size_t thread_stack_size;
   queue_t *queue;
-  lock_t lock;
   chanend_t cend;
   char *thread_stack;
   size_t *thread_status;
@@ -112,11 +110,10 @@ dispatch_queue_t *dispatch_queue_create(size_t length, size_t thread_count,
 
   dispatch_queue->length = length;
   dispatch_queue->thread_count = thread_count;
-  dispatch_queue->lock = lock_alloc();  // lock used for all synchronization
   dispatch_queue->cend = chanend_alloc();
 
   // allocate  queue
-  dispatch_queue->queue = queue_create(length, dispatch_queue->lock);
+  dispatch_queue->queue = queue_create(length);
 
   // allocate thread status flags
   dispatch_queue->thread_status =
@@ -170,8 +167,7 @@ void dispatch_queue_task_add(dispatch_queue_t *ctx, dispatch_task_t *task) {
 
   if (task->waitable) {
     // create event counter
-    //   re-use the queue's lock given hardware lock are so scarce
-    task->private_data = event_counter_create(1, dispatch_queue->lock);
+    task->private_data = event_counter_create(1);
   }
 
   queue_send(dispatch_queue->queue, (void *)task, dispatch_queue->cend);
@@ -189,7 +185,7 @@ void dispatch_queue_group_add(dispatch_queue_t *ctx, dispatch_group_t *group) {
 
   if (group->waitable) {
     // create event counter
-    counter = event_counter_create(group->count, dispatch_queue->lock);
+    counter = event_counter_create(group->count);
   }
 
   for (int i = 0; i < group->count; i++) {
@@ -212,9 +208,9 @@ void dispatch_queue_task_wait(dispatch_queue_t *ctx, dispatch_task_t *task) {
     event_counter_t *counter = (event_counter_t *)task->private_data;
 
     event_counter_wait(counter);
-    // the contract is that the dispatch queue must destroy waitable tasks
-    event_counter_destroy(counter);
-    dispatch_task_destroy(task);
+    // the contract is that the dispatch queue must delete waitable tasks
+    event_counter_delete(counter);
+    dispatch_task_delete(task);
   }
 }
 
@@ -228,10 +224,10 @@ void dispatch_queue_group_wait(dispatch_queue_t *ctx, dispatch_group_t *group) {
   if (group->waitable) {
     event_counter_t *counter = (event_counter_t *)group->tasks[0]->private_data;
     event_counter_wait(counter);
-    // the contract is that the dispatch queue must destroy waitable tasks
-    event_counter_destroy(counter);
+    // the contract is that the dispatch queue must delete waitable tasks
+    event_counter_delete(counter);
     for (int i = 0; i < group->count; i++) {
-      dispatch_task_destroy(group->tasks[i]);
+      dispatch_task_delete(group->tasks[i]);
     }
   }
 }
@@ -254,7 +250,7 @@ void dispatch_queue_wait(dispatch_queue_t *ctx) {
   }
 }
 
-void dispatch_queue_destroy(dispatch_queue_t *ctx) {
+void dispatch_queue_delete(dispatch_queue_t *ctx) {
   dispatch_assert(ctx);
   dispatch_xcore_queue_t *dispatch_queue = (dispatch_xcore_queue_t *)ctx;
 
@@ -264,11 +260,10 @@ void dispatch_queue_destroy(dispatch_queue_t *ctx) {
   dispatch_assert(dispatch_queue->thread_stack);
   dispatch_assert(dispatch_queue->queue);
 
-  dispatch_printf("dispatch_queue_destroy: %u\n", (size_t)dispatch_queue);
+  dispatch_printf("dispatch_queue_delete: %u\n", (size_t)dispatch_queue);
 
-  queue_destroy(dispatch_queue->queue, dispatch_queue->cend);
+  queue_delete(dispatch_queue->queue, dispatch_queue->cend);
 
-  lock_free(dispatch_queue->lock);
   chanend_free(dispatch_queue->cend);
 
   // free memory

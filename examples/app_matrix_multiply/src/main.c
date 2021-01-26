@@ -119,9 +119,9 @@ static int multi_thread_mat_mul() {
 
   verify_output();
 
-  // destroy the dispatch group and queue
-  dispatch_group_destroy(group);
-  dispatch_queue_destroy(queue);
+  // delete the dispatch group and queue
+  dispatch_group_delete(group);
+  dispatch_queue_delete(queue);
 
   return ticks;
 }

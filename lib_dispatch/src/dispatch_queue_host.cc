@@ -112,8 +112,8 @@ void dispatch_queue_worker(dispatch_host_queue_t *dispatch_queue,
         EventCounter *counter = static_cast<EventCounter *>(task->private_data);
         counter->Signal();
       } else {
-        // the contract is that the worker must destroy non-waitable tasks
-        dispatch_task_destroy(task);
+        // the contract is that the worker must delete non-waitable tasks
+        dispatch_task_delete(task);
       }
 
       lock.lock();
@@ -227,9 +227,9 @@ void dispatch_queue_task_wait(dispatch_queue_t *ctx, dispatch_task_t *task) {
     EventCounter *counter = static_cast<EventCounter *>(task->private_data);
     // wait on the task's semaphore which signals that it is complete
     counter->Wait();
-    // the contract is that the dispatch queue must destroy waitable tasks
+    // the contract is that the dispatch queue must delete waitable tasks
     delete counter;
-    dispatch_task_destroy(task);
+    dispatch_task_delete(task);
   }
 }
 
@@ -270,12 +270,12 @@ void dispatch_queue_wait(dispatch_queue_t *ctx) {
   }
 }
 
-void dispatch_queue_destroy(dispatch_queue_t *ctx) {
+void dispatch_queue_delete(dispatch_queue_t *ctx) {
   dispatch_assert(ctx);
   dispatch_host_queue_t *dispatch_queue =
       static_cast<dispatch_host_queue_t *>(ctx);
 
-  dispatch_printf("dispatch_queue_destroy: %u\n", (size_t)dispatch_queue);
+  dispatch_printf("dispatch_queue_delete: %u\n", (size_t)dispatch_queue);
 
   // signal to all thread workers that it is time to quit
   std::unique_lock<std::mutex> lock(dispatch_queue->lock);

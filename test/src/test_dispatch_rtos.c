@@ -77,9 +77,9 @@ TEST(dispatch_queue_rtos, test_parallel) {
     TEST_ASSERT_EQUAL_INT(num_values_in_chunk, args[i].count);
   }
 
-  // destroy the dispatch group and queue
-  dispatch_group_destroy(group);
-  dispatch_queue_destroy(queue);
+  // delete the dispatch group and queue
+  dispatch_group_delete(group);
+  dispatch_queue_delete(queue);
 
   // now test that the multi thread was ~kThreadCount times faster
   float speedup = (float)single_thread_ticks / (float)multi_thread_ticks;

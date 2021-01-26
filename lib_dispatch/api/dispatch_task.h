@@ -52,7 +52,7 @@ void dispatch_task_perform(dispatch_task_t *task);
  *
  * \param task  Task object
  */
-void dispatch_task_destroy(dispatch_task_t *task);
+void dispatch_task_delete(dispatch_task_t *task);
 
 #ifdef __cplusplus
 }  // extern "C"

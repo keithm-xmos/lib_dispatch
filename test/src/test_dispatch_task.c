@@ -34,7 +34,7 @@ TEST(dispatch_task, test_create) {
   task = dispatch_task_create(do_dispatch_task_work, NULL, false);
   TEST_ASSERT_NOT_NULL(task);
 
-  dispatch_task_destroy(task);
+  dispatch_task_delete(task);
 }
 
 TEST(dispatch_task, test_perform) {
@@ -47,7 +47,7 @@ TEST(dispatch_task, test_perform) {
   TEST_ASSERT_EQUAL_INT(0, arg.zero);
   TEST_ASSERT_EQUAL_INT(1, arg.one);
 
-  dispatch_task_destroy(task);
+  dispatch_task_delete(task);
 }
 
 TEST_GROUP_RUNNER(dispatch_task) {

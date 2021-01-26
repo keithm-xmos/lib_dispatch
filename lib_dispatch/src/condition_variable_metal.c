@@ -5,32 +5,33 @@
 
 condition_variable_t* condition_variable_create() {
   condition_variable_t* cv = dispatch_malloc(sizeof(condition_variable_t));
+
   cv->waiters = NULL;
-  swlock_init(&cv->swlock);
+  cv->lock = dispatch_spinlock_create();
 
   return cv;
 }
 
-bool condition_variable_wait(condition_variable_t* cv, dispatch_lock_t lock,
+bool condition_variable_wait(condition_variable_t* cv, dispatch_mutex_t lock,
                              chanend_t dest) {
   dispatch_assert(cv);
 
-  swlock_acquire(&cv->swlock);
+  dispatch_spinlock_get(cv->lock);
   condition_node_t waiter;
   waiter.cend = dest;
   waiter.next = cv->waiters;
   cv->waiters = &waiter;
-  swlock_release(&cv->swlock);
+  dispatch_spinlock_put(cv->lock);
 
   // release lock while we wait
-  dispatch_lock_release(lock);
+  dispatch_mutex_put(lock);
 
   // wait for signal
   int evt = chan_in_byte(waiter.cend);
 
   if (evt == CONDITION_SIGNAL_EVT) {
     // re-acquire lock so the caller can hold it
-    dispatch_lock_acquire(lock);
+    dispatch_mutex_get(lock);
     return true;
   }
 
@@ -49,7 +50,7 @@ static void condition_variable_send(chanend_t source, chanend_t dest,
 void condition_variable_signal(condition_variable_t* cv, chanend_t source) {
   dispatch_assert(cv);
 
-  swlock_acquire(&cv->swlock);
+  dispatch_spinlock_get(cv->lock);
 
   // send the next waiter the signal event
   if (cv->waiters != NULL) {
@@ -57,13 +58,13 @@ void condition_variable_signal(condition_variable_t* cv, chanend_t source) {
     cv->waiters = cv->waiters->next;
   }
 
-  swlock_release(&cv->swlock);
+  dispatch_spinlock_put(cv->lock);
 }
 
 void condition_variable_broadcast(condition_variable_t* cv, chanend_t source) {
   dispatch_assert(cv);
 
-  swlock_acquire(&cv->swlock);
+  dispatch_spinlock_get(cv->lock);
 
   // send all waiter the signal event
   while (cv->waiters != NULL) {
@@ -71,13 +72,13 @@ void condition_variable_broadcast(condition_variable_t* cv, chanend_t source) {
     cv->waiters = cv->waiters->next;
   }
 
-  swlock_release(&cv->swlock);
+  dispatch_spinlock_put(cv->lock);
 }
 
 void condition_variable_terminate(condition_variable_t* cv, chanend_t source) {
   dispatch_assert(cv);
 
-  swlock_acquire(&cv->swlock);
+  dispatch_spinlock_get(cv->lock);
 
   // send all waiter the terminate event
   while (cv->waiters != NULL) {
@@ -85,11 +86,12 @@ void condition_variable_terminate(condition_variable_t* cv, chanend_t source) {
     cv->waiters = cv->waiters->next;
   }
 
-  swlock_release(&cv->swlock);
+  dispatch_spinlock_put(cv->lock);
 }
 
-void condition_variable_destroy(condition_variable_t* cv) {
+void condition_variable_delete(condition_variable_t* cv) {
   dispatch_assert(cv);
 
+  dispatch_spinlock_delete(cv->lock);
   dispatch_free(cv);
 }

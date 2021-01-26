@@ -29,8 +29,8 @@ static void hello_world(void* unused) {
   // wait for all functions to finish executing
   dispatch_queue_wait(queue);
 
-  // destroy the dispatch queue
-  dispatch_queue_destroy(queue);
+  // delete the dispatch queue
+  dispatch_queue_delete(queue);
 }
 
 int main(int argc, const char* argv[]) {

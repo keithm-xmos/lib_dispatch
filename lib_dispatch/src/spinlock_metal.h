@@ -1,20 +1,16 @@
 // Copyright (c) 2020, XMOS Ltd, All rights reserved
-#ifndef DISPATCH_SPINLOCK_H_
-#define DISPATCH_SPINLOCK_H_
+#ifndef DISPATCH_SPINLOCK_METAL_H_
+#define DISPATCH_SPINLOCK_METAL_H_
 
-typedef unsigned swlock_t;
+typedef unsigned spinlock_t;
 
-#define SWLOCK_INITIAL_VALUE 0
-
-enum { SWLOCK_NOT_ACQUIRED = 0 };
-
-/** Initialize a software lock.
+/** Create a software lock.
  *
- *  This function will initialize a software lock for use. Note that unlike
+ *  This function will create a software lock for use. Note that unlike
  *  hardware locks, there is no need to allocate or free a software lock from a
  *  limited pool.
  */
-void swlock_init(swlock_t *lock);
+spinlock_t *spinlock_create();
 
 /** Try and acquire a software lock.
  *
@@ -23,11 +19,11 @@ void swlock_init(swlock_t *lock);
  *
  *  \param   lock  the software lock to acquire.
  *
- *  \returns a value that is equal to ``SWLOCK_NOT_ACQUIRED`` if
+ *  \returns a value that is equal to ``SPINLOCK_NOT_ACQUIRED`` if
  *           the attempt fails. Any other value indicates that the
  *           acquisition has succeeded.
  */
-int swlock_try_acquire(swlock_t *lock);
+int spinlock_try_acquire(spinlock_t *lock);
 
 /** Acquire a software lock.
  *
@@ -38,7 +34,7 @@ int swlock_try_acquire(swlock_t *lock);
  *  \param   lock  the software lock to acquire.
  *
  */
-void swlock_acquire(swlock_t *lock);
+void spinlock_acquire(spinlock_t *lock);
 
 /** Release a software lock.
  *
@@ -48,6 +44,15 @@ void swlock_acquire(swlock_t *lock);
  *  \param lock   the software lock to release.
  *
  */
-void swlock_release(swlock_t *lock);
+void spinlock_release(spinlock_t *lock);
 
-#endif  // DISPATCH_SPINLOCK_H_
+/** Delete a software lock.
+ *
+ *  This function delete the memory associated with the software lock
+ *
+ *  \param lock   the software lock to delete.
+ *
+ */
+void spinlock_delete(spinlock_t *lock);
+
+#endif  // DISPATCH_SPINLOCK_METAL_H_
