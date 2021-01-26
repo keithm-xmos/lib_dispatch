@@ -30,8 +30,10 @@ endif()
 #**********************
 # Setup project
 #**********************
-project(lib_dispatch_tests VERSION 1.0.0)
 
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/dependencies.cmake")
+
+project(lib_dispatch_tests VERSION 1.0.0)
 
 #**********************
 # Disable in-source build.
@@ -92,36 +94,14 @@ else()
 endif()
 
 #**********************
-# Unity
+# Paths
 #**********************
 
-set(UNITY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Unity")
-set(LIB_LOGGING_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib_logging")
 set(FREERTOS_DIR $ENV{XMOS_AIOT_SDK_PATH}/modules/rtos/FreeRTOS/FreeRTOS-Plus/FreeRTOS-SMP/FreeRTOS)
 set(RTOS_SUPPORT_DIR $ENV{XMOS_AIOT_SDK_PATH}/modules/lib_rtos_support)
 
 #NOTE This can go away when lib_xassert is no longer part of SDK
 set(XASSERT_DIR $ENV{XMOS_AIOT_SDK_PATH}/modules/lib_xassert/lib_xassert/lib_xassert)
-
-set(UNITY_SOURCES
-  PRIVATE "${UNITY_DIR}/src/unity.c"
-  PRIVATE "${UNITY_DIR}/extras/memory/src/unity_memory.c"
-  PRIVATE "${UNITY_DIR}/extras/fixture/src/unity_fixture.c"
-)
-
-set(UNITY_INCLUDES
-  PRIVATE "${UNITY_DIR}/src"
-  PRIVATE "${UNITY_DIR}/extras/memory/src"
-  PRIVATE "${UNITY_DIR}/extras/fixture/src"
-)
-
-set(LIB_LOGGING_SOURCES
-  PRIVATE "${LIB_LOGGING_DIR}/lib_logging/src/debug_printf.c"
-)
-
-set(LIB_LOGGING_INCLUDES
-  PRIVATE "${LIB_LOGGING_DIR}/lib_logging/api"
-)
 
 #**********************
 # targets
