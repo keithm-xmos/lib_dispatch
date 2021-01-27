@@ -108,7 +108,7 @@ The bare-metal implementation uses the following hardware resources:
 - 1 hardware lock
 - 1 hardware thread per worker
 - N+1 chanends, where N equals the number of worker threads
-- 2 additional chanends for every waitable task or group. These 2 additional chanends are freed when the waitable task completes.
+- 2 additional chanends for every waitable task or group. These 2 additional chanends are freed when the waitable task or group completes.
 
 Using the library
 #################
@@ -117,8 +117,8 @@ Some dependent components are included as git submodules. These can be obtained 
 
 .. code:: console
 
-    git clone --recurse-submodules git@github.com:xmos/lib_dispatch.git
+    git clone git@github.com:xmos/lib_dispatch.git
 
 The AIoT SDK is required to build and run the FreeRTOS example applications or unit tests.  Follow the instructions in the `AIoT SDK Getting Started Guide <https://github.com/xmos/aiot_sdk/blob/develop/documents/quick_start/getting-started.rst>`__ to setup the SDK. 
 
-**This remainder of the section is intentionally left blank.**
+**This remainder of the section is intentionally left blank because nobody should be using this library.**

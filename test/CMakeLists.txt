@@ -31,7 +31,7 @@ endif()
 # Setup project
 #**********************
 
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/dependencies.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/dependencies.cmake")
 
 project(lib_dispatch_tests VERSION 1.0.0)
 

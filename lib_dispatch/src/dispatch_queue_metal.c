@@ -34,6 +34,18 @@ struct dispatch_worker_data_struct {
   queue_t *queue;
 };
 
+static void run_task(dispatch_task_t *task) {
+  dispatch_task_perform(task);
+
+  if (task->waitable) {
+    // signal the event counter
+    event_counter_signal((event_counter_t *)task->private_data);
+  } else {
+    // the contract is that the worker must delete non-waitable tasks
+    dispatch_task_delete(task);
+  }
+}
+
 void dispatch_queue_worker(void *param) {
   dispatch_worker_data_t *worker_data = (dispatch_worker_data_t *)param;
   dispatch_task_t *task = NULL;
@@ -49,16 +61,7 @@ void dispatch_queue_worker(void *param) {
   for (;;) {
     if (queue_receive(queue, (void **)&task, cend)) {
       *status = DISPATCH_WORKER_BUSY_STATUS;
-      // run the task
-      dispatch_task_perform(task);
-
-      if (task->waitable) {
-        // signal the event counter
-        event_counter_signal((event_counter_t *)task->private_data);
-      } else {
-        // the contract is that the worker must delete non-waitable tasks
-        dispatch_task_delete(task);
-      }
+      run_task(task);
       *status = DISPATCH_WORKER_READY_STATUS;
     } else {
       chanend_free(cend);
@@ -88,6 +91,17 @@ struct dispatch_xcore_struct {
   size_t *thread_status;
   dispatch_worker_data_t *worker_data;
 };
+
+static int busy_workers(dispatch_xcore_queue_t *dispatch_queue) {
+  size_t busy_count = 0;
+
+  for (int i = 0; i < dispatch_queue->thread_count; i++) {
+    if (dispatch_queue->thread_status[i] == DISPATCH_WORKER_BUSY_STATUS)
+      busy_count++;
+  }
+
+  return busy_count;
+}
 
 //***********************
 //***********************
@@ -170,6 +184,14 @@ void dispatch_queue_task_add(dispatch_queue_t *ctx, dispatch_task_t *task) {
     task->private_data = event_counter_create(1);
   }
 
+#if defined(use_callers_thread)
+  if (busy_workers(dispatch_queue) == dispatch_queue->thread_count) {
+    // all the workers are busy and this thread is configured to pitch in
+    run_task(task);
+    return;
+  }
+#endif
+
   queue_send(dispatch_queue->queue, (void *)task, dispatch_queue->cend);
 }
 
@@ -189,8 +211,16 @@ void dispatch_queue_group_add(dispatch_queue_t *ctx, dispatch_group_t *group) {
   }
 
   for (int i = 0; i < group->count; i++) {
-    // task_add(queue, group->tasks[i], counter);
     group->tasks[i]->private_data = counter;
+
+#if defined(use_callers_thread)
+    if (busy_workers(dispatch_queue) == dispatch_queue->thread_count) {
+      // all the workers are busy and this thread is configured to pitch in
+      run_task(group->tasks[i]);
+      continue;
+    }
+#endif
+
     queue_send(dispatch_queue->queue, (void *)group->tasks[i],
                dispatch_queue->cend);
   }
@@ -239,14 +269,12 @@ void dispatch_queue_wait(dispatch_queue_t *ctx) {
   dispatch_printf("dispatch_queue_wait: %u\n", (size_t)dispatch_queue);
 
   size_t busy_count;
+  size_t waiting_count;
 
   for (;;) {
-    busy_count = queue_size(dispatch_queue->queue);
-    for (int i = 0; i < dispatch_queue->thread_count; i++) {
-      if (dispatch_queue->thread_status[i] == DISPATCH_WORKER_BUSY_STATUS)
-        busy_count++;
-    }
-    if (busy_count == 0) return;
+    busy_count = busy_workers(dispatch_queue);
+    waiting_count = queue_size(dispatch_queue->queue);
+    if ((busy_count + waiting_count) == 0) return;
   }
 }
 

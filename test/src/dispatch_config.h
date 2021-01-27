@@ -16,6 +16,17 @@
 typedef lock_t dispatch_mutex_t;
 typedef spinlock_t* dispatch_spinlock_t;
 
+// Uncomment the following line to enable use_callers_thread mode.
+//  When this is defined, the bare-metal version of the dispatch queue
+//  will pitch in and execute a task in the caller's thread if all
+//  workers are busy. As a result, the dispatch queue size will never
+//  exceed the numebr of workers. So, be sure to set the length and
+//  number of threads to be the same when creating the dispatch queue.
+//  We do not recommend this mode.  Instead, we recommend that you
+//  utilize the caller's thread to do other processing if you need
+//  additional CPU resources.
+//#define use_callers_thread
+
 #define dispatch_assert(A) xassert(A)
 
 #define dispatch_malloc(A) malloc(A)
