@@ -30,8 +30,10 @@ endif()
 #**********************
 # Setup project
 #**********************
-project(lib_dispatch_tests VERSION 1.0.0)
 
+include("${CMAKE_CURRENT_SOURCE_DIR}/dependencies.cmake")
+
+project(lib_dispatch_tests VERSION 1.0.0)
 
 #**********************
 # Disable in-source build.
@@ -92,25 +94,14 @@ else()
 endif()
 
 #**********************
-# Unity
+# Paths
 #**********************
 
-set(UNITY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Unity")
 set(FREERTOS_DIR $ENV{XMOS_AIOT_SDK_PATH}/modules/rtos/FreeRTOS/FreeRTOS-Plus/FreeRTOS-SMP/FreeRTOS)
 set(RTOS_SUPPORT_DIR $ENV{XMOS_AIOT_SDK_PATH}/modules/lib_rtos_support)
+
+#NOTE This can go away when lib_xassert is no longer part of SDK
 set(XASSERT_DIR $ENV{XMOS_AIOT_SDK_PATH}/modules/lib_xassert/lib_xassert/lib_xassert)
-
-set(UNITY_SOURCES
-  PRIVATE "${UNITY_DIR}/src/unity.c"
-  PRIVATE "${UNITY_DIR}/extras/memory/src/unity_memory.c"
-  PRIVATE "${UNITY_DIR}/extras/fixture/src/unity_fixture.c"
-)
-
-set(UNITY_INCLUDES
-  PRIVATE "${UNITY_DIR}/src"
-  PRIVATE "${UNITY_DIR}/extras/memory/src"
-  PRIVATE "${UNITY_DIR}/extras/fixture/src"
-)
 
 #**********************
 # targets
@@ -121,7 +112,8 @@ if(HOST)
   set(LIB_DISPATCH_SOURCES ${LIB_DISPATCH_HOST_SOURCES})
 elseif(FREERTOS)
   set(LIB_DISPATCH_SOURCES ${LIB_DISPATCH_FREERTOS_SOURCES})
-  set(TEST_DISPATCH_SOURCES 
+  set(TEST_DISPATCH_SOURCES
+    ${LIB_LOGGING_SOURCES}
     "${FREERTOS_DIR}/Source/croutine.c"
     "${FREERTOS_DIR}/Source/event_groups.c"
     "${FREERTOS_DIR}/Source/list.c"
@@ -138,13 +130,15 @@ elseif(FREERTOS)
     "${RTOS_SUPPORT_DIR}/src/rtos_locks.c"
     "${RTOS_SUPPORT_DIR}/src/rtos_printf.c"
     "${RTOS_SUPPORT_DIR}/src/rtos_time.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/test_dispatch_freertos.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/test_dispatch_rtos.c"
   )
 
   set_source_files_properties("${FREERTOS_DIR}/Source/portable/XCC/XCOREAI/port.xc" PROPERTIES LANGUAGE C)
 
   set(TEST_DISPATCH_INCLUDES 
+    #NOTE This can go away when lib_xassert is no longer part of SDK
     "${XASSERT_DIR}/api"
+    ${LIB_LOGGING_INCLUDES}
     "${FREERTOS_DIR}/Source/include"
     "${FREERTOS_DIR}/Source/portable/XCC/XCOREAI"
     "${RTOS_SUPPORT_DIR}/api"
@@ -153,8 +147,12 @@ elseif(FREERTOS)
 else()
   set(LIB_DISPATCH_SOURCES ${LIB_DISPATCH_METAL_SOURCES})
   set(TEST_DISPATCH_SOURCES 
+    ${LIB_LOGGING_SOURCES}
     "${CMAKE_CURRENT_SOURCE_DIR}/src/test_queue_metal.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/test_dispatch_metal.c"
+  )
+  set(TEST_DISPATCH_INCLUDES 
+    ${LIB_LOGGING_INCLUDES}
   )
 endif()
 

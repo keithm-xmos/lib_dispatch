@@ -17,7 +17,7 @@ struct dispatch_task_struct {
 struct dispatch_group_struct {
   size_t length;            // maximum number of tasks in the group
   size_t count;             // number of tasks added to the group
-  bool waitable;            // task can be waited on
+  bool waitable;            // group can be waited on
   dispatch_task_t **tasks;  // array of task pointers
 };
 

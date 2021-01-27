@@ -29,7 +29,7 @@ TEST(dispatch_group, test_create) {
   group = dispatch_group_create(3, false);
   TEST_ASSERT_NOT_NULL(group);
 
-  dispatch_group_destroy(group);
+  dispatch_group_delete(group);
 }
 
 TEST(dispatch_group, test_perform_tasks) {
@@ -51,10 +51,10 @@ TEST(dispatch_group, test_perform_tasks) {
   TEST_ASSERT_EQUAL_INT(kLength, arg.count);
 
   for (int i = 0; i < kLength; i++) {
-    dispatch_task_destroy(tasks[i]);
+    dispatch_task_delete(tasks[i]);
   }
 
-  dispatch_group_destroy(group);
+  dispatch_group_delete(group);
 }
 
 TEST(dispatch_group, test_perform_functions) {
@@ -75,10 +75,10 @@ TEST(dispatch_group, test_perform_functions) {
   TEST_ASSERT_EQUAL_INT(kLength, arg.count);
 
   for (int i = 0; i < kLength; i++) {
-    dispatch_task_destroy(tasks[i]);
+    dispatch_task_delete(tasks[i]);
   }
 
-  dispatch_group_destroy(group);
+  dispatch_group_delete(group);
 }
 
 TEST_GROUP_RUNNER(dispatch_group) {

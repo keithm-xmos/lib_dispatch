@@ -10,12 +10,12 @@
 #if BARE_METAL
 #include "test_dispatch_queue_metal.h"
 #elif FREERTOS
-#include "test_dispatch_queue_freertos.h"
+#include "test_dispatch_queue_rtos.h"
 #elif HOST
 #include "test_dispatch_queue_host.h"
 #endif
 
-static dispatch_lock_t lock;
+static dispatch_mutex_t mutex;
 
 DISPATCH_TASK_FUNCTION
 void do_limited_work(void *p) {
@@ -23,9 +23,9 @@ void do_limited_work(void *p) {
 
   look_busy(100);
 
-  dispatch_lock_acquire(lock);
+  dispatch_mutex_get(mutex);
   arg->count++;
-  dispatch_lock_release(lock);
+  dispatch_mutex_put(mutex);
 }
 
 DISPATCH_TASK_FUNCTION
@@ -34,9 +34,9 @@ void do_standard_work(void *p) {
 
   look_busy(500);
 
-  dispatch_lock_acquire(lock);
+  dispatch_mutex_get(mutex);
   arg->count++;
-  dispatch_lock_release(lock);
+  dispatch_mutex_put(mutex);
 }
 
 DISPATCH_TASK_FUNCTION
@@ -45,9 +45,9 @@ void do_extended_work(void *p) {
 
   look_busy(1000);
 
-  dispatch_lock_acquire(lock);
+  dispatch_mutex_get(mutex);
   arg->count++;
-  dispatch_lock_release(lock);
+  dispatch_mutex_put(mutex);
 }
 
 DISPATCH_TASK_FUNCTION
@@ -60,9 +60,9 @@ void do_parallel_work(void *p) {
 
 TEST_GROUP(dispatch_queue);
 
-TEST_SETUP(dispatch_queue) { lock = dispatch_lock_alloc(); }
+TEST_SETUP(dispatch_queue) { mutex = dispatch_mutex_create(); }
 
-TEST_TEAR_DOWN(dispatch_queue) { dispatch_lock_free(lock); }
+TEST_TEAR_DOWN(dispatch_queue) { dispatch_mutex_delete(mutex); }
 
 TEST(dispatch_queue, test_wait_queue) {
   dispatch_queue_t *queue;
@@ -85,7 +85,7 @@ TEST(dispatch_queue, test_wait_queue) {
 
   TEST_ASSERT_EQUAL_INT(2, arg.count);
 
-  dispatch_queue_destroy(queue);
+  dispatch_queue_delete(queue);
 }
 
 TEST(dispatch_queue, test_wait_task) {
@@ -106,7 +106,7 @@ TEST(dispatch_queue, test_wait_task) {
 
   TEST_ASSERT_EQUAL_INT(1, arg.count);
 
-  dispatch_queue_destroy(queue);
+  dispatch_queue_delete(queue);
 }
 
 TEST(dispatch_queue, test_wait_group) {
@@ -133,8 +133,8 @@ TEST(dispatch_queue, test_wait_group) {
 
   TEST_ASSERT_EQUAL_INT(kGroupLength, arg.count);
 
-  dispatch_group_destroy(group);
-  dispatch_queue_destroy(queue);
+  dispatch_group_delete(group);
+  dispatch_queue_delete(queue);
 }
 
 TEST(dispatch_queue, test_mixed_durations1) {
@@ -185,9 +185,9 @@ TEST(dispatch_queue, test_mixed_durations1) {
 
     // cleanup
     for (int j = 0; j < extended_task_count - 1; j++) {
-      dispatch_task_destroy(extended_tasks[j]);
+      dispatch_task_delete(extended_tasks[j]);
     }
-    dispatch_queue_destroy(queue);
+    dispatch_queue_delete(queue);
     free(extended_tasks);
   }
 }
@@ -232,8 +232,8 @@ TEST(dispatch_queue, test_mixed_durations2) {
   dispatch_queue_task_wait(queue, extended_task2);
   TEST_ASSERT_EQUAL_INT(2, extended_arg.count);
 
-  dispatch_group_destroy(limited_group);
-  dispatch_queue_destroy(queue);
+  dispatch_group_delete(limited_group);
+  dispatch_queue_delete(queue);
 }
 
 TEST_GROUP_RUNNER(dispatch_queue) {

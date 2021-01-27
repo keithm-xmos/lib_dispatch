@@ -2,15 +2,6 @@
 #include <stdio.h>
 #include <xcore/hwtimer.h>
 
-#if FREERTOS
-#include "FreeRTOS.h"
-#include "task.h"
-#define THREAD_PRIORITY (configMAX_PRIORITIES - 1)
-#else
-#include "debug_print.h"
-#define THREAD_PRIORITY (0)
-#endif
-
 #include "dispatch.h"
 
 #define NUM_THREADS 4
@@ -39,8 +30,8 @@ void verify_output() {
   for (int i = 0; i < ROWS; i++)
     for (int j = 0; j < COLUMNS; j++) {
       if (output_mat[i][j] != ROWS) {
-        debug_printf("Whoops! output_mat[%d][%d] equals %d, expected %d\n", i,
-                     j, output_mat[i][j], ROWS);
+        printf("Whoops! output_mat[%d][%d] equals %d, expected %d\n", i, j,
+               output_mat[i][j], ROWS);
       }
     }
 }
@@ -91,8 +82,7 @@ static int multi_thread_mat_mul() {
   reset_matrices();
 
   // create the dispatch queue
-  queue = dispatch_queue_create(queue_length, queue_thread_count, 1024,
-                                THREAD_PRIORITY);
+  queue = dispatch_queue_create(queue_length, queue_thread_count, 1024, 0);
 
   // create the dispatch group
   group = dispatch_group_create(queue_thread_count, true);
@@ -119,9 +109,9 @@ static int multi_thread_mat_mul() {
 
   verify_output();
 
-  // destroy the dispatch group and queue
-  dispatch_group_destroy(group);
-  dispatch_queue_destroy(queue);
+  // delete the dispatch group and queue
+  dispatch_group_delete(group);
+  dispatch_queue_delete(queue);
 
   return ticks;
 }
@@ -140,13 +130,6 @@ static void mat_mul(void* unused) {
 }
 
 int main(int argc, const char* argv[]) {
-#if FREERTOS
-  xTaskCreate(mat_mul, "mat_mul", 16 * 1024, NULL, configMAX_PRIORITIES - 1,
-              NULL);
-  vTaskStartScheduler();
-#endif
-  // for FreeRTOS build we never reach here because vTaskStartScheduler never
-  // returns
   mat_mul(NULL);
   return 0;
 }

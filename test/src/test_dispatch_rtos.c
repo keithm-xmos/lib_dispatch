@@ -10,13 +10,13 @@
 
 #define DISPATCHER_STACK_SIZE (1024)  // more than enough
 
-TEST_GROUP(dispatch_queue_freertos);
+TEST_GROUP(dispatch_queue_rtos);
 
-TEST_SETUP(dispatch_queue_freertos) {}
+TEST_SETUP(dispatch_queue_rtos) {}
 
-TEST_TEAR_DOWN(dispatch_queue_freertos) {}
+TEST_TEAR_DOWN(dispatch_queue_rtos) {}
 
-TEST(dispatch_queue_freertos, test_parallel) {
+TEST(dispatch_queue_rtos, test_parallel) {
   const int kThreadCount = 4;
   int num_values = kThreadCount * 1000000;
   test_parallel_work_arg args[kThreadCount];
@@ -77,15 +77,15 @@ TEST(dispatch_queue_freertos, test_parallel) {
     TEST_ASSERT_EQUAL_INT(num_values_in_chunk, args[i].count);
   }
 
-  // destroy the dispatch group and queue
-  dispatch_group_destroy(group);
-  dispatch_queue_destroy(queue);
+  // delete the dispatch group and queue
+  dispatch_group_delete(group);
+  dispatch_queue_delete(queue);
 
   // now test that the multi thread was ~kThreadCount times faster
   float speedup = (float)single_thread_ticks / (float)multi_thread_ticks;
   TEST_ASSERT_FLOAT_WITHIN(0.1, (float)kThreadCount, speedup);
 }
 
-TEST_GROUP_RUNNER(dispatch_queue_freertos) {
-  RUN_TEST_CASE(dispatch_queue_freertos, test_parallel);
+TEST_GROUP_RUNNER(dispatch_queue_rtos) {
+  RUN_TEST_CASE(dispatch_queue_rtos, test_parallel);
 }

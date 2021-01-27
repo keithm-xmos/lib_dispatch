@@ -1,5 +1,5 @@
 // Copyright (c) 2020, XMOS Ltd, All rights reserved
-//#include "dispatch_queue_freertos.h"
+//#include "dispatch_queue_rtos.h"
 
 #include <stdbool.h>
 #include <stdlib.h>
@@ -7,11 +7,11 @@
 
 #include "FreeRTOS.h"
 #include "dispatch_config.h"
-#include "dispatch_event_counter.h"
 #include "dispatch_group.h"
 #include "dispatch_queue.h"
 #include "dispatch_task.h"
 #include "dispatch_types.h"
+#include "event_counter.h"
 #include "event_groups.h"
 #include "queue.h"
 #include "task.h"
@@ -51,12 +51,11 @@ void dispatch_queue_worker(void *param) {
       dispatch_task_perform(task);
       if (task->waitable) {
         // signal the event counter
-        dispatch_event_counter_signal(
-            (dispatch_event_counter_t *)task->private_data);
+        event_counter_signal((event_counter_t *)task->private_data);
         // clear semaphore
       } else {
-        // the contract is that the worker must destroy non-waitable tasks
-        dispatch_task_destroy(task);
+        // the contract is that the worker must delete non-waitable tasks
+        dispatch_task_delete(task);
       }
       // set ready bit
       xEventGroupSetBits(xEventGroup, xReadyBit);
@@ -156,7 +155,7 @@ void dispatch_queue_task_add(dispatch_queue_t *ctx, dispatch_task_t *task) {
                   (size_t)dispatch_queue, (size_t)task);
 
   if (task->waitable) {
-    task->private_data = dispatch_event_counter_create(1, NULL);
+    task->private_data = event_counter_create(1);
   }
 
   // send to queue
@@ -171,11 +170,11 @@ void dispatch_queue_group_add(dispatch_queue_t *ctx, dispatch_group_t *group) {
   dispatch_printf("dispatch_queue_group_add: %u   group=%u\n",
                   (size_t)dispatch_queue, (size_t)group);
 
-  dispatch_event_counter_t *counter = NULL;
+  event_counter_t *counter = NULL;
 
   if (group->waitable) {
     // create event counter
-    counter = dispatch_event_counter_create(group->count, NULL);
+    counter = event_counter_create(group->count);
   }
 
   // send to queue
@@ -193,12 +192,11 @@ void dispatch_queue_task_wait(dispatch_queue_t *ctx, dispatch_task_t *task) {
                   (size_t)task);
 
   if (task->waitable) {
-    dispatch_event_counter_t *counter =
-        (dispatch_event_counter_t *)task->private_data;
-    dispatch_event_counter_wait(counter);
-    // the contract is that the dispatch queue must destroy waitable tasks
-    dispatch_event_counter_destroy(counter);
-    dispatch_task_destroy(task);
+    event_counter_t *counter = (event_counter_t *)task->private_data;
+    event_counter_wait(counter);
+    // the contract is that the dispatch queue must delete waitable tasks
+    event_counter_delete(counter);
+    dispatch_task_delete(task);
   }
 }
 
@@ -210,12 +208,11 @@ void dispatch_queue_group_wait(dispatch_queue_t *ctx, dispatch_group_t *group) {
                   (size_t)group);
 
   if (group->waitable) {
-    dispatch_event_counter_t *counter =
-        (dispatch_event_counter_t *)group->tasks[0]->private_data;
-    dispatch_event_counter_wait(counter);
-    dispatch_event_counter_destroy(counter);
+    event_counter_t *counter = (event_counter_t *)group->tasks[0]->private_data;
+    event_counter_wait(counter);
+    event_counter_delete(counter);
     for (int i = 0; i < group->count; i++) {
-      dispatch_task_destroy(group->tasks[i]);
+      dispatch_task_delete(group->tasks[i]);
     }
   }
 }
@@ -238,11 +235,11 @@ void dispatch_queue_wait(dispatch_queue_t *ctx) {
                       pdFALSE, pdTRUE, portMAX_DELAY);
 }
 
-void dispatch_queue_destroy(dispatch_queue_t *ctx) {
+void dispatch_queue_delete(dispatch_queue_t *ctx) {
   dispatch_freertos_queue_t *dispatch_queue = (dispatch_freertos_queue_t *)ctx;
   dispatch_assert(dispatch_queue);
 
-  dispatch_printf("dispatch_queue_destroy: %u\n", (size_t)dispatch_queue);
+  dispatch_printf("dispatch_queue_delete: %u\n", (size_t)dispatch_queue);
 
   // delete all threads
   for (int i = 0; i < dispatch_queue->thread_count; i++) {

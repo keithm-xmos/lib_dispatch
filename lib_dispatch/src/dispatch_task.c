@@ -13,7 +13,7 @@ dispatch_task_t *dispatch_task_create(dispatch_function_t function,
 
   dispatch_task_init(task, function, argument, waitable);
 
-  dispatch_printf("dispatch_task_create:  task=%u\n", (long)task);
+  dispatch_printf("dispatch_task_create:  task=%u\n", (size_t)task);
 
   return task;
 }
@@ -32,16 +32,16 @@ void dispatch_task_init(dispatch_task_t *task, dispatch_function_t function,
 void dispatch_task_perform(dispatch_task_t *task) {
   dispatch_assert(task);
 
-  dispatch_printf("dispatch_task_perform:  task=%u\n", (long)task);
+  dispatch_printf("dispatch_task_perform:  task=%u\n", (size_t)task);
 
   // call function in current thread
   task->function(task->argument);
 }
 
-void dispatch_task_destroy(dispatch_task_t *task) {
+void dispatch_task_delete(dispatch_task_t *task) {
   dispatch_assert(task);
 
-  dispatch_printf("dispatch_task_destroy:  task=%u\n", (long)task);
+  dispatch_printf("dispatch_task_delete:  task=%u\n", (size_t)task);
 
   dispatch_free(task);
 }

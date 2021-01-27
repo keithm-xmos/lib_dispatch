@@ -1,6 +1,0 @@
-[submodule "lib_logging"]
-	path = lib_logging
-	url = git@github.com:xmos/lib_logging.git
-[submodule "test/Unity"]
-	path = test/Unity
-	url = git@github.com:ThrowTheSwitch/Unity.git

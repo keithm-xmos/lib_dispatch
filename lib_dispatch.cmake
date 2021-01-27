@@ -6,7 +6,6 @@ endif()
 set(LIB_DISPATCH_SOURCES
   "${LIB_DISPATCH_DIR}/lib_dispatch/src/dispatch_task.c"
   "${LIB_DISPATCH_DIR}/lib_dispatch/src/dispatch_group.c"
-  "${LIB_DISPATCH_DIR}/lib_dispatch/src/dispatch_event_counter.c"
 )
 
 set(LIB_DISPATCH_HOST_SOURCES
@@ -17,18 +16,19 @@ set(LIB_DISPATCH_HOST_SOURCES
 set(LIB_DISPATCH_METAL_SOURCES
   ${LIB_DISPATCH_SOURCES}
   "${LIB_DISPATCH_DIR}/lib_dispatch/src/dispatch_queue_metal.c"
+  "${LIB_DISPATCH_DIR}/lib_dispatch/src/spinlock.c"
+  "${LIB_DISPATCH_DIR}/lib_dispatch/src/spinlock_asm.S"
   "${LIB_DISPATCH_DIR}/lib_dispatch/src/condition_variable_metal.c"
+  "${LIB_DISPATCH_DIR}/lib_dispatch/src/event_counter_metal.c"
   "${LIB_DISPATCH_DIR}/lib_dispatch/src/queue_metal.c"
-  "${LIB_DISPATCH_DIR}/lib_logging/lib_logging/src/debug_printf.c"
 )
 
 set(LIB_DISPATCH_FREERTOS_SOURCES
   ${LIB_DISPATCH_SOURCES}
-  "${LIB_DISPATCH_DIR}/lib_dispatch/src/dispatch_queue_freertos.c"
-  "${LIB_DISPATCH_DIR}/lib_logging/lib_logging/src/debug_printf.c"
+  "${LIB_DISPATCH_DIR}/lib_dispatch/src/dispatch_queue_rtos.c"
+  "${LIB_DISPATCH_DIR}/lib_dispatch/src/event_counter_rtos.c"
 )
 
 set(LIB_DISPATCH_INCLUDES
   "${LIB_DISPATCH_DIR}/lib_dispatch/api"
-  "${LIB_DISPATCH_DIR}/lib_logging/lib_logging/api"
 )

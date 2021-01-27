@@ -18,7 +18,7 @@ static void RunTests(void* unused) {
   RUN_TEST_GROUP(dispatch_task);
   RUN_TEST_GROUP(dispatch_group);
   RUN_TEST_GROUP(dispatch_queue);
-  RUN_TEST_GROUP(dispatch_queue_freertos);
+  RUN_TEST_GROUP(dispatch_queue_rtos);
   UnityEnd();
   exit(Unity.TestFailures);
 }

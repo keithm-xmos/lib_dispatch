@@ -53,7 +53,7 @@ void dispatch_group_task_add(dispatch_group_t *group, dispatch_task_t *task) {
 void dispatch_group_perform(dispatch_group_t *group) {
   dispatch_assert(group);
 
-  dispatch_printf("dispatch_group_perform: %u\n", (long)group);
+  dispatch_printf("dispatch_group_perform: %u\n", (size_t)group);
 
   // call group in current thread
   for (int i = 0; i < group->count; i++) {
@@ -62,7 +62,7 @@ void dispatch_group_perform(dispatch_group_t *group) {
   }
 }
 
-void dispatch_group_destroy(dispatch_group_t *group) {
+void dispatch_group_delete(dispatch_group_t *group) {
   dispatch_assert(group);
   dispatch_assert(group->tasks);
 

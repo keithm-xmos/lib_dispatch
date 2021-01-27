@@ -34,7 +34,7 @@ void dispatch_group_init(dispatch_group_t *group, bool waitable);
  *
  * \param group  Group object
  */
-void dispatch_group_destroy(dispatch_group_t *group);
+void dispatch_group_delete(dispatch_group_t *group);
 
 /** Creates a task and adds it to the the group
  *
