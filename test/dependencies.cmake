@@ -2,7 +2,7 @@ include(FetchContent)
 
 FetchContent_Declare(
   lib_logging
-  GIT_REPOSITORY git@github.com:xmos/lib_logging.git
+  GIT_REPOSITORY https://github.com/xmos/lib_logging.git
   GIT_TAG        09c77b06920afc1d3ddc70f377fe92a0bec46e0f
   GIT_SHALLOW    TRUE
   SOURCE_DIR     lib_logging
@@ -21,7 +21,7 @@ endif ()
 
 FetchContent_Declare(
   unity
-  GIT_REPOSITORY git@github.com:ThrowTheSwitch/Unity.git
+  GIT_REPOSITORY https://github.com/ThrowTheSwitch/Unity.git
   GIT_TAG        cf949f45ca6d172a177b00da21310607b97bc7a7
   GIT_SHALLOW    TRUE
   SOURCE_DIR     unity
