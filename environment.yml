@@ -1,0 +1,11 @@
+channels:
+  - mvdbeek
+  - bioconda
+  - conda-forge
+  - anaconda
+  - defaults
+dependencies:
+  - cmake=3.14.0
+  - make=4.2.1
+  - nbval=0.9.6
+  - ncurses=6.1
