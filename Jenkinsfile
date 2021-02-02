@@ -33,13 +33,6 @@ pipeline {
                     $class: 'GitSCM',
                     branches: scm.branches,
                     doGenerateSubmoduleConfigurations: false,
-                    extensions: [[$class: 'SubmoduleOption',
-                                  threads: 8,
-                                  timeout: 20,
-                                  shallow: true,
-                                  parentCredentials: true,
-                                  recursiveSubmodules: true],
-                                 [$class: 'CleanCheckout']],
                     userRemoteConfigs: [[credentialsId: 'xmos-bot',
                                          url: 'git@github.com:xmos/lib_dispatch']]
                 ])
