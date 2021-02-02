@@ -61,7 +61,7 @@ pipeline {
                 // below is how we can activate the tools
                 sh """pushd /XMOS/tools/${params.TOOLS_VERSION}/XMOS/xTIMEcomposer/${params.TOOLS_VERSION} && . SetEnv && popd &&
                       . activate ./lib_dispatch_venv &&
-                      cd test && ./ci_tests.sh"""
+                      cd test && bash ci_tests.sh"""
             }
         }
     }
